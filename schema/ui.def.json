@@ -1,0 +1,488 @@
+{
+  "schemaVersion": 1,
+  "uiApiVersion": 1,
+  "defaults": {
+    "gap": 12,
+    "cell": { "width": 8, "height": 20 }
+  },
+  "limits": {
+    "maxDepth": 8,
+    "maxItems": 512,
+    "maxTextBytes": 65536,
+    "maxDocumentBytes": 1048576,
+    "maxTableRows": 512,
+    "maxTableColumns": 16,
+    "maxTreeNodes": 1024,
+    "maxDataPoints": 4096
+  },
+  "enums": {
+    "textType": ["body", "caption", "title"],
+    "tone": [
+      "normal",
+      "hint",
+      "accent",
+      "title",
+      "error",
+      "warning",
+      "success",
+      "tool",
+      "thinking",
+      "user",
+      "assistant",
+      "system"
+    ],
+    "alignH": ["start", "center", "end"],
+    "alignHV": ["start", "center", "end", "stretch"],
+    "mainAxis": ["start", "center", "end", "spaceBetween"],
+    "blockVariant": ["card", "inset", "plain"],
+    "buttonVariant": ["primary", "secondary", "ghost", "link"],
+    "controlKind": ["buttons", "select", "checkbox", "switch", "text", "number"],
+    "actionKind": ["none", "dispatch", "route", "command"],
+    "sparkStyle": ["block", "bar"],
+    "imageFit": ["contain", "cover", "fill", "fitWidth", "fitHeight", "none"]
+  },
+  "adapt": {
+    "Text": "terminal",
+      "Divider": "plainTextMono",
+      "Gap": "plainTextMono",
+      "Button": "plainTextMono",
+      "Block": "flatten",
+      "Row": "flatten",
+      "Column": "flatten",
+      "Expanded": "flatten",
+      "Spacer": "skip",
+      "SizedBox": "flatten",
+      "Padding": "flatten",
+      "Align": "flatten",
+      "Collapse": "flatten",
+      "KV": "plainTextMono",
+      "Table": "plainTextMono",
+      "Tree": "plainTextMono",
+      "Progress": "plainTextMono",
+      "Badge": "plainTextMono",
+      "Control": "plainTextMono",
+      "Markdown": "plainTextMono",
+      "Icon": "glyphText",
+      "Stack": "lastChild",
+      "Image": "altText",
+      "Diff": "plainTextMono",
+      "Sparkline": "plainTextMono",
+      "Diagram": "plainTextMono",
+    "musicxx.Shader": "skip"
+  },
+  "blocks": [
+    {
+      "kind": "Text",
+      "level": "core",
+      "doc": "一段文字",
+      "fields": [
+        { "name": "text", "type": "text", "required": true },
+        { "name": "type", "type": "enum:textType", "default": "body" },
+        { "name": "tone", "type": "tone", "default": "normal" },
+        { "name": "bold", "type": "bool", "default": false },
+        { "name": "dim", "type": "bool", "default": false },
+        { "name": "mono", "type": "bool", "default": false },
+        { "name": "wrap", "type": "bool", "default": true },
+        { "name": "maxLines", "type": "int", "default": 0 },
+        { "name": "align", "type": "enum:alignH", "default": "start" },
+        { "name": "action", "type": "action" }
+      ],
+      "sample": { "kind": "Text", "text": "一段说明文字", "type": "body", "tone": "hint" }
+    },
+    {
+      "kind": "Divider",
+      "level": "core",
+      "doc": "分隔线（样式由客户端主题决定）",
+      "fields": [],
+      "sample": { "kind": "Divider" }
+    },
+    {
+      "kind": "Gap",
+      "level": "core",
+      "doc": "竖直留白（缺省取 defaults.gap）",
+      "fields": [{ "name": "size", "type": "size", "default": "gap" }],
+      "sample": { "kind": "Gap", "size": 12 }
+    },
+    {
+      "kind": "Button",
+      "level": "core",
+      "doc": "按钮（自己处理点击）",
+      "fields": [
+        { "name": "label", "type": "text", "required": true },
+        { "name": "variant", "type": "enum:buttonVariant", "default": "secondary" },
+        { "name": "icon", "type": "string" },
+        { "name": "disabled", "type": "bool", "default": false },
+        { "name": "action", "type": "action" }
+      ],
+      "sample": { "kind": "Button", "label": "保存", "variant": "primary", "action": "apply" }
+    },
+    {
+      "kind": "Block",
+      "level": "core",
+      "doc": "卡片/内容块",
+      "fields": [
+        { "name": "title", "type": "text" },
+        { "name": "variant", "type": "enum:blockVariant", "default": "card" },
+        { "name": "padding", "type": "edges" },
+        { "name": "margin", "type": "edges" },
+        { "name": "action", "type": "action" },
+        { "name": "children", "type": "items" }
+      ],
+      "sample": {
+        "kind": "Block",
+        "title": "统计",
+        "variant": "inset",
+        "padding": { "horizontal": 12, "vertical": 8 },
+        "children": [{ "kind": "Text", "text": "内容" }]
+      }
+    },
+    {
+      "kind": "Row",
+      "level": "core",
+      "doc": "横向排列",
+      "fields": [
+        { "name": "gap", "type": "size" },
+        { "name": "main", "type": "enum:mainAxis", "default": "start" },
+        { "name": "cross", "type": "enum:alignHV", "default": "start" },
+        { "name": "action", "type": "action" },
+        { "name": "children", "type": "items" }
+      ],
+      "sample": {
+        "kind": "Row",
+        "gap": 12,
+        "main": "spaceBetween",
+        "children": [
+          { "kind": "Text", "text": "左侧" },
+          { "kind": "Text", "text": "右侧" }
+        ]
+      }
+    },
+    {
+      "kind": "Column",
+      "level": "core",
+      "doc": "纵向排列",
+      "fields": [
+        { "name": "gap", "type": "size" },
+        { "name": "main", "type": "enum:mainAxis", "default": "start" },
+        { "name": "cross", "type": "enum:alignHV", "default": "start" },
+        { "name": "action", "type": "action" },
+        { "name": "children", "type": "items" }
+      ],
+      "sample": {
+        "kind": "Column",
+        "gap": 8,
+        "children": [
+          { "kind": "Text", "text": "第一行" },
+          { "kind": "Text", "text": "第二行" }
+        ]
+      }
+    },
+    {
+      "kind": "Expanded",
+      "level": "core",
+      "doc": "按比例分剩余空间",
+      "fields": [
+        { "name": "flex", "type": "int", "default": 1, "min": 1 },
+        { "name": "children", "type": "items" }
+      ],
+      "sample": { "kind": "Expanded", "flex": 3, "children": [{ "kind": "Text", "text": "占满" }] }
+    },
+    {
+      "kind": "Spacer",
+      "level": "core",
+      "doc": "纯占位（撑开）",
+      "fields": [{ "name": "flex", "type": "int", "default": 1, "min": 1 }],
+      "sample": { "kind": "Spacer", "flex": 1 }
+    },
+    {
+      "kind": "SizedBox",
+      "level": "core",
+      "doc": "固定尺寸/占位",
+      "fields": [
+        { "name": "width", "type": "size" },
+        { "name": "height", "type": "size" },
+        { "name": "aspect", "type": "float" },
+        { "name": "children", "type": "items" }
+      ],
+      "sample": { "kind": "SizedBox", "width": 120, "height": { "percent": 40 } }
+    },
+    {
+      "kind": "Padding",
+      "level": "core",
+      "doc": "内边距",
+      "fields": [
+        { "name": "padding", "type": "edges", "required": true },
+        { "name": "children", "type": "items" }
+      ],
+      "sample": {
+        "kind": "Padding",
+        "padding": { "horizontal": 20, "vertical": 8 },
+        "children": [{ "kind": "Text", "text": "带内边距" }]
+      }
+    },
+    {
+      "kind": "Align",
+      "level": "core",
+      "doc": "对齐（终端垂直分量尽力而为）",
+      "fields": [
+        { "name": "align", "type": "enum:alignHV", "default": "center" },
+        { "name": "vertical", "type": "enum:alignHV", "default": "center" },
+        { "name": "children", "type": "items" }
+      ],
+      "sample": { "kind": "Align", "align": "end", "children": [{ "kind": "Text", "text": "靠右" }] }
+    },
+    {
+      "kind": "Collapse",
+      "level": "core",
+      "doc": "折叠分组（展开状态由客户端按 id 维护）",
+      "fields": [
+        { "name": "id", "type": "string", "required": true },
+        { "name": "title", "type": "text", "required": true },
+        { "name": "expanded", "type": "bool", "default": true },
+        { "name": "children", "type": "items" }
+      ],
+      "sample": {
+        "kind": "Collapse",
+        "id": "detail",
+        "title": "详细信息",
+        "expanded": false,
+        "children": [{ "kind": "Text", "text": "折叠内容" }]
+      }
+    },
+    {
+      "kind": "KV",
+      "level": "core",
+      "doc": "键值两列",
+      "fields": [
+        { "name": "pairs", "type": "pairs", "required": true },
+        { "name": "keyWidth", "type": "size", "default": "auto" },
+        { "name": "sep", "type": "string", "default": " : " }
+      ],
+      "sample": {
+        "kind": "KV",
+        "pairs": [
+          { "k": "模型", "v": "gpt-5" },
+          { "k": { "key": "ui.tokens", "fallback": "令牌数" }, "v": "1280", "vTone": "accent" }
+        ]
+      }
+    },
+    {
+      "kind": "Table",
+      "level": "core",
+      "doc": "表格（未指定宽度的列按内容比例分剩余空间）",
+      "fields": [
+        { "name": "header", "type": "bool", "default": true },
+        { "name": "columns", "type": "columns", "required": true },
+        { "name": "rows", "type": "rows" }
+      ],
+      "sample": {
+        "kind": "Table",
+        "header": true,
+        "columns": [
+          { "title": "名称" },
+          { "title": "耗时", "align": "end", "width": 60 }
+        ],
+        "rows": [["编译", "1.4s"], [{ "text": "测试", "tone": "accent" }, "0.6s"]]
+      }
+    },
+    {
+      "kind": "Tree",
+      "level": "core",
+      "doc": "层级列表",
+      "fields": [
+        { "name": "connector", "type": "bool", "default": true },
+        { "name": "nodes", "type": "nodes", "required": true }
+      ],
+      "sample": {
+        "kind": "Tree",
+        "nodes": [
+          { "label": "src", "children": [{ "label": "main.cpp" }, { "label": "io.cpp" }] },
+          { "label": "README.md" }
+        ]
+      }
+    },
+    {
+      "kind": "Progress",
+      "level": "core",
+      "doc": "进度/计量",
+      "fields": [
+        { "name": "value", "type": "float", "required": true },
+        { "name": "total", "type": "float", "default": 100 },
+        { "name": "label", "type": "text" },
+        { "name": "unit", "type": "string", "default": "%" },
+        { "name": "showValue", "type": "bool", "default": true },
+        { "name": "tone", "type": "tone", "default": "accent" },
+        { "name": "thresholds", "type": "thresholds" },
+        { "name": "width", "type": "size" }
+      ],
+      "sample": {
+        "kind": "Progress",
+        "label": "已用额度",
+        "value": 72,
+        "total": 100,
+        "unit": "%",
+        "thresholds": [{ "at": 90, "tone": "error" }]
+      }
+    },
+    {
+      "kind": "Badge",
+      "level": "core",
+      "doc": "状态小标签",
+      "fields": [
+        { "name": "text", "type": "text", "required": true },
+        { "name": "tone", "type": "tone", "default": "accent" }
+      ],
+      "sample": { "kind": "Badge", "text": "已启用", "tone": "success" }
+    },
+    {
+      "kind": "Control",
+      "level": "core",
+      "doc": "交互控件（值变化即派发）",
+      "fields": [
+        { "name": "control", "type": "enum:controlKind", "required": true },
+        { "name": "id", "type": "string", "required": true },
+        { "name": "label", "type": "text" },
+        { "name": "help", "type": "text" },
+        { "name": "options", "type": "options" },
+        { "name": "value", "type": "json" },
+        { "name": "disabled", "type": "bool", "default": false },
+        { "name": "integer", "type": "bool", "default": false },
+        { "name": "min", "type": "float" },
+        { "name": "max", "type": "float" },
+        { "name": "step", "type": "float" },
+        { "name": "multiline", "type": "bool", "default": false },
+        { "name": "action", "type": "action" }
+      ],
+      "sample": {
+        "kind": "Control",
+        "control": "switch",
+        "id": "skipAds",
+        "label": "跳过广告",
+        "value": true,
+        "action": "setSkipAds"
+      }
+    },
+    {
+      "kind": "Markdown",
+      "level": "core",
+      "doc": "markdown 源码",
+      "fields": [{ "name": "text", "type": "string", "required": true }],
+      "sample": { "kind": "Markdown", "text": "# 标题\n\n- 列表项" }
+    },
+    {
+      "kind": "Icon",
+      "level": "optional",
+      "doc": "图标：GUI 用 name，终端用 glyph（都没有就跳过）",
+      "fields": [
+        { "name": "name", "type": "string" },
+        { "name": "glyph", "type": "string" },
+        { "name": "size", "type": "size" },
+        { "name": "tone", "type": "tone", "default": "normal" },
+        { "name": "alt", "type": "text" }
+      ],
+      "sample": { "kind": "Icon", "name": "play", "glyph": "▶" }
+    },
+    {
+      "kind": "Stack",
+      "level": "optional",
+      "doc": "叠放（终端适配为取最后一个子节点）",
+      "fields": [
+        { "name": "align", "type": "enum:alignHV", "default": "start" },
+        { "name": "vertical", "type": "enum:alignHV", "default": "start" },
+        { "name": "children", "type": "items" }
+      ],
+      "sample": {
+        "kind": "Stack",
+        "align": "center",
+        "children": [
+          { "kind": "Text", "text": "底层" },
+          { "kind": "Badge", "text": "上层" }
+        ]
+      }
+    },
+    {
+      "kind": "Image",
+      "level": "optional",
+      "doc": "图片：source 不做限制（惯例 cover/file/asset/url），取不到用 alt 兜底",
+      "fields": [
+        { "name": "source", "type": "string", "default": "file" },
+        { "name": "src", "type": "string" },
+        { "name": "width", "type": "size" },
+        { "name": "height", "type": "size" },
+        { "name": "aspect", "type": "float" },
+        { "name": "radius", "type": "float" },
+        { "name": "fit", "type": "enum:imageFit", "default": "contain" },
+        { "name": "alt", "type": "text" }
+      ],
+      "sample": {
+        "kind": "Image",
+        "source": "cover",
+        "width": 96,
+        "height": 96,
+        "radius": 8,
+        "fit": "cover",
+        "alt": "封面"
+      }
+    },
+    {
+      "kind": "Diff",
+      "level": "optional",
+      "doc": "差异对比（未实现时适配为等宽文本）",
+      "fields": [
+        { "name": "path", "type": "string" },
+        { "name": "oldStr", "type": "string" },
+        { "name": "newStr", "type": "string" }
+      ],
+      "sample": { "kind": "Diff", "path": "app.json", "oldStr": "a\nb", "newStr": "a\nc" }
+    },
+    {
+      "kind": "Sparkline",
+      "level": "optional",
+      "doc": "迷你趋势图（未实现时适配为末值文本）",
+      "fields": [
+        { "name": "data", "type": "numbers", "required": true },
+        { "name": "height", "type": "int", "default": 1 },
+        { "name": "glyphStyle", "type": "enum:sparkStyle", "default": "block" },
+        { "name": "min", "type": "float" },
+        { "name": "max", "type": "float" },
+        { "name": "tone", "type": "tone", "default": "accent" },
+        { "name": "colors", "type": "tones" },
+        { "name": "showLast", "type": "bool", "default": true }
+      ],
+      "sample": {
+        "kind": "Sparkline",
+        "data": [1, 4, 2, 8, 5],
+        "height": 1,
+        "glyphStyle": "block",
+        "showLast": true
+      }
+    },
+    {
+      "kind": "Diagram",
+      "level": "optional",
+      "doc": "状态图（未实现时适配为等宽文本）",
+      "fields": [{ "name": "mermaid", "type": "string", "required": true }],
+      "sample": { "kind": "Diagram", "mermaid": "stateDiagram-v2\n  a --> b" }
+    },
+    {
+      "kind": "musicxx.Shader",
+      "level": "client",
+      "client": "musicxx",
+      "doc": "插件着色器（字段集照搬 shader bundle 文档；其他客户端跳过）",
+      "fields": [
+        { "name": "bundle", "type": "string", "required": true },
+        { "name": "args", "type": "json" },
+        { "name": "speed", "type": "float", "default": 1 },
+        { "name": "maxFps", "type": "int" },
+        { "name": "animate", "type": "bool", "default": true },
+        { "name": "resolutionScale", "type": "float", "default": 1 }
+      ],
+      "sample": {
+        "kind": "musicxx.Shader",
+        "bundle": "shader/background.shaderbundle",
+        "speed": 1,
+        "animate": true
+      }
+    }
+  ]
+}

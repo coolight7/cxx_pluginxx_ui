@@ -1,0 +1,8 @@
+name: pluginxx_ui
+description: 插件界面描述层（模型 / 解析 / 适配 / 纯文本降级 / kit），与渲染器无关。
+version: 0.1.0
+publish_to: none
+environment:
+  sdk: ^3.5.0
+dev_dependencies:
+  test: ^1.25.0

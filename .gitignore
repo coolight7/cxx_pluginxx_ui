@@ -1,0 +1,7 @@
+build/
+.native/
+.dart/.dart_tool/
+dart/pubspec.lock
+*.user
+.vs/
+

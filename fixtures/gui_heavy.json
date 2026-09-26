@@ -1,0 +1,40 @@
+{
+  "title": "图形界面味",
+  "blocks": [
+    {
+      "kind": "Row",
+      "gap": 12,
+      "cross": "center",
+      "children": [
+        {
+          "kind": "Image",
+          "source": "cover",
+          "src": "current",
+          "width": 96,
+          "height": 96,
+          "radius": 8,
+          "fit": "cover",
+          "alt": "封面"
+        },
+        {
+          "kind": "Expanded",
+          "children": [
+            { "kind": "Text", "text": "歌名", "type": "title" },
+            { "kind": "Text", "text": "歌手", "type": "caption", "tone": "hint" }
+          ]
+        },
+        { "kind": "Icon", "name": "play", "glyph": "▶", "size": 24 }
+      ]
+    },
+    {
+      "kind": "Stack",
+      "align": "center",
+      "children": [
+        { "kind": "Image", "source": "url", "src": "https://example.com/a.png", "alt": "底图" },
+        { "kind": "Badge", "text": "NEW", "tone": "accent" }
+      ]
+    },
+    { "kind": "SizedBox", "width": { "percent": 60 }, "height": 80 },
+    { "kind": "Progress", "value": 3, "total": 10, "unit": "/10" }
+  ]
+}

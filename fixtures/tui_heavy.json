@@ -1,0 +1,40 @@
+{
+  "blocks": [
+    { "kind": "Text", "text": "等宽文本", "mono": true },
+    { "kind": "Gap", "size": 20 },
+    { "kind": "Gap", "size": 8 },
+    {
+      "kind": "KV",
+      "sep": ": ",
+      "pairs": [
+        { "k": "状态", "v": "运行中" },
+        { "k": "会话", "v": "2026-09-27" }
+      ]
+    },
+    {
+      "kind": "Table",
+      "header": true,
+      "columns": [
+        { "title": "命令", "width": 160 },
+        { "title": "说明" }
+      ],
+      "rows": [
+        ["build", "构建"],
+        ["run", "运行"]
+      ]
+    },
+    {
+      "kind": "Tree",
+      "connector": false,
+      "nodes": [
+        { "label": "agent", "children": [{ "label": "lib" }] },
+        { "label": "docs" }
+      ]
+    },
+    { "kind": "Sparkline", "data": [1, 4, 2, 8, 5], "height": 1, "glyphStyle": "block", "showLast": true },
+    { "kind": "Sparkline", "data": [3, 3, 9], "height": 1, "glyphStyle": "bar", "showLast": false },
+    { "kind": "Divider" },
+    { "kind": "Progress", "value": 0, "total": 100, "showValue": true },
+    { "kind": "Align", "align": "center", "children": [{ "kind": "Badge", "text": "居中标签" }] }
+  ]
+}

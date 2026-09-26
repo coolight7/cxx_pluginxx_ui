@@ -1,0 +1,5 @@
+name: cxx_pluginxx_ui
+description: 插件界面描述层（schema + 三份绑定的生成器与 fixture）。
+publish_to: none
+environment:
+  sdk: ^3.5.0

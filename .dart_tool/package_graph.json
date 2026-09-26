@@ -1,0 +1,14 @@
+{
+  "roots": [
+    "cxx_pluginxx_ui"
+  ],
+  "packages": [
+    {
+      "name": "cxx_pluginxx_ui",
+      "version": "0.0.0",
+      "dependencies": [],
+      "devDependencies": []
+    }
+  ],
+  "configVersion": 1
+}

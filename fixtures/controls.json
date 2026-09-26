@@ -1,0 +1,70 @@
+{
+  "title": "控件",
+  "blocks": [
+    {
+      "kind": "Control",
+      "control": "checkbox",
+      "id": "skipAds",
+      "label": "跳过广告",
+      "value": true,
+      "action": "setSkipAds"
+    },
+    {
+      "kind": "Control",
+      "control": "switch",
+      "id": "autoPlay",
+      "label": "自动播放",
+      "help": "打开应用后自动继续上次的播放",
+      "value": false,
+      "action": "setAutoPlay"
+    },
+    {
+      "kind": "Control",
+      "control": "text",
+      "id": "greeting",
+      "label": "启动提示语",
+      "value": "早上好",
+      "multiline": false,
+      "action": "setGreeting"
+    },
+    {
+      "kind": "Control",
+      "control": "number",
+      "id": "retry",
+      "label": "重试次数",
+      "value": 3,
+      "integer": true,
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "action": "setRetry"
+    },
+    {
+      "kind": "Control",
+      "control": "buttons",
+      "id": "rate",
+      "label": "速率",
+      "value": 1,
+      "options": [
+        { "value": 0.5, "label": "0.5×" },
+        { "value": 1, "label": "1×" },
+        { "value": 2, "label": "2×" }
+      ],
+      "action": "setRate"
+    },
+    {
+      "kind": "Control",
+      "control": "select",
+      "id": "theme",
+      "label": "主题",
+      "value": "dark",
+      "options": [
+        { "value": "light", "label": "浅色" },
+        { "value": "dark", "label": "深色" }
+      ],
+      "action": "setTheme"
+    },
+    { "kind": "Button", "label": "应用", "variant": "primary", "action": "applySettings" },
+    { "kind": "Button", "label": "重置", "variant": "ghost", "disabled": true }
+  ]
+}

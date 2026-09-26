@@ -1,0 +1,18 @@
+@PACKAGE_INIT@
+
+# cxx_pluginxx_ui 包配置: 解析依赖并导入导出目标
+#   cxx_pluginxx_ui         (INTERFACE, 只要头文件)
+#   cxx_pluginxx_ui_static  (静态库, 解析/适配/文本降级实现)
+#
+# 依赖查找顺序 (处理方须遵守): cxx_utilxx_base 的条件依赖 (io_uring) 需先在本机
+# 查找, 再 find_package(cxx_pluginxx_ui) (其内部 find_dependency(cxx_utilxx_base)
+# 会校验 PkgConfig::uring 是否存在)。
+
+include(CMakeFindDependencyMacro)
+
+find_dependency(fmt)
+find_dependency(cxx_utilxx_base)
+
+include("${CMAKE_CURRENT_LIST_DIR}/cxx_pluginxx_uiTargets.cmake")
+
+check_required_components(cxx_pluginxx_ui)
