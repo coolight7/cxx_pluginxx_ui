@@ -662,5 +662,60 @@ std::string plainTextJson(const utilxx_base::Json& json, const int width, const 
     return plainTextDocument(parseDocument(json), width, lookup);
 }
 
+// ===== 显示列宽辅助（终端渲染与文本降级共用同一口径）=====
+
+std::string_view prefixByWidth(const std::string_view text, const int maxWidth, int& usedWidth) {
+    usedWidth = 0;
+    if (maxWidth <= 0 || text.empty()) {
+        return {};
+    }
+    std::size_t i = 0;
+    while (i < text.size()) {
+        std::size_t         size = 1;
+        const std::uint32_t cp   = decodeUtf8(text, i, size);
+        const int width = isZeroWidthCodePoint(cp) ? 0 : (isWideCodePoint(cp) ? 2 : 1);
+        // 宽字符放不下时停在这里（宁可少一列也不切开字符）
+        if (usedWidth + width > maxWidth) {
+            break;
+        }
+        usedWidth += width;
+        i += size;
+    }
+    return text.substr(0, i);
+}
+
+std::string truncateToWidth(
+    const std::string_view text,
+    const int              maxWidth,
+    const std::string_view ellipsis
+) {
+    if (maxWidth <= 0) {
+        return {};
+    }
+    const int total = displayWidth(text);
+    if (total <= maxWidth) {
+        return std::string{text};
+    }
+    const int        ellipsisWidth = displayWidth(ellipsis);
+    int              keepWidth     = maxWidth - ellipsisWidth;
+    std::string_view prefix;
+    if (keepWidth > 0) {
+        int used = 0;
+        prefix   = prefixByWidth(text, keepWidth, used);
+    }
+    std::string out{prefix};
+    out.append(ellipsis);
+    return out;
+}
+
+std::string padRightToWidth(const std::string_view text, const int width) {
+    std::string out{text};
+    const int   pad = width - displayWidth(out);
+    if (pad > 0) {
+        out.append(static_cast<std::size_t>(pad), ' ');
+    }
+    return out;
+}
+
 } // namespace ui
 } // namespace pluginxx
