@@ -2,6 +2,9 @@
 //
 // 输出与 C++ 绑定逐字节一致（diff 由测试用同一批夹具对比）：不使用语言相关文案，
 // 数值一律走 [formatNumber]。
+import 'dart:math' as math;
+
+import 'gen/blocks.g.dart';
 import 'model.dart';
 
 const int _fallbackDividerWidth = 40;
@@ -49,12 +52,26 @@ bool _isZeroWidth(int cp) =>
     cp == 0xFEFF;
 
 class _Ctx {
-  _Ctx(this.width, this.lookup);
+  _Ctx(this.width, this.lookup, [this.cellWidth = kDefaultCellWidth]);
 
   final int width;
   final String Function(String key)? lookup;
 
+  /// 留白换算基准：`Padding` 的左留白（u）按它折算成缩进列数（与 C++ 侧同口径）
+  final double cellWidth;
+
   String text(TextValue value) => value.resolve(lookup: lookup);
+
+  /// 本轮的折行宽度（扣掉当前缩进；<=0 表示不折行）
+  int availableWidth(int indent) {
+    if (width <= 0) {
+      return 0;
+    }
+    return math.max(1, width - indent);
+  }
+
+  /// 派生一个折行宽度更小的上下文（用于缩进后的子树）
+  _Ctx withWidth(int nextWidth) => _Ctx(nextWidth, lookup, cellWidth);
 }
 
 String _repeat(String unit, int count) {
@@ -94,6 +111,16 @@ List<String> wrapLines(String text, int width) {
 }
 
 String _linesOf(String text, _Ctx ctx) => wrapLines(text, ctx.width).join('\n');
+
+/// `Padding` 的左留白折算成缩进列数（u → 列，四舍五入；与 C++ 侧同口径）
+int _indentColumns(ItemData item, _Ctx ctx) {
+  final double cell = ctx.cellWidth > 0 ? ctx.cellWidth : kDefaultCellWidth;
+  final double left = item.hasPadding ? item.padding.left : 0;
+  if (cell <= 0 || left <= 0) {
+    return 0;
+  }
+  return (left / cell).round();
+}
 
 String _indentLines(String text, String prefix) =>
     text.split('\n').map((String line) => '$prefix$line').join('\n');
@@ -159,12 +186,21 @@ String? _itemText(ItemData item, _Ctx ctx) {
       final String row = _childrenText(item.children, ctx, separator: ' | ');
       return row.isEmpty ? null : row;
     case 'Column':
-    case 'Padding':
     case 'SizedBox':
     case 'Align':
     case 'Expanded':
       final String column = _childrenText(item.children, ctx);
       return column.isEmpty ? null : column;
+    case 'Padding':
+      // 留白按左留白折算成缩进列数（u → 列，四舍五入）：折行宽度扣掉缩进，每行加前导空格。
+      // 与 C++ 侧同口径（见 src/plain_text.cpp 的 Padding 分支）。
+      final int indent = _indentColumns(item, ctx);
+      final String body =
+          _childrenText(item.children, ctx.withWidth(ctx.availableWidth(indent)));
+      if (body.isEmpty) {
+        return null;
+      }
+      return indent > 0 ? _indentLines(body, _repeat(' ', indent)) : body;
     case 'Spacer':
       return null;
     case 'Collapse':

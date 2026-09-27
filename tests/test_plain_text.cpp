@@ -64,6 +64,27 @@ PLUGINXX_UI_TEST(纯文本按宽度折行) {
     );
 }
 
+PLUGINXX_UI_TEST(纯文本的缩进留白) {
+    // Padding 的左留白折算成缩进列数（u → 列，默认每列 8u）; 折行宽度扣掉缩进
+    const std::vector<Item> items = pluginxx::ui::parseBlocks(Json::parse(R"([
+        {"kind":"Padding","padding":16,"children":[{"kind":"Text","text":"abc"}]}
+    ])"));
+    PLUGINXX_UI_CHECK_EQ(pluginxx::ui::plainText(items), std::string("  abc"), "两列缩进");
+    PLUGINXX_UI_CHECK_EQ(pluginxx::ui::plainText(items, 6), std::string("  abc"), "缩进后仍放得下");
+    const std::vector<Item> wrapped = pluginxx::ui::parseBlocks(Json::parse(R"([
+        {"kind":"Padding","padding":16,"children":[{"kind":"Text","text":"abcdefgh"}]}
+    ])"));
+    PLUGINXX_UI_CHECK_EQ(
+        pluginxx::ui::plainText(wrapped, 6), std::string("  abcd\n  efgh"), "折行后每行都带缩进"
+    );
+    // 其余三边的留白在行式文本里没有意义（忽略）；左留白不足半列时折算结果是 0 列
+    const std::vector<Item> others = pluginxx::ui::parseBlocks(Json::parse(R"([
+        {"kind":"Padding","padding":{"left":3,"top":40,"right":40,"bottom":40},
+         "children":[{"kind":"Text","text":"x"}]}
+    ])"));
+    PLUGINXX_UI_CHECK_EQ(pluginxx::ui::plainText(others), std::string("x"), "不足半列不缩进");
+}
+
 PLUGINXX_UI_TEST(纯文本的容器与降级形态) {
     const std::vector<Item> items = pluginxx::ui::parseBlocks(Json::parse(R"([
         {"kind":"Block","title":"卡片","children":[{"kind":"Text","text":"内容"}]},

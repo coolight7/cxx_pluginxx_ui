@@ -77,9 +77,19 @@ bool isZeroWidthCodePoint(const std::uint32_t cp) {
 struct Ctx {
     int               width  = 0; ///< >0 时折行
     const TextLookup* lookup = nullptr;
+    /// 留白换算基准：`Padding` 的左留白（u）按它折算成缩进列数（默认取库常量）
+    double cellWidth = gen::kDefaultCellWidth;
 
     std::string text(const TextValue& value) const {
         return value.resolve(lookup != nullptr ? *lookup : TextLookup{});
+    }
+
+    /// 本轮的折行宽度（扣掉当前缩进；<=0 表示不折行）
+    int availableWidth(const int indent) const {
+        if (width <= 0) {
+            return 0;
+        }
+        return std::max(1, width - indent);
     }
 };
 
@@ -284,9 +294,26 @@ bool itemText(const Item& item, const Ctx& ctx, std::string& out) {
         out = childrenText(item.children, ctx, " | ");
         return !out.empty();
     }
-    if (item.kind == "Column" || item.kind == "Padding" || item.kind == "SizedBox" ||
-        item.kind == "Align" || item.kind == "Expanded") {
+    if (item.kind == "Column" || item.kind == "SizedBox" || item.kind == "Align" ||
+        item.kind == "Expanded") {
         out = childrenText(item.children, ctx);
+        return !out.empty();
+    }
+    if (item.kind == "Padding") {
+        // 留白按左留白折算成缩进列数（u → 列，取整）: 折行宽度扣掉缩进, 每行加前导空格。
+        // 这样"缩进"这种只有渲染器才有的概念在文本降级里也有对应形态, 而不是被丢掉;
+        // 其余三边的留白在行式文本里没有意义, 忽略。
+        const double cell = ctx.cellWidth > 0.0 ? ctx.cellWidth : gen::kDefaultCellWidth;
+        const double left = item.hasPadding ? item.padding.left : 0.0;
+        const int    indent =
+            (cell > 0.0 && left > 0.0) ? static_cast<int>(std::lround(left / cell)) : 0;
+        Ctx inner   = ctx;
+        inner.width = ctx.availableWidth(indent);
+        out         = childrenText(item.children, inner);
+        if (indent > 0 && !out.empty()) {
+            const std::string pad = repeat(' ', indent);
+            out                   = indentLines(out, pad.c_str());
+        }
         return !out.empty();
     }
     if (item.kind == "Spacer") {

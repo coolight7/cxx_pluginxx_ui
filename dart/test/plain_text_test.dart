@@ -61,6 +61,37 @@ void main() {
     expect(plainText(wide, width: 4), '中文\nabc');
   });
 
+  test('纯文本的缩进留白', () {
+    // Padding 的左留白折算成缩进列数（u → 列，默认每列 8u）; 折行宽度扣掉缩进
+    final List<ItemData> items = parseBlocks(<Object?>[
+      <String, Object?>{
+        'kind': 'Padding',
+        'padding': 16,
+        'children': <Object?>[<String, Object?>{'kind': 'Text', 'text': 'abc'}],
+      },
+    ]);
+    expect(plainText(items), '  abc');
+    expect(plainText(items, width: 6), '  abc');
+
+    final List<ItemData> wrapped = parseBlocks(<Object?>[
+      <String, Object?>{
+        'kind': 'Padding',
+        'padding': 16,
+        'children': <Object?>[<String, Object?>{'kind': 'Text', 'text': 'abcdefgh'}],
+      },
+    ]);
+    expect(plainText(wrapped, width: 6), '  abcd\n  efgh');
+
+    final List<ItemData> others = parseBlocks(<Object?>[
+      <String, Object?>{
+        'kind': 'Padding',
+        'padding': <String, Object?>{'left': 3, 'top': 40, 'right': 40, 'bottom': 40},
+        'children': <Object?>[<String, Object?>{'kind': 'Text', 'text': 'x'}],
+      },
+    ]);
+    expect(plainText(others), 'x');
+  });
+
   test('纯文本的容器与降级形态', () {
     final List<ItemData> items = parseBlocks(<Object?>[
       <String, Object?>{
