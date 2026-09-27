@@ -58,7 +58,7 @@ PLUGINXX_UI_TEST(构建器的文本与动作字段) {
     const Item control = pluginxx::ui::build::control("checkbox", "skipAds",
                                                       pluginxx::ui::TextValue::of("跳过广告"),
                                                       pluginxx::ui::build::dispatch("setSkipAds"));
-    PLUGINXX_UI_CHECK_EQ(control.controlKind, std::string("checkbox"), "控件形态");
+    PLUGINXX_UI_CHECK_EQ(control.control, std::string("checkbox"), "控件形态");
     PLUGINXX_UI_CHECK_EQ(control.id, std::string("skipAds"), "控件 id");
     PLUGINXX_UI_CHECK_EQ(control.label.fallback, std::string("跳过广告"), "控件标签");
     PLUGINXX_UI_CHECK(control.action.kind == Action::Kind::Dispatch, "控件动作是 dispatch");
