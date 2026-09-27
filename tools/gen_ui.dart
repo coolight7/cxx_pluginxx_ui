@@ -6,8 +6,11 @@
 //   dart run tools/gen_ui.dart --check                # 校验生成物与定义一致（提交前/CI）
 //   dart run tools/gen_ui.dart                        # 生成到 gen/、docs/、fixtures/
 //   dart run tools/gen_ui.dart --ext-kit <扩展 kit> --prefix musicxx \
-//       --namespace musicxx::ui::kit --targets cpp,js --out <目录>
+//       --namespace musicxx::ui::kit --targets cpp,js --out <目录> \
+//       --source-note 'schema/musicxx-ui-kit.def.json'
 //       # 扩展 kit：把基础 kit 与扩展 kit 合并后各自成篇（自包含，不引用基础 kit 头文件）
+//       # --source-note 可选：写进生成物头部的"扩展 kit 定义"注释（用仓库内相对路径，
+//       # 不要用绝对路径；缺省取定义文件名）
 //
 // 生成物：
 //   gen/blocks.g.h / gen/blocks.g.dart            组件表、枚举表、默认值、上限
@@ -24,6 +27,12 @@ import 'dart:io';
 
 const String _genHeader = '// 本文件由 tools/gen_ui.dart 生成，请勿手工修改。\n'
     '// 定义来源：schema/ui.def.json / schema/kit.def.json';
+
+/// 生成物头部"定义来源"那一行（扩展 kit 要在它后面补上扩展定义文件）
+const String _genHeaderSourceLine = '// 定义来源：schema/ui.def.json / schema/kit.def.json';
+
+/// markdown 生成物的"本文件由…生成"那一行
+const String _genDocSourceLine = '> 本文件由 `tools/gen_ui.dart` 生成。';
 
 /// 允许的字段类型
 const Set<String> _fieldTypes = <String>{
@@ -512,6 +521,12 @@ class Generator {
   String prefix = '';
   Set<String> targets = _allTargets;
 
+  /// 扩展 kit 定义文件在生成物头部注释里的写法（`--source-note`；空 = 不改头部）
+  ///
+  /// 用仓库内相对路径，生成物因此在任何机器上重新生成都一致（绝对路径会带来
+  /// "换台机器重新生成就整文件 diff"的麻烦）。
+  String sourceNote = '';
+
   late final KitDef baseKit = KitDef(_readJson('schema/kit.def.json'), ui);
 
   /// 扩展 kit 与基础 kit 合并后的组件列表（同名覆盖，扩展新增的追加在后面）
@@ -548,16 +563,18 @@ class Generator {
     final Map<String, String> files = <String, String>{};
     if (extOnly) {
       final String dir = outDir ?? '.';
+      // 扩展 kit 的生成物头部补上"由哪份定义产出"（`--source-note`）
       if (targets.contains('cpp')) {
-        files['$dir/$base.g.h'] = _kitH(kit, mergedComponents(kit));
+        files['$dir/$base.g.h'] = _withSourceNote(_kitH(kit, mergedComponents(kit)));
       }
       if (targets.contains('dart')) {
-        files['$dir/$base.g.dart'] = _kitDart(kit, mergedComponents(kit));
+        files['$dir/$base.g.dart'] = _withSourceNote(_kitDart(kit, mergedComponents(kit)));
       }
       if (targets.contains('js')) {
-        files['$dir/$base.js'] = _kitJs(kit, mergedComponents(kit));
+        files['$dir/$base.js'] = _withSourceNote(_kitJs(kit, mergedComponents(kit)));
       }
-      files['$dir/$base.md'] = _kitDoc(kit, mergedComponents(kit), '扩展 kit（$prefix）');
+      files['$dir/$base.md']
+          = _withSourceNote(_kitDoc(kit, mergedComponents(kit), '扩展 kit（$prefix）'));
     } else {
       files['include/pluginxx/ui/gen/blocks.g.h'] = _blocksH();
       files['dart/lib/src/gen/blocks.g.dart'] = _blocksDart();
@@ -809,6 +826,27 @@ class Generator {
   }
 
   // ---------- kit ----------
+
+  /// 把扩展 kit 的定义文件写进生成物头部（`--source-note` 为空时原样返回）
+  ///
+  /// 代码产物改写"定义来源"那一行；markdown 产物在引用行里补一句（两者本来是
+  /// 不同的头部格式）。
+  String _withSourceNote(String text) {
+    if (sourceNote.isEmpty) {
+      return text;
+    }
+    if (text.contains(_genHeaderSourceLine)) {
+      return text.replaceFirst(
+        _genHeaderSourceLine,
+        '$_genHeaderSourceLine；扩展 kit 定义：$sourceNote',
+      );
+    }
+    return text.replaceFirst(
+      _genDocSourceLine,
+      '$_genDocSourceLine定义来源：`schema/ui.def.json` / `schema/kit.def.json`；'
+          '扩展 kit 定义：`$sourceNote`。',
+    );
+  }
 
   String _kitH(KitDef kit, List<Map<String, Object?>> components) {
     // 扩展 kit 用客户端自己的命名空间（默认 pluginxx::ui::kit）：同名组件不会与
@@ -1378,6 +1416,7 @@ void main(List<String> args) {
   String prefix = '';
   String? outDir;
   String namespace = 'pluginxx::ui::kit';
+  String sourceNote = '';
   Set<String> targets = _allTargets;
   for (int i = 0; i < args.length; i++) {
     switch (args[i]) {
@@ -1385,6 +1424,8 @@ void main(List<String> args) {
         check = true;
       case '--ext-kit':
         extKitPath = args[++i];
+      case '--source-note':
+        sourceNote = args[++i];
       case '--prefix':
         prefix = args[++i];
       case '--out':
@@ -1413,10 +1454,15 @@ void main(List<String> args) {
   try {
     final UiDef ui = UiDef(_readJson('schema/ui.def.json'));
     final KitDef? ext = extKitPath == null ? null : KitDef(_readJson(extKitPath), ui);
+    // 没给 --source-note 时退回定义文件名（不带目录，避免把本机绝对路径写进生成物）
+    final String note = sourceNote.isNotEmpty
+        ? sourceNote
+        : (extKitPath == null ? '' : Uri.file(extKitPath).pathSegments.last);
     Generator(ui: ui, extKit: ext)
       ..namespace = namespace
       ..prefix = prefix
       ..targets = targets
+      ..sourceNote = note
       ..run(check: check, extOnly: null != ext, outDir: outDir);
   } on DefProblem catch (error) {
     stderr.writeln(error.message);
