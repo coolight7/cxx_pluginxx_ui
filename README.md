@@ -32,7 +32,7 @@ tools/gen_ui.dart   生成器（生成三份绑定 + 文档 + fixture）
 dart/               Dart 包 `pluginxx_ui`（模型 / 解析 / 适配 / 文本降级 / kit）
 js/pluginxx_ui_kit.js  基础 kit（JS 插件随插件目录分发这一份）
 fixtures/           共享夹具（两端解析/降级/纯文本测试共用）
-docs/               生成文档（ui-schema.md / kit.md）
+docs/               文档（ui-schema.md / kit.md 是生成物；integration.md 是手写的接入指引）
 tests/              C++ 单元测试
 ```
 
@@ -62,7 +62,8 @@ tests/              C++ 单元测试
 - **未知不致命**：未知组件走 `fallback` 或跳过；未知字段忽略；未知枚举值取默认值；超限截断。
 
 组件全集、字段与适配规则见生成的 [`docs/ui-schema.md`](docs/ui-schema.md)，基础 kit 见
-[`docs/kit.md`](docs/kit.md)。
+[`docs/kit.md`](docs/kit.md)；客户端 / 宿主 / 插件作者怎么接入见
+[`docs/integration.md`](docs/integration.md)（含"新增渲染器接入清单"）。
 
 ## 构建与测试
 
