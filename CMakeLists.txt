@@ -117,6 +117,7 @@ if (CXX_PLUGINXX_UI_BUILD_TESTS)
     tests/test_adapt.cpp
     tests/test_plain_text.cpp
     tests/test_kit.cpp
+    tests/test_build.cpp
     tests/test_size.cpp
   )
   target_include_directories(cxx_pluginxx_ui_tests PRIVATE

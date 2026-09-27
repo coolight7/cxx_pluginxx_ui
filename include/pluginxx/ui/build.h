@@ -153,7 +153,7 @@ inline Item stack(std::initializer_list<Item> children) {
 /// 内容块与交互
 inline Item card(Item child, std::string_view blockTitle = {}, std::string_view variant = "card") {
     Item item = node("Block");
-    item.title.assign(blockTitle);
+    item.title   = TextValue::of(blockTitle);
     item.variant.assign(variant);
     if (!child.kind.empty()) {
         item.children.push_back(std::move(child));
