@@ -338,6 +338,21 @@ class UiDef {
 }
 
 /// kit 定义（schema/kit.def.json 或扩展 kit）
+/// 组件参数默认值表（默认值是 `"gap"` 表示"用客户端默认行距" → 缺省为空）
+///
+/// 传组件定义本身，而不是"kit + 名字"：扩展 kit 用的是**合并后**的组件列表，
+/// 其中既有扩展新增的组件，也有基础 kit 的组件。
+Map<String, Object?> defaultsOfComponent(Map<String, Object?> component) {
+  final String name = component['name']! as String;
+  final Map<String, Object?> out = <String, Object?>{};
+  for (final Object? p in _list(component['params'] ?? <Object?>[], '$name.params')) {
+    final Map<String, Object?> param = _map(p, '$name.param');
+    final Object? def = param['default'];
+    out[param['name']! as String] = def == 'gap' ? null : def;
+  }
+  return out;
+}
+
 class KitDef {
   KitDef(this.raw, this.ui);
 
@@ -410,15 +425,8 @@ class KitDef {
       };
 
   /// 参数默认值表（默认值是 `"gap"` 表示"用客户端默认行距" → 缺省为空）
-  Map<String, Object?> defaultsOf(String name) {
-    final Map<String, Object?> out = <String, Object?>{};
-    for (final Object? p in _list(byName[name]!['params'] ?? <Object?>[], '$name.params')) {
-      final Map<String, Object?> param = _map(p, '$name.param');
-      final Object? def = param['default'];
-      out[param['name']! as String] = def == 'gap' ? null : def;
-    }
-    return out;
-  }
+  Map<String, Object?> defaultsOf(String name) =>
+      defaultsOfComponent(byName[name]!);
 
   void _checkTemplate(Object? value, String name, Set<String> params, int depth) {
     if (depth > 12) {
@@ -803,6 +811,14 @@ class Generator {
   // ---------- kit ----------
 
   String _kitH(KitDef kit, List<Map<String, Object?>> components) {
+    // 扩展 kit 用客户端自己的命名空间（默认 pluginxx::ui::kit）：同名组件不会与
+    // 基础 kit 冲突，插件可以同时包含两个头文件。库里的名字一律写全限定名，
+    // 因此在任何命名空间深度下都能编译。
+    final List<String> ns = namespace
+        .split('::')
+        .map((String v) => v.trim())
+        .where((String v) => v.isNotEmpty)
+        .toList();
     final StringBuffer out = StringBuffer()
       ..writeln(_genHeader)
       ..writeln('#pragma once')
@@ -822,22 +838,23 @@ class Generator {
       ..writeln('#include <map>')
       ..writeln('#include <string>')
       ..writeln('#include <string_view>')
-      ..writeln()
-      ..writeln('namespace pluginxx {')
-      ..writeln('namespace ui {')
-      ..writeln('namespace kit {')
+      ..writeln();
+    for (final String part in ns) {
+      out.writeln('namespace $part {');
+    }
+    out
       ..writeln()
       ..writeln('/// kit 版本')
       ..writeln('inline constexpr int kKitVersion = ${kit.kitVersion};')
       ..writeln()
       ..writeln('/// 组件模板（键 = 组件名，值是 {variants, params} 的 JSON 文本）')
-      ..writeln('inline Json kitTemplate(const std::string_view name) {')
+      ..writeln('inline pluginxx::ui::Json kitTemplate(const std::string_view name) {')
       ..writeln('    static const std::map<std::string_view, std::string_view> kTable = {');
     for (final Map<String, Object?> c in components) {
       final String cname = c['name']! as String;
       final Map<String, Object?> payload = <String, Object?>{
         'variants': c['variants'],
-        'params': kit.defaultsOf(cname),
+        'params': defaultsOfComponent(c),
       };
       out
         ..writeln('        {"$cname",')
@@ -847,20 +864,24 @@ class Generator {
       ..writeln('    };')
       ..writeln('    const auto it = kTable.find(name);')
       ..writeln('    if (it == kTable.end()) {')
-      ..writeln('        return Json::object();')
+      ..writeln('        return pluginxx::ui::Json::object();')
       ..writeln('    }')
-      ..writeln('    return Json::parse(it->second);')
+      ..writeln('    return pluginxx::ui::Json::parse(it->second);')
       ..writeln('}')
       ..writeln()
       ..writeln('/// 按格换算成 u（count 列），env 为空时用库默认格大小')
-      ..writeln('inline double cols(const int count, const Capabilities* env = nullptr) {')
+      ..writeln('inline double cols(const int count,'
+          ' const pluginxx::ui::Capabilities* env = nullptr) {')
       ..writeln('    return static_cast<double>(count) *')
-      ..writeln('           (env != nullptr ? env->cell.width : gen::kDefaultCellWidth);')
+      ..writeln('           (env != nullptr ? env->cell.width'
+          ' : pluginxx::ui::gen::kDefaultCellWidth);')
       ..writeln('}')
       ..writeln('/// 按格换算成 u（count 行），env 为空时用库默认格大小')
-      ..writeln('inline double rows(const int count, const Capabilities* env = nullptr) {')
+      ..writeln('inline double rows(const int count,'
+          ' const pluginxx::ui::Capabilities* env = nullptr) {')
       ..writeln('    return static_cast<double>(count) *')
-      ..writeln('           (env != nullptr ? env->cell.height : gen::kDefaultCellHeight);')
+      ..writeln('           (env != nullptr ? env->cell.height'
+          ' : pluginxx::ui::gen::kDefaultCellHeight);')
       ..writeln('}')
       ..writeln()
       ..writeln('/// kit 组件（参数说明见生成的 docs/kit.md）');
@@ -870,17 +891,18 @@ class Generator {
         ..writeln()
         ..writeln('/// ${c['doc'] as String? ?? ''}')
         ..writeln('/// 参数：${_paramDoc(c)}')
-        ..writeln('inline Item $cname(')
-        ..writeln('    const Json& params = Json::object(), const Capabilities* env = nullptr')
+        ..writeln('inline pluginxx::ui::Item $cname(')
+        ..writeln('    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),')
+        ..writeln('    const pluginxx::ui::Capabilities* env = nullptr')
         ..writeln(') {')
-        ..writeln('    return detail::expandKit("$cname", params, env, &kitTemplate);')
+        ..writeln('    return pluginxx::ui::detail::expandKit('
+            '"$cname", params, env, &kitTemplate);')
         ..writeln('}');
     }
-    out
-      ..writeln()
-      ..writeln('} // namespace kit')
-      ..writeln('} // namespace ui')
-      ..writeln('} // namespace pluginxx');
+    out.writeln();
+    for (final String part in ns.reversed) {
+      out.writeln('} // namespace $part');
+    }
     return out.toString();
   }
 
@@ -905,7 +927,7 @@ class Generator {
       final String cname = c['name']! as String;
       out
         ..writeln("  '$cname': <String, Object?>{")
-        ..writeln("    'params': ${_dartLiteral(kit.defaultsOf(cname))},")
+        ..writeln("    'params': ${_dartLiteral(defaultsOfComponent(c))},")
         ..writeln("    'variants': ${_dartLiteral(c['variants'])},")
         ..writeln('  },');
     }
@@ -956,7 +978,7 @@ class Generator {
         for (final Map<String, Object?> c in components)
           c['name']! as String: <String, Object?>{
             'variants': c['variants'],
-            'params': kit.defaultsOf(c['name']! as String),
+            'params': defaultsOfComponent(c),
           },
       })};')
       ..writeln()

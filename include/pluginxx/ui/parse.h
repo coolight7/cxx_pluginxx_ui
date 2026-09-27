@@ -55,10 +55,19 @@ PLUGINXX_UI_API Item parseBlock(
     ParseReport*              report = nullptr
 );
 
+/// 解析一个动作描述（块字段与客户端扩展点里的 `action` 共用同一套语义）
+///
+/// 允许的写法：字符串短写（= `dispatch`）、`{"kind":"dispatch"|"route"|"command"|"none"}`
+/// （kind 忽略大小写；未知 kind 取 `none`）。解析失败返回空动作（`kind == None`）。
+PLUGINXX_UI_API Action parseAction(const utilxx_base::Json& json);
+
 /// 规范模型 → JSON（字段取缺省值时不输出；用于往返测试与日志）
 PLUGINXX_UI_API utilxx_base::Json dumpDocument(const Document& doc);
 PLUGINXX_UI_API utilxx_base::Json dumpItem(const Item& item);
 PLUGINXX_UI_API utilxx_base::Json dumpBlocks(const std::vector<Item>& items);
+
+/// 动作 → JSON（空动作输出 null；用于往返测试与日志）
+PLUGINXX_UI_API utilxx_base::Json dumpAction(const Action& action);
 
 /// 按名字查组件元信息（忽略大小写；未找到返回 nullptr）
 PLUGINXX_UI_API const BlockMeta* findBlockMeta(std::string_view kind);

@@ -1453,5 +1453,15 @@ Capabilities Capabilities::minimal() {
     return minimalCapabilities();
 }
 
+/// 动作描述 → 规范模型（块字段与客户端扩展点共用同一套解析）
+Action parseAction(const utilxx_base::Json& json) {
+    return actionOf(json);
+}
+
+/// 动作 → JSON（空动作输出 null）
+utilxx_base::Json dumpAction(const Action& action) {
+    return actionToJson(action);
+}
+
 } // namespace ui
 } // namespace pluginxx

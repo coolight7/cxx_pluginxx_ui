@@ -175,6 +175,12 @@ UiAction? _action(Object? value) {
   }
 }
 
+/// 解析一个动作描述（块字段与客户端扩展点里的 `action` 共用同一套语义）
+///
+/// 允许字符串短写（= `dispatch`）与 `{kind: dispatch|route|command|none}`
+/// （kind 忽略大小写；未知 kind 返回 `null`）。
+UiAction? parseAction(Object? json) => _action(json);
+
 class _Ctx {
   _Ctx(this.limits, this.report);
 

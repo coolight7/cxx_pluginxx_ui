@@ -26,7 +26,7 @@ namespace kit {
 inline constexpr int kKitVersion = 1;
 
 /// 组件模板（键 = 组件名，值是 {variants, params} 的 JSON 文本）
-inline Json kitTemplate(const std::string_view name) {
+inline pluginxx::ui::Json kitTemplate(const std::string_view name) {
     static const std::map<std::string_view, std::string_view> kTable = {
         {"title",
          R"KIT({"variants":[{"template":{"kind":"Text","text":"$text","type":"title"}}],"params":{"text":null}})KIT"},
@@ -65,158 +65,175 @@ inline Json kitTemplate(const std::string_view name) {
     };
     const auto it = kTable.find(name);
     if (it == kTable.end()) {
-        return Json::object();
+        return pluginxx::ui::Json::object();
     }
-    return Json::parse(it->second);
+    return pluginxx::ui::Json::parse(it->second);
 }
 
 /// 按格换算成 u（count 列），env 为空时用库默认格大小
-inline double cols(const int count, const Capabilities* env = nullptr) {
+inline double cols(const int count, const pluginxx::ui::Capabilities* env = nullptr) {
     return static_cast<double>(count) *
-           (env != nullptr ? env->cell.width : gen::kDefaultCellWidth);
+           (env != nullptr ? env->cell.width : pluginxx::ui::gen::kDefaultCellWidth);
 }
 /// 按格换算成 u（count 行），env 为空时用库默认格大小
-inline double rows(const int count, const Capabilities* env = nullptr) {
+inline double rows(const int count, const pluginxx::ui::Capabilities* env = nullptr) {
     return static_cast<double>(count) *
-           (env != nullptr ? env->cell.height : gen::kDefaultCellHeight);
+           (env != nullptr ? env->cell.height : pluginxx::ui::gen::kDefaultCellHeight);
 }
 
 /// kit 组件（参数说明见生成的 docs/kit.md）
 
 /// 标题行
 /// 参数：text(text, 必填)
-inline Item title(
-    const Json& params = Json::object(), const Capabilities* env = nullptr
+inline pluginxx::ui::Item title(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
 ) {
-    return detail::expandKit("title", params, env, &kitTemplate);
+    return pluginxx::ui::detail::expandKit("title", params, env, &kitTemplate);
 }
 
 /// 次要说明行
 /// 参数：text(text, 必填)
-inline Item hint(
-    const Json& params = Json::object(), const Capabilities* env = nullptr
+inline pluginxx::ui::Item hint(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
 ) {
-    return detail::expandKit("hint", params, env, &kitTemplate);
+    return pluginxx::ui::detail::expandKit("hint", params, env, &kitTemplate);
 }
 
 /// 正文行
 /// 参数：text(text, 必填)、tone(tone, 默认 normal)、mono(bool, 默认 false)
-inline Item text(
-    const Json& params = Json::object(), const Capabilities* env = nullptr
+inline pluginxx::ui::Item text(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
 ) {
-    return detail::expandKit("text", params, env, &kitTemplate);
+    return pluginxx::ui::detail::expandKit("text", params, env, &kitTemplate);
 }
 
 /// 状态小标签
 /// 参数：text(text, 必填)、tone(tone, 默认 accent)
-inline Item badge(
-    const Json& params = Json::object(), const Capabilities* env = nullptr
+inline pluginxx::ui::Item badge(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
 ) {
-    return detail::expandKit("badge", params, env, &kitTemplate);
+    return pluginxx::ui::detail::expandKit("badge", params, env, &kitTemplate);
 }
 
 /// 图标（目标不支持 Icon 时退化成 glyph 文本）
 /// 参数：name(string)、glyph(string)、size(size)、tone(tone, 默认 normal)
-inline Item icon(
-    const Json& params = Json::object(), const Capabilities* env = nullptr
+inline pluginxx::ui::Item icon(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
 ) {
-    return detail::expandKit("icon", params, env, &kitTemplate);
+    return pluginxx::ui::detail::expandKit("icon", params, env, &kitTemplate);
 }
 
 /// 竖直留白（缺省用客户端默认行距）
 /// 参数：size(size, 默认 gap)
-inline Item gap(
-    const Json& params = Json::object(), const Capabilities* env = nullptr
+inline pluginxx::ui::Item gap(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
 ) {
-    return detail::expandKit("gap", params, env, &kitTemplate);
+    return pluginxx::ui::detail::expandKit("gap", params, env, &kitTemplate);
 }
 
 /// 分隔线
 /// 参数：
-inline Item divider(
-    const Json& params = Json::object(), const Capabilities* env = nullptr
+inline pluginxx::ui::Item divider(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
 ) {
-    return detail::expandKit("divider", params, env, &kitTemplate);
+    return pluginxx::ui::detail::expandKit("divider", params, env, &kitTemplate);
 }
 
 /// 按钮
 /// 参数：label(text, 必填)、variant(enum:buttonVariant, 默认 secondary)、icon(string)、disabled(bool, 默认 false)、action(action)
-inline Item button(
-    const Json& params = Json::object(), const Capabilities* env = nullptr
+inline pluginxx::ui::Item button(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
 ) {
-    return detail::expandKit("button", params, env, &kitTemplate);
+    return pluginxx::ui::detail::expandKit("button", params, env, &kitTemplate);
 }
 
 /// 一排等宽按钮（按钮列表里的每一项占一等份）
 /// 参数：buttons(items, 必填)
-inline Item actionsRow(
-    const Json& params = Json::object(), const Capabilities* env = nullptr
+inline pluginxx::ui::Item actionsRow(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
 ) {
-    return detail::expandKit("actionsRow", params, env, &kitTemplate);
+    return pluginxx::ui::detail::expandKit("actionsRow", params, env, &kitTemplate);
 }
 
 /// 内容块（卡片）
 /// 参数：title(text)、variant(enum:blockVariant, 默认 card)、padding(edges)、margin(edges)、children(items)
-inline Item card(
-    const Json& params = Json::object(), const Capabilities* env = nullptr
+inline pluginxx::ui::Item card(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
 ) {
-    return detail::expandKit("card", params, env, &kitTemplate);
+    return pluginxx::ui::detail::expandKit("card", params, env, &kitTemplate);
 }
 
 /// 卡片里的一行（标题 + 可选副标题 + 可选右侧文字）
 /// 参数：title(text, 必填)、subtitle(text)、trailing(text)、action(action)
-inline Item listRow(
-    const Json& params = Json::object(), const Capabilities* env = nullptr
+inline pluginxx::ui::Item listRow(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
 ) {
-    return detail::expandKit("listRow", params, env, &kitTemplate);
+    return pluginxx::ui::detail::expandKit("listRow", params, env, &kitTemplate);
 }
 
 /// 小节标题 + 若干行
 /// 参数：title(text, 必填)、rows(items, 必填)
-inline Item section(
-    const Json& params = Json::object(), const Capabilities* env = nullptr
+inline pluginxx::ui::Item section(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
 ) {
-    return detail::expandKit("section", params, env, &kitTemplate);
+    return pluginxx::ui::detail::expandKit("section", params, env, &kitTemplate);
 }
 
 /// 键值块（键列按最长键自适应）
 /// 参数：pairs(pairs, 必填)、sep(string)
-inline Item kv(
-    const Json& params = Json::object(), const Capabilities* env = nullptr
+inline pluginxx::ui::Item kv(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
 ) {
-    return detail::expandKit("kv", params, env, &kitTemplate);
+    return pluginxx::ui::detail::expandKit("kv", params, env, &kitTemplate);
 }
 
 /// 表格（未指定的列宽由客户端自动分配）
 /// 参数：columns(columns, 必填)、rows(rows)、header(bool, 默认 true)
-inline Item table(
-    const Json& params = Json::object(), const Capabilities* env = nullptr
+inline pluginxx::ui::Item table(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
 ) {
-    return detail::expandKit("table", params, env, &kitTemplate);
+    return pluginxx::ui::detail::expandKit("table", params, env, &kitTemplate);
 }
 
 /// 层级列表
 /// 参数：nodes(nodes, 必填)、connector(bool, 默认 true)
-inline Item tree(
-    const Json& params = Json::object(), const Capabilities* env = nullptr
+inline pluginxx::ui::Item tree(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
 ) {
-    return detail::expandKit("tree", params, env, &kitTemplate);
+    return pluginxx::ui::detail::expandKit("tree", params, env, &kitTemplate);
 }
 
 /// 迷你趋势图
 /// 参数：data(numbers, 必填)、height(int, 默认 1)、glyphStyle(enum:sparkStyle, 默认 block)、showLast(bool, 默认 true)、tone(tone, 默认 accent)
-inline Item sparkline(
-    const Json& params = Json::object(), const Capabilities* env = nullptr
+inline pluginxx::ui::Item sparkline(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
 ) {
-    return detail::expandKit("sparkline", params, env, &kitTemplate);
+    return pluginxx::ui::detail::expandKit("sparkline", params, env, &kitTemplate);
 }
 
 /// 一行进度（左侧标签 + 进度条）
 /// 参数：label(text)、value(float, 必填)、total(float, 默认 100)、unit(string)
-inline Item progressRow(
-    const Json& params = Json::object(), const Capabilities* env = nullptr
+inline pluginxx::ui::Item progressRow(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
 ) {
-    return detail::expandKit("progressRow", params, env, &kitTemplate);
+    return pluginxx::ui::detail::expandKit("progressRow", params, env, &kitTemplate);
 }
 
 } // namespace kit

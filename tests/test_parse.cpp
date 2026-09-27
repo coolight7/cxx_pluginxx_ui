@@ -103,6 +103,30 @@ PLUGINXX_UI_TEST(动作的四种形态) {
     PLUGINXX_UI_CHECK(none.empty(), "none 是空动作");
 }
 
+PLUGINXX_UI_TEST(动作解析器可直接用) {
+    // 块字段与客户端扩展点（UI 项的 data.action）共用同一个解析器
+    const Action shortForm = pluginxx::ui::parseAction(Json("openSettings"));
+    PLUGINXX_UI_CHECK(shortForm.kind == Action::Kind::Dispatch, "字符串短写 = dispatch");
+    PLUGINXX_UI_CHECK_EQ(shortForm.name, std::string("openSettings"), "动作名");
+
+    const Action route = pluginxx::ui::parseAction(
+        Json::parse(R"({"kind":"ROUTE","route":"ext://demo/card"})"));
+    PLUGINXX_UI_CHECK(route.kind == Action::Kind::Route, "kind 忽略大小写");
+    PLUGINXX_UI_CHECK_EQ(route.route, std::string("ext://demo/card"), "跳转地址");
+
+    const Action none = pluginxx::ui::parseAction(Json::parse(R"({"kind":"none"})"));
+    PLUGINXX_UI_CHECK(none.empty(), "none 是空动作");
+    PLUGINXX_UI_CHECK(pluginxx::ui::parseAction(Json::parse(R"({"kind":"unknown"})")).empty(),
+                      "未知 kind 取 none");
+    PLUGINXX_UI_CHECK(pluginxx::ui::parseAction(Json(3)).empty(), "非法取值是空动作");
+
+    // 序列化：空动作输出 null，其余可往返
+    PLUGINXX_UI_CHECK(pluginxx::ui::dumpAction(none).is_null(), "空动作输出 null");
+    const Action again =
+        pluginxx::ui::parseAction(pluginxx::ui::dumpAction(route));
+    PLUGINXX_UI_CHECK_EQ(again.route, route.route, "往返保留地址");
+}
+
 PLUGINXX_UI_TEST(解析与序列化往返稳定) {
     const std::string text = pluginxx_ui_test::readFixture("core.json");
     PLUGINXX_UI_CHECK(!text.empty(), "core.json 存在");

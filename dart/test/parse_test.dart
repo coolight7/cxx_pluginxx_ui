@@ -106,6 +106,19 @@ void main() {
     expect(actionOf(<String, Object?>{'kind': 'none'}), isNull);
   });
 
+  test('动作解析器可直接用（块字段与客户端扩展点共用）', () {
+    expect(parseAction('openSettings')?.kind, ActionKind.dispatch);
+    expect(parseAction('openSettings')?.name, 'openSettings');
+    expect(
+      parseAction(<String, Object?>{'kind': 'ROUTE', 'route': 'ext://demo/card'})?.route,
+      'ext://demo/card',
+    );
+    expect(parseAction(<String, Object?>{'kind': 'none'}), isNull);
+    expect(parseAction(<String, Object?>{'kind': 'unknown-kind'}), isNull);
+    expect(parseAction(null), isNull);
+    expect(parseAction(3), isNull);
+  });
+
   test('解析与序列化往返稳定', () {
     final Object? first = readFixtureJson('core.json');
     final Object firstDump = dumpDocument(parseDocument(first));
