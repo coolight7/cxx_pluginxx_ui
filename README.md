@@ -95,11 +95,13 @@ node tools/kit_js_test.js
 ```bash
 cd <本库>
 dart run tools/gen_ui.dart --ext-kit <客户端 kit 定义> \
-    --prefix <名字前缀> --namespace <C++ 命名空间> --targets cpp,js --out <客户端目录>
+    --prefix <名字前缀> --namespace <C++ 命名空间> --targets cpp,js --out <客户端目录> \
+    --source-note '<定义文件的仓库内相对路径>'
 ```
 
 产出 `<前缀>_ui_kit.g.h` / `<前缀>_ui_kit.js` / `<前缀>_ui_kit.md`（合并了基础 kit 的全部组件，
-自包含，不引用基础 kit 头文件）。
+自包含，不引用基础 kit 头文件），头部会写上"扩展 kit 定义：`<source-note>`"，便于追溯是哪份
+定义产出的（`--source-note` 缺省取定义文件名）。
 
 - C++ 产物按 `--namespace` 落在自己的命名空间里（默认 `pluginxx::ui::kit`）。因此**基础 kit 与
   扩展 kit 可以同时包含**：同名组件各在自己的命名空间，不会重复定义；扩展 kit 里的名字都是

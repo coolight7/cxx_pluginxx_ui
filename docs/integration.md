@@ -285,7 +285,8 @@ const items = [
 ```bash
 cd <本库>            # 生成器按相对路径读 schema/ui.def.json，必须在库根目录执行
 dart run tools/gen_ui.dart --ext-kit <客户端 kit 定义> \
-    --prefix <前缀> --namespace <C++ 命名空间> --targets cpp,js --out <客户端目录>
+    --prefix <前缀> --namespace <C++ 命名空间> --targets cpp,js --out <客户端目录> \
+    --source-note '<定义文件的仓库内相对路径>'
 ```
 
 | 参数 | 说明 |
@@ -295,6 +296,7 @@ dart run tools/gen_ui.dart --ext-kit <客户端 kit 定义> \
 | `--namespace` | C++ 命名空间（如 `musicxx::ui::kit`），只影响 C++；JS 统一写全局 `pluginxx.ui.kit` |
 | `--targets` | `cpp,js`（Dart 侧由基础包提供 `KitRuntime` 与模板，不单独生成客户端 kit） |
 | `--out` | 输出目录（生成器只往一个目录写，多目录时用脚本搬运，见两个项目的 `tools/gen_ui_kit.ps1`） |
+| `--source-note` | 可选：写进生成物头部的"扩展 kit 定义"注释。用**仓库内相对路径**（如 `schema/musicxx-ui-kit.def.json`），不要用绝对路径，否则换台机器重新生成就是整文件 diff；缺省取定义文件名 |
 
 三条纪律：**只写数值 u**（取 8 / 12 / 20 这类贴近格整数倍的值）、**不引用客户端专属块以外的库外概念**、
 **只装配不含逻辑**。需要"目标不支持时的替代形态"就写变体：
