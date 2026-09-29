@@ -16,16 +16,6 @@ const double kDefaultCellWidth = 8;
 /// 终端"每个字符格相当于多少 u"的默认值（纵向）
 const double kDefaultCellHeight = 20;
 
-/// 默认解析上限
-const int kMaxDepth = 8;
-const int kMaxItems = 512;
-const int kMaxTextBytes = 65536;
-const int kMaxDocumentBytes = 1048576;
-const int kMaxTableRows = 512;
-const int kMaxTableColumns = 16;
-const int kMaxTreeNodes = 1024;
-const int kMaxDataPoints = 4096;
-
 /// 组件表（组件名 / 级别 / 归属客户端 / 适配规则）
 const List<BlockMeta> kBlockTable = <BlockMeta>[
   BlockMeta('Text', BlockLevel.core, '', AdaptRule.terminal),

@@ -126,14 +126,33 @@ void main() {
     expect(jsonEncode(secondDump), jsonEncode(firstDump));
   });
 
-  test('超过数量上限时截断', () {
+  test('不再按数量/层级上限截断（限制已移除）', () {
     final List<Object?> array = <Object?>[
       for (int i = 0; i < 600; i++) <String, Object?>{'kind': 'Text', 'text': 'x'},
     ];
     final ParseReport report = ParseReport();
     final List<ItemData> items = parseBlocks(array, report: report);
-    expect(items.length, kMaxItems);
-    expect(report.truncated, isTrue);
+    expect(items.length, 600);
+    expect(report.truncated, isFalse);
+
+    // 深层嵌套同样完整保留
+    Object? deep = <String, Object?>{'kind': 'Text', 'text': '最深处'};
+    for (int i = 0; i < 20; i++) {
+      deep = <String, Object?>{
+        'kind': 'Column',
+        'children': <Object?>[deep],
+      };
+    }
+    final ParseReport deepReport = ParseReport();
+    final ItemData block = parseBlock(deep, report: deepReport);
+    int depth = 0;
+    ItemData cursor = block;
+    while (cursor.children.isNotEmpty) {
+      cursor = cursor.children.first;
+      depth++;
+    }
+    expect(depth, 20);
+    expect(deepReport.truncated, isFalse);
   });
 
   test('能力段往返', () {

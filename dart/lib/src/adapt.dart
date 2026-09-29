@@ -119,13 +119,14 @@ List<ItemData> _adaptItem(
       return out;
     }
 
-    // 子块：层级与数量上限按客户端能力截断
+    // 子块：不再按层级/数量上限截断（限制已移除；`caps.limits` 的值 0 表示不限制）
     if (node.children.isNotEmpty) {
-      if (depth >= caps.limits.maxDepth) {
+      if (caps.limits.maxDepth > 0 && depth >= caps.limits.maxDepth) {
         report?.note('${node.kind} 的层级超过上限 ${caps.limits.maxDepth}，子块被丢弃');
         node.children = <ItemData>[];
       } else {
-        if (node.children.length > caps.limits.maxItems) {
+        if (caps.limits.maxItems > 0 &&
+            node.children.length > caps.limits.maxItems) {
           report?.note('${node.kind} 的子块超过上限 ${caps.limits.maxItems}，已截断');
           node.children = node.children.sublist(0, caps.limits.maxItems);
         }
@@ -140,7 +141,8 @@ List<ItemData> _adaptItem(
         args: node.text.args,
       );
     }
-    if (node.data.length > caps.limits.maxDataPoints) {
+    if (caps.limits.maxDataPoints > 0 &&
+        node.data.length > caps.limits.maxDataPoints) {
       node.data = node.data.sublist(0, caps.limits.maxDataPoints);
     }
     out.add(node);

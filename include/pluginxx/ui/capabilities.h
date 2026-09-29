@@ -37,16 +37,16 @@ struct CellSize {
     double height = gen::kDefaultCellHeight;
 };
 
-/// 解析与渲染上限（越界按截断/跳过处理，不使整份描述失效）
+/// 解析与渲染上限（**当前版本全部为 0 = 不限制**，保留结构只为能力段 JSON 兼容）
 struct Limits {
-    int         maxDepth         = gen::kMaxDepth;
-    std::size_t maxItems         = gen::kMaxItems;
-    std::size_t maxTextBytes     = gen::kMaxTextBytes;
-    std::size_t maxDocumentBytes = gen::kMaxDocumentBytes;
-    std::size_t maxTableRows     = gen::kMaxTableRows;
-    int         maxTableColumns  = gen::kMaxTableColumns;
-    std::size_t maxTreeNodes     = gen::kMaxTreeNodes;
-    std::size_t maxDataPoints    = gen::kMaxDataPoints;
+    int         maxDepth         = 0;
+    std::size_t maxItems         = 0;
+    std::size_t maxTextBytes     = 0;
+    std::size_t maxDocumentBytes = 0;
+    std::size_t maxTableRows     = 0;
+    int         maxTableColumns  = 0;
+    std::size_t maxTreeNodes     = 0;
+    std::size_t maxDataPoints    = 0;
 };
 
 /// 客户端能力

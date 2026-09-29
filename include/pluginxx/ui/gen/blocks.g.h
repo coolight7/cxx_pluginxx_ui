@@ -25,16 +25,6 @@ inline constexpr double kDefaultCellWidth = 8;
 /// 终端"每个字符格相当于多少 u"的默认值（纵向）
 inline constexpr double kDefaultCellHeight = 20;
 
-/// 默认解析上限
-inline constexpr int kMaxDepth = 8;
-inline constexpr std::size_t kMaxItems = 512;
-inline constexpr std::size_t kMaxTextBytes = 65536;
-inline constexpr std::size_t kMaxDocumentBytes = 1048576;
-inline constexpr std::size_t kMaxTableRows = 512;
-inline constexpr int kMaxTableColumns = 16;
-inline constexpr std::size_t kMaxTreeNodes = 1024;
-inline constexpr std::size_t kMaxDataPoints = 4096;
-
 /// 组件表（顺序与定义文件一致）
 inline constexpr BlockMeta kBlockTable[] = {
     {"Text", BlockLevel::Core,

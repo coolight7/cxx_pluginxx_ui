@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <limits>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -236,11 +237,21 @@ struct Ctx {
 
 Item parseBlockImpl(const Json& json, const Ctx& ctx, int depth);
 
-/// 解析子块数组（带数量与层级上限）
+/// 取上限（0 = 不限制）：解析规模限制已移除，`Limits` 的默认值就是 0
+template <typename T>
+std::size_t clampCount(const std::size_t value, const T limit) {
+    if (static_cast<long long>(limit) <= 0) {
+        return value;
+    }
+    const std::size_t maxValue = static_cast<std::size_t>(limit);
+    return value <= maxValue ? value : maxValue;
+}
+
+/// 解析子块数组（带数量与层级上限；上限为 0 时不限制）
 std::vector<Item> parseChildren(const Json& json, const Ctx& ctx, const int depth,
                                 const std::string& what) {
     std::vector<Item> out;
-    if (depth >= ctx.limits->maxDepth) {
+    if (ctx.limits->maxDepth > 0 && depth >= ctx.limits->maxDepth) {
         ctx.truncate(what + " 超过层级上限 " + std::to_string(ctx.limits->maxDepth) + "，子块被丢弃");
         return out;
     }
@@ -248,7 +259,7 @@ std::vector<Item> parseChildren(const Json& json, const Ctx& ctx, const int dept
         return out;
     }
     const std::size_t total = json.size();
-    const std::size_t count = std::min(total, ctx.limits->maxItems);
+    const std::size_t count = clampCount(total, ctx.limits->maxItems);
     if (count < total) {
         ctx.truncate(what + " 的子块超过上限 " + std::to_string(ctx.limits->maxItems) + "，已截断");
     }
@@ -264,7 +275,7 @@ std::vector<TextValue> textListOf(const Json& value, const Ctx& ctx, const std::
     if (!value.is_array()) {
         return out;
     }
-    const std::size_t count = std::min(value.size(), ctx.limits->maxItems);
+    const std::size_t count = clampCount(value.size(), ctx.limits->maxItems);
     if (count < value.size()) {
         ctx.truncate(what + " 的数量超过上限，已截断");
     }
@@ -279,7 +290,7 @@ std::vector<ControlOption> optionsOf(const Json& value, const Ctx& ctx, const st
     if (!value.is_array()) {
         return out;
     }
-    const std::size_t count = std::min(value.size(), ctx.limits->maxItems);
+    const std::size_t count = clampCount(value.size(), ctx.limits->maxItems);
     if (count < value.size()) {
         ctx.truncate(what + " 的候选项超过上限，已截断");
     }
@@ -306,7 +317,7 @@ std::vector<Threshold> thresholdsOf(const Json& value, const Ctx& ctx, const std
     if (!value.is_array()) {
         return out;
     }
-    const std::size_t count = std::min(value.size(), ctx.limits->maxItems);
+    const std::size_t count = clampCount(value.size(), ctx.limits->maxItems);
     if (count < value.size()) {
         ctx.truncate(what + " 的阈值超过上限，已截断");
     }
@@ -328,7 +339,7 @@ std::vector<double> numbersOf(const Json& value, const Ctx& ctx, const std::stri
     if (!value.is_array()) {
         return out;
     }
-    const std::size_t count = std::min(value.size(), ctx.limits->maxDataPoints);
+    const std::size_t count = clampCount(value.size(), ctx.limits->maxDataPoints);
     if (count < value.size()) {
         ctx.truncate(what + " 的数据点超过上限，已截断");
     }
@@ -346,7 +357,7 @@ std::vector<std::string> tonesOf(const Json& value, const Ctx& ctx, const std::s
     if (!value.is_array()) {
         return out;
     }
-    const std::size_t count = std::min(value.size(), ctx.limits->maxItems);
+    const std::size_t count = clampCount(value.size(), ctx.limits->maxItems);
     if (count < value.size()) {
         ctx.truncate(what + " 的配色数量超过上限，已截断");
     }
@@ -366,7 +377,7 @@ std::vector<KeyValuePair> pairsOf(const Json& value, const Ctx& ctx, const std::
     if (!value.is_array()) {
         return out;
     }
-    const std::size_t count = std::min(value.size(), ctx.limits->maxItems);
+    const std::size_t count = clampCount(value.size(), ctx.limits->maxItems);
     if (count < value.size()) {
         ctx.truncate(what + " 的条目超过上限，已截断");
     }
@@ -391,7 +402,7 @@ std::vector<TableColumn> columnsOf(const Json& value, const Ctx& ctx, const std:
         return out;
     }
     const std::size_t count =
-        std::min(value.size(), static_cast<std::size_t>(ctx.limits->maxTableColumns));
+        clampCount(value.size(), ctx.limits->maxTableColumns);
     if (count < value.size()) {
         ctx.truncate(what + " 的列数超过上限 " + std::to_string(ctx.limits->maxTableColumns) +
                      "，已截断");
@@ -421,7 +432,7 @@ std::vector<std::vector<TableCell>> rowsOf(const Json& value, const Ctx& ctx,
     if (!value.is_array()) {
         return out;
     }
-    const std::size_t count = std::min(value.size(), ctx.limits->maxTableRows);
+    const std::size_t count = clampCount(value.size(), ctx.limits->maxTableRows);
     if (count < value.size()) {
         ctx.truncate(what + " 的行数超过上限 " + std::to_string(ctx.limits->maxTableRows) +
                      "，已截断");
@@ -430,9 +441,8 @@ std::vector<std::vector<TableCell>> rowsOf(const Json& value, const Ctx& ctx,
         const Json& row = value[i];
         std::vector<TableCell> cells;
         if (row.is_array()) {
-            const std::size_t cellCount = std::min(
-                row.size(), static_cast<std::size_t>(ctx.limits->maxTableColumns)
-            );
+            const std::size_t cellCount =
+                clampCount(row.size(), ctx.limits->maxTableColumns);
             if (cellCount < row.size()) {
                 ctx.truncate(what + "[" + std::to_string(i) + "] 的单元格超过列数上限，已截断");
             }
@@ -464,9 +474,10 @@ TreeNode parseTreeNode(const Json& node, const Ctx& ctx, const int depth,
     out.label    = textValueOf(node["label"]);
     out.tone     = fieldTone(node, "tone", "");
     out.action   = actionOf(node["action"]);
-    if (node.contains("children") && node["children"].is_array() && depth < ctx.limits->maxDepth) {
+    if (node.contains("children") && node["children"].is_array() &&
+        (ctx.limits->maxDepth <= 0 || depth < ctx.limits->maxDepth)) {
         const std::size_t count =
-            std::min(node["children"].size(), ctx.limits->maxItems);
+            clampCount(node["children"].size(), ctx.limits->maxItems);
         if (count < node["children"].size()) {
             ctx.truncate("树节点的子节点超过上限，已截断");
         }
@@ -482,8 +493,11 @@ std::vector<TreeNode> nodesOf(const Json& value, const Ctx& ctx, const std::stri
     if (!value.is_array()) {
         return out;
     }
-    std::size_t budget = ctx.limits->maxTreeNodes;
-    const std::size_t count = std::min(value.size(), ctx.limits->maxItems);
+    /// 节点总数上限：0 = 不限制
+    std::size_t budget = ctx.limits->maxTreeNodes > 0
+                             ? ctx.limits->maxTreeNodes
+                             : (std::numeric_limits<std::size_t>::max)();
+    const std::size_t count = clampCount(value.size(), ctx.limits->maxItems);
     if (count < value.size()) {
         ctx.truncate(what + " 的节点超过上限，已截断");
     }
@@ -528,7 +542,8 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
             item.text = textValueOf(raw);
         }
     }
-    if (item.text.fallback.size() > ctx.limits->maxTextBytes) {
+    if (ctx.limits->maxTextBytes > 0 &&
+        item.text.fallback.size() > ctx.limits->maxTextBytes) {
         item.text.fallback = clampTextBytes(item.text.fallback, ctx.limits->maxTextBytes);
         ctx.truncate("文本超过长度上限，已截断");
     }

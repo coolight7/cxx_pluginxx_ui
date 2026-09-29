@@ -131,19 +131,16 @@
   "gap": 12,                          // 本客户端的默认行距
   "icons": ["play", "pause"],          // 可选：认识的图标名
   "percent": true, "aspect": true,     // 尺寸形态支持
-  "limits": { "maxDepth": 8, "maxItems": 512, "maxTextBytes": 65536, "maxDocumentBytes": 1048576 }
 }
 ```
 
-## 上限（越界按截断/跳过处理，不使整份描述失效）
+> 解析规模不设上限（早期版本的层级 / 数量 / 文本字节 / 表格行列等限制已移除）。
 
-| 项 | 默认值 |
-|---|---|
-| `maxDepth` | `8` |
-| `maxItems` | `512` |
-| `maxTextBytes` | `65536` |
-| `maxDocumentBytes` | `1048576` |
-| `maxTableRows` | `512` |
-| `maxTableColumns` | `16` |
-| `maxTreeNodes` | `1024` |
-| `maxDataPoints` | `4096` |
+## 越界处理
+
+没有"按上限截断"这回事了：整份描述按原样解析，只有结构性错误（JSON 非法、
+字段类型不符、组件不认识）才按规则跳过或降级。
+
+---
+
+本文件由 `tools/gen_ui.dart` 生成，请勿手改。

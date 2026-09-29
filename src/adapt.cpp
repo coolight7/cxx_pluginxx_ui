@@ -108,16 +108,17 @@ std::vector<Item> adaptItemImpl(const Item& item, const Capabilities& caps, Adap
             return out;
         }
 
-        // 子块：层级与数量上限按客户端能力截断
+        // 子块：不再按层级/数量上限截断（限制已移除；limits 的 0 表示不限制）
         if (!node.children.empty()) {
-            if (depth >= caps.limits.maxDepth) {
+            if (caps.limits.maxDepth > 0 && depth >= caps.limits.maxDepth) {
                 if (report) {
                     report->note(node.kind + " 的层级超过上限 " +
                                  std::to_string(caps.limits.maxDepth) + "，子块被丢弃");
                 }
                 node.children.clear();
             } else {
-                if (node.children.size() > caps.limits.maxItems) {
+                if (caps.limits.maxItems > 0 &&
+                    node.children.size() > caps.limits.maxItems) {
                     if (report) {
                         report->note(node.kind + " 的子块超过上限 " +
                                      std::to_string(caps.limits.maxItems) + "，已截断");
@@ -128,11 +129,12 @@ std::vector<Item> adaptItemImpl(const Item& item, const Capabilities& caps, Adap
             }
         }
 
-        // 文本长度上限
+        // 文本长度上限（0 = 不限制）
         if (!node.text.fallback.empty()) {
             node.text.fallback = clampBytes(node.text.fallback, caps.limits.maxTextBytes);
         }
-        if (node.data.size() > caps.limits.maxDataPoints) {
+        if (caps.limits.maxDataPoints > 0 &&
+            node.data.size() > caps.limits.maxDataPoints) {
             node.data.resize(caps.limits.maxDataPoints);
         }
         out.push_back(std::move(node));

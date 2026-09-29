@@ -54,6 +54,10 @@ String _enum(Map<String, Object?> json, String key, List<String> values, String 
 String _tone(Map<String, Object?> json, String key, [String fallback = 'normal']) =>
     _enum(json, key, kEnumTone, fallback);
 
+/// 取上限（0 = 不限制）：解析规模限制已移除，`Limits` 的默认值就是 0
+int _limitCount(int value, int limit) =>
+    (limit > 0 && value > limit) ? limit : value;
+
 String _clampBytes(String text, int maxBytes) {
   if (maxBytes <= 0 || text.length <= maxBytes) {
     return text;
@@ -230,11 +234,11 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
       return <ItemData>[];
     }
     // 顶层块算第 1 层：块自身在第 depth 层（0 起），子块在第 depth+1 层
-    if (depth >= ctx.limits.maxDepth) {
+    if (ctx.limits.maxDepth > 0 && depth >= ctx.limits.maxDepth) {
       ctx.truncate('$what 超过层级上限 ${ctx.limits.maxDepth}，子块被丢弃');
       return <ItemData>[];
     }
-    final int count = raw.length > ctx.limits.maxItems ? ctx.limits.maxItems : raw.length;
+    final int count = _limitCount(raw.length, ctx.limits.maxItems);
     if (count < raw.length) {
       ctx.truncate('$what 的子块超过上限 ${ctx.limits.maxItems}，已截断');
     }
@@ -457,7 +461,7 @@ List<KeyValuePair> _pairs(Object? value, _Ctx ctx, String what) {
   if (value is! List) {
     return <KeyValuePair>[];
   }
-  final int count = value.length > ctx.limits.maxItems ? ctx.limits.maxItems : value.length;
+  final int count = _limitCount(value.length, ctx.limits.maxItems);
   if (count < value.length) {
     ctx.truncate('$what 的条目超过上限，已截断');
   }
@@ -483,9 +487,7 @@ List<TableColumn> _columns(Object? value, _Ctx ctx, String what) {
   if (value is! List) {
     return <TableColumn>[];
   }
-  final int count = value.length > ctx.limits.maxTableColumns
-      ? ctx.limits.maxTableColumns
-      : value.length;
+  final int count = _limitCount(value.length, ctx.limits.maxTableColumns);
   if (count < value.length) {
     ctx.truncate('$what 的列数超过上限 ${ctx.limits.maxTableColumns}，已截断');
   }
@@ -514,9 +516,7 @@ List<List<TableCell>> _rows(Object? value, _Ctx ctx, String what) {
   if (value is! List) {
     return <List<TableCell>>[];
   }
-  final int count = value.length > ctx.limits.maxTableRows
-      ? ctx.limits.maxTableRows
-      : value.length;
+  final int count = _limitCount(value.length, ctx.limits.maxTableRows);
   if (count < value.length) {
     ctx.truncate('$what 的行数超过上限 ${ctx.limits.maxTableRows}，已截断');
   }
@@ -525,9 +525,7 @@ List<List<TableCell>> _rows(Object? value, _Ctx ctx, String what) {
     final Object? row = value[i];
     final List<TableCell> cells = <TableCell>[];
     if (row is List) {
-      final int cellCount = row.length > ctx.limits.maxTableColumns
-          ? ctx.limits.maxTableColumns
-          : row.length;
+      final int cellCount = _limitCount(row.length, ctx.limits.maxTableColumns);
       if (cellCount < row.length) {
         ctx.truncate('$what[$i] 的单元格超过列数上限，已截断');
       }
@@ -559,9 +557,9 @@ TreeNode _treeNode(Object? value, _Ctx ctx, int depth, List<int> budget) {
   budget[0] -= 1;
   final Object? rawChildren = map['children'];
   final List<TreeNode> children = <TreeNode>[];
-  if (rawChildren is List && depth < ctx.limits.maxDepth) {
-    final int count =
-        rawChildren.length > ctx.limits.maxItems ? ctx.limits.maxItems : rawChildren.length;
+  if (rawChildren is List &&
+      (ctx.limits.maxDepth <= 0 || depth < ctx.limits.maxDepth)) {
+    final int count = _limitCount(rawChildren.length, ctx.limits.maxItems);
     if (count < rawChildren.length) {
       ctx.truncate('树节点的子节点超过上限，已截断');
     }
@@ -581,8 +579,11 @@ List<TreeNode> _nodes(Object? value, _Ctx ctx, String what) {
   if (value is! List) {
     return <TreeNode>[];
   }
-  final List<int> budget = <int>[ctx.limits.maxTreeNodes];
-  final int count = value.length > ctx.limits.maxItems ? ctx.limits.maxItems : value.length;
+  /// 节点总数上限：0 = 不限制
+  final List<int> budget = <int>[
+    ctx.limits.maxTreeNodes > 0 ? ctx.limits.maxTreeNodes : 0x7FFFFFFF,
+  ];
+  final int count = _limitCount(value.length, ctx.limits.maxItems);
   if (count < value.length) {
     ctx.truncate('$what 的节点超过上限，已截断');
   }
@@ -615,8 +616,7 @@ List<double> _numbers(Object? value, _Ctx ctx, String what) {
   if (value is! List) {
     return <double>[];
   }
-  final int count =
-      value.length > ctx.limits.maxDataPoints ? ctx.limits.maxDataPoints : value.length;
+  final int count = _limitCount(value.length, ctx.limits.maxDataPoints);
   if (count < value.length) {
     ctx.truncate('$what 的数据点超过上限，已截断');
   }
@@ -649,7 +649,7 @@ List<ControlOption> _options(Object? value, _Ctx ctx, String what) {
   if (value is! List) {
     return <ControlOption>[];
   }
-  final int count = value.length > ctx.limits.maxItems ? ctx.limits.maxItems : value.length;
+  final int count = _limitCount(value.length, ctx.limits.maxItems);
   if (count < value.length) {
     ctx.truncate('$what 的候选项超过上限，已截断');
   }
@@ -694,7 +694,7 @@ List<ItemData> parseBlocks(
 }
 
 List<ItemData> _parseBlockImplList(List<Object?> array, _Ctx ctx) {
-  final int count = array.length > ctx.limits.maxItems ? ctx.limits.maxItems : array.length;
+  final int count = _limitCount(array.length, ctx.limits.maxItems);
   if (count < array.length) {
     ctx.truncate('blocks 的子块超过上限 ${ctx.limits.maxItems}，已截断');
   }
@@ -1194,16 +1194,14 @@ PluginCapabilities capabilitiesFromJson(Object? json) {
     limits: null == limits
         ? const Limits()
         : Limits(
-            maxDepth: _num(limits, 'maxDepth', kMaxDepth.toDouble()).toInt(),
-            maxItems: _num(limits, 'maxItems', kMaxItems.toDouble()).toInt(),
-            maxTextBytes: _num(limits, 'maxTextBytes', kMaxTextBytes.toDouble()).toInt(),
-            maxDocumentBytes:
-                _num(limits, 'maxDocumentBytes', kMaxDocumentBytes.toDouble()).toInt(),
-            maxTableRows: _num(limits, 'maxTableRows', kMaxTableRows.toDouble()).toInt(),
-            maxTableColumns:
-                _num(limits, 'maxTableColumns', kMaxTableColumns.toDouble()).toInt(),
-            maxTreeNodes: _num(limits, 'maxTreeNodes', kMaxTreeNodes.toDouble()).toInt(),
-            maxDataPoints: _num(limits, 'maxDataPoints', kMaxDataPoints.toDouble()).toInt(),
+            maxDepth: _num(limits, 'maxDepth', 0).toInt(),
+            maxItems: _num(limits, 'maxItems', 0).toInt(),
+            maxTextBytes: _num(limits, 'maxTextBytes', 0).toInt(),
+            maxDocumentBytes: _num(limits, 'maxDocumentBytes', 0).toInt(),
+            maxTableRows: _num(limits, 'maxTableRows', 0).toInt(),
+            maxTableColumns: _num(limits, 'maxTableColumns', 0).toInt(),
+            maxTreeNodes: _num(limits, 'maxTreeNodes', 0).toInt(),
+            maxDataPoints: _num(limits, 'maxDataPoints', 0).toInt(),
           ),
   );
 }

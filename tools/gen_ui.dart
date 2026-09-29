@@ -131,7 +131,6 @@ class UiDef {
   late final int schemaVersion = raw['schemaVersion'] as int? ?? _fail('缺少 schemaVersion');
   late final int uiApiVersion = raw['uiApiVersion'] as int? ?? _fail('缺少 uiApiVersion');
   late final Map<String, Object?> defaults = _map(raw['defaults'], 'defaults');
-  late final Map<String, Object?> limits = _map(raw['limits'], 'limits');
   late final Map<String, List<String>> enums = <String, List<String>>{
     for (final MapEntry<String, Object?> entry in _map(raw['enums'], 'enums').entries)
       entry.key: _list(entry.value, 'enums.${entry.key}').cast<String>().toList(),
@@ -649,16 +648,6 @@ class Generator {
       ..writeln('/// 终端"每个字符格相当于多少 u"的默认值（纵向）')
       ..writeln('inline constexpr double kDefaultCellHeight = ${_num(ui.defaultCellHeight)};')
       ..writeln()
-      ..writeln('/// 默认解析上限')
-      ..writeln('inline constexpr int kMaxDepth = ${ui.limits['maxDepth']};')
-      ..writeln('inline constexpr std::size_t kMaxItems = ${ui.limits['maxItems']};')
-      ..writeln('inline constexpr std::size_t kMaxTextBytes = ${ui.limits['maxTextBytes']};')
-      ..writeln('inline constexpr std::size_t kMaxDocumentBytes = ${ui.limits['maxDocumentBytes']};')
-      ..writeln('inline constexpr std::size_t kMaxTableRows = ${ui.limits['maxTableRows']};')
-      ..writeln('inline constexpr int kMaxTableColumns = ${ui.limits['maxTableColumns']};')
-      ..writeln('inline constexpr std::size_t kMaxTreeNodes = ${ui.limits['maxTreeNodes']};')
-      ..writeln('inline constexpr std::size_t kMaxDataPoints = ${ui.limits['maxDataPoints']};')
-      ..writeln()
       ..writeln('/// 组件表（顺序与定义文件一致）')
       ..writeln('inline constexpr BlockMeta kBlockTable[] = {');
     for (final Map<String, Object?> block in ui.blocks) {
@@ -753,16 +742,6 @@ class Generator {
       ..writeln('const double kDefaultCellWidth = ${_num(ui.defaultCellWidth)};')
       ..writeln('/// 终端"每个字符格相当于多少 u"的默认值（纵向）')
       ..writeln('const double kDefaultCellHeight = ${_num(ui.defaultCellHeight)};')
-      ..writeln()
-      ..writeln('/// 默认解析上限')
-      ..writeln('const int kMaxDepth = ${ui.limits['maxDepth']};')
-      ..writeln('const int kMaxItems = ${ui.limits['maxItems']};')
-      ..writeln('const int kMaxTextBytes = ${ui.limits['maxTextBytes']};')
-      ..writeln('const int kMaxDocumentBytes = ${ui.limits['maxDocumentBytes']};')
-      ..writeln('const int kMaxTableRows = ${ui.limits['maxTableRows']};')
-      ..writeln('const int kMaxTableColumns = ${ui.limits['maxTableColumns']};')
-      ..writeln('const int kMaxTreeNodes = ${ui.limits['maxTreeNodes']};')
-      ..writeln('const int kMaxDataPoints = ${ui.limits['maxDataPoints']};')
       ..writeln()
       ..writeln('/// 组件表（组件名 / 级别 / 归属客户端 / 适配规则）')
       ..writeln('const List<BlockMeta> kBlockTable = <BlockMeta>[');
@@ -1149,19 +1128,19 @@ class Generator {
       ..writeln('  "gap": ${_num(ui.defaultGap)},                          // 本客户端的默认行距')
       ..writeln('  "icons": ["play", "pause"],          // 可选：认识的图标名')
       ..writeln('  "percent": true, "aspect": true,     // 尺寸形态支持')
-      ..writeln('  "limits": { "maxDepth": ${ui.limits['maxDepth']}, "maxItems": ${ui.limits['maxItems']},'
-          ' "maxTextBytes": ${ui.limits['maxTextBytes']},'
-          ' "maxDocumentBytes": ${ui.limits['maxDocumentBytes']} }')
       ..writeln('}')
       ..writeln('```')
       ..writeln()
-      ..writeln('## 上限（越界按截断/跳过处理，不使整份描述失效）')
+      ..writeln('> 解析规模不设上限（早期版本的层级 / 数量 / 文本字节 / 表格行列等限制已移除）。')
       ..writeln()
-      ..writeln('| 项 | 默认值 |')
-      ..writeln('|---|---|');
-    for (final MapEntry<String, Object?> entry in ui.limits.entries) {
-      out.writeln('| `${entry.key}` | `${entry.value}` |');
-    }
+      ..writeln('## 越界处理')
+      ..writeln()
+      ..writeln('没有"按上限截断"这回事了：整份描述按原样解析，只有结构性错误（JSON 非法、')
+      ..writeln('字段类型不符、组件不认识）才按规则跳过或降级。')
+      ..writeln()
+      ..writeln('---')
+      ..writeln()
+      ..writeln('本文件由 `tools/gen_ui.dart` 生成，请勿手改。');
     return out.toString();
   }
 

@@ -12,17 +12,17 @@ class CellSize {
   final double height;
 }
 
-/// 解析与渲染上限（越界按截断/跳过处理）
+/// 解析与渲染上限（**当前版本全部为 0 = 不限制**；保留结构只为能力段 JSON 兼容）
 class Limits {
   const Limits({
-    this.maxDepth = kMaxDepth,
-    this.maxItems = kMaxItems,
-    this.maxTextBytes = kMaxTextBytes,
-    this.maxDocumentBytes = kMaxDocumentBytes,
-    this.maxTableRows = kMaxTableRows,
-    this.maxTableColumns = kMaxTableColumns,
-    this.maxTreeNodes = kMaxTreeNodes,
-    this.maxDataPoints = kMaxDataPoints,
+    this.maxDepth = 0,
+    this.maxItems = 0,
+    this.maxTextBytes = 0,
+    this.maxDocumentBytes = 0,
+    this.maxTableRows = 0,
+    this.maxTableColumns = 0,
+    this.maxTreeNodes = 0,
+    this.maxDataPoints = 0,
   });
 
   final int maxDepth;

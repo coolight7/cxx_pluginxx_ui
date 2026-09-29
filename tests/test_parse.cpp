@@ -136,21 +136,21 @@ PLUGINXX_UI_TEST(解析与序列化往返稳定) {
     PLUGINXX_UI_CHECK_EQ(dumped.dump(), second.dump(), "dump(parse(dump(parse(x)))) 稳定");
 }
 
-PLUGINXX_UI_TEST(超过数量上限时截断) {
+PLUGINXX_UI_TEST(不再按数量上限截断) {
     Json array = Json::array();
     for (int i = 0; i < 600; ++i) {
         array.push_back(Json::object({{"kind", "Text"}, {"text", "x"}}));
     }
     ParseReport report;
     const auto  items = pluginxx::ui::parseBlocks(array, {}, &report);
-    PLUGINXX_UI_CHECK_EQ(items.size(), pluginxx::ui::gen::kMaxItems, "按上限截断");
-    PLUGINXX_UI_CHECK(report.truncated, "标记为截断");
+    PLUGINXX_UI_CHECK_EQ(items.size(), static_cast<std::size_t>(600), "全部保留");
+    PLUGINXX_UI_CHECK(!report.truncated, "没有截断标记");
 }
 
-PLUGINXX_UI_TEST(超过层级上限时丢弃更深子块) {
-    // 造一段比 maxDepth 更深的嵌套
+PLUGINXX_UI_TEST(不再按层级上限丢弃子块) {
+    // 造 20 层嵌套：全部保留（早期版本会按 maxDepth 砍掉深层子块）
     Json node = Json::object({{"kind", "Text"}, {"text", "最深处"}});
-    for (int i = 0; i < pluginxx::ui::gen::kMaxDepth + 4; ++i) {
+    for (int i = 0; i < 20; ++i) {
         Json wrapper = Json::object({{"kind", "Column"}});
         Json children = Json::array();
         children.push_back(node);
@@ -159,15 +159,14 @@ PLUGINXX_UI_TEST(超过层级上限时丢弃更深子块) {
     }
     ParseReport report;
     const Item  item = pluginxx::ui::parseBlock(node, {}, &report);
-    PLUGINXX_UI_CHECK(report.truncated, "标记为截断");
+    PLUGINXX_UI_CHECK(!report.truncated, "没有截断标记");
     const pluginxx::ui::Item* cursor = &item;
     int                       depth  = 0;
     while (!cursor->children.empty()) {
         cursor = &cursor->children.front();
         ++depth;
-        // 顶层块算第 1 层：最深块正好落在上限上
-        PLUGINXX_UI_CHECK(depth <= pluginxx::ui::gen::kMaxDepth, "层级不超过上限");
     }
+    PLUGINXX_UI_CHECK_EQ(depth, 20, "深层嵌套完整保留");
 }
 
 PLUGINXX_UI_TEST(能力段往返) {
