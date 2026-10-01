@@ -48,8 +48,15 @@ endif ()
 
 option(CXX_PLUGINXX_UI_BUILD_TESTS "构建本库的单元测试" ON)
 
+# 依赖库的依赖先于依赖库自身查找: cxx_utilxx_base 的导出接口以目标名
+# PkgConfig::uring 声明 io_uring (其构建开关 CXX_UTILXX_BASE_LINUX_IO_URING_SUPPORTED
+# 与顶层 XX_LINUX_IO_URING_SUPPORTED 同源, superbuild 同时下发给两者);
+# 缺少这一步时 find_package(cxx_utilxx_base) 会报 "PkgConfig::uring target not found"
+find_package(PkgConfig REQUIRED)
+if (XX_LINUX_IO_URING_SUPPORTED)
+  pkg_check_modules(uring REQUIRED IMPORTED_TARGET liburing)
+endif ()
 find_package(fmt REQUIRED)
-# cxx_utilxx_base 的条件依赖 (io_uring) 需先由上层查找 (与它的构建开关同源)
 find_package(cxx_utilxx_base REQUIRED)
 
 set(_CXX_PLUGINXX_UI_SOURCES
