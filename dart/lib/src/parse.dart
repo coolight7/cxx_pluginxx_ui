@@ -476,12 +476,23 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
       return item;
     case 'musicxx.SizeTransition':
     case 'musicxx.FadeTransition':
+    case 'musicxx.SlideTransition':
+    case 'musicxx.ScaleTransition':
+    case 'musicxx.RotationTransition':
       item.animValue = json['value'];
       item.value = _num(json, 'value', 1);
       item.curve = _enum(json, 'curve', kEnumEase, '');
+      // `from` / `to`：位移用数组（[x, y]），缩放/旋转用数字 —— 原样保留给客户端解释
+      item.animFrom = json['from'];
+      item.animTo = json['to'];
       if (canonical == 'musicxx.SizeTransition') {
         item.axis = _enum(json, 'axis', kEnumAxis, 'vertical');
         item.axisAlignment = _num(json, 'axisAlignment', -1);
+      }
+      if (canonical == 'musicxx.ScaleTransition' ||
+          canonical == 'musicxx.RotationTransition') {
+        item.animFrom = _num(json, 'from', canonical == 'musicxx.ScaleTransition' ? 0.0 : 0.0);
+        item.animTo = _num(json, 'to', 1.0);
       }
       item.children = children('children', '$canonical.children');
       return item;
@@ -1134,6 +1145,21 @@ Map<String, Object?> dumpItem(ItemData item) {
       putChildren();
       break;
     case 'musicxx.FadeTransition':
+      out['value'] = item.animValue ?? item.value;
+      if (item.curve.isNotEmpty) {
+        out['curve'] = item.curve;
+      }
+      putChildren();
+      break;
+    case 'musicxx.SlideTransition':
+    case 'musicxx.ScaleTransition':
+    case 'musicxx.RotationTransition':
+      if (null != item.animFrom) {
+        out['from'] = item.animFrom;
+      }
+      if (null != item.animTo) {
+        out['to'] = item.animTo;
+      }
       out['value'] = item.animValue ?? item.value;
       if (item.curve.isNotEmpty) {
         out['curve'] = item.curve;

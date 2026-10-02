@@ -63,7 +63,10 @@
     "musicxx.Shader": "skip",
     "musicxx.AnimatedBuilder": "flatten",
     "musicxx.SizeTransition": "flatten",
-    "musicxx.FadeTransition": "flatten"
+    "musicxx.FadeTransition": "flatten",
+    "musicxx.SlideTransition": "flatten",
+    "musicxx.ScaleTransition": "flatten",
+    "musicxx.RotationTransition": "flatten"
   },
   "blocks": [
     {
@@ -529,6 +532,66 @@
         "kind": "musicxx.FadeTransition",
         "value": { "kind": "const", "value": 1 },
         "children": [ { "kind": "Text", "text": "淡入的内容" } ]
+      }
+    },
+    {
+      "kind": "musicxx.SlideTransition",
+      "level": "client",
+      "client": "musicxx",
+      "doc": "位移动画：按 value（0~1）从 from 移到 to（单位 = 自身尺寸的倍数；其他客户端展开子节点）",
+      "fields": [
+        { "name": "from", "type": "json" },
+        { "name": "to", "type": "json" },
+        { "name": "value", "type": "json" },
+        { "name": "curve", "type": "enum:ease" },
+        { "name": "children", "type": "items" }
+      ],
+      "sample": {
+        "kind": "musicxx.SlideTransition",
+        "from": [0, 0.1],
+        "to": [0, 0],
+        "value": { "kind": "const", "value": 1 },
+        "children": [ { "kind": "Text", "text": "滑入的内容" } ]
+      }
+    },
+    {
+      "kind": "musicxx.ScaleTransition",
+      "level": "client",
+      "client": "musicxx",
+      "doc": "缩放动画：按 value（0~1）从 from 缩放到 to（其他客户端展开子节点）",
+      "fields": [
+        { "name": "from", "type": "float", "default": 0 },
+        { "name": "to", "type": "float", "default": 1 },
+        { "name": "value", "type": "json" },
+        { "name": "curve", "type": "enum:ease" },
+        { "name": "children", "type": "items" }
+      ],
+      "sample": {
+        "kind": "musicxx.ScaleTransition",
+        "from": 0.8,
+        "to": 1,
+        "value": { "kind": "const", "value": 1 },
+        "children": [ { "kind": "Text", "text": "放大显示的内容" } ]
+      }
+    },
+    {
+      "kind": "musicxx.RotationTransition",
+      "level": "client",
+      "client": "musicxx",
+      "doc": "旋转动画：按 value（0~1）从 from 转到 to（单位 = 圈数；其他客户端展开子节点）",
+      "fields": [
+        { "name": "from", "type": "float", "default": 0 },
+        { "name": "to", "type": "float", "default": 1 },
+        { "name": "value", "type": "json" },
+        { "name": "curve", "type": "enum:ease" },
+        { "name": "children", "type": "items" }
+      ],
+      "sample": {
+        "kind": "musicxx.RotationTransition",
+        "from": 0,
+        "to": 1,
+        "value": { "kind": "const", "value": 0.5 },
+        "children": [ { "kind": "Text", "text": "转起来的内容" } ]
       }
     }
   ]

@@ -117,6 +117,15 @@ inline constexpr BlockMeta kBlockTable[] = {
     {"musicxx.FadeTransition", BlockLevel::Client,
      "Musicxx", AdaptRule::Flatten,
      "透明度过渡：按 value（0~1）淡入淡出（其他客户端展开子节点）"},
+    {"musicxx.SlideTransition", BlockLevel::Client,
+     "Musicxx", AdaptRule::Flatten,
+     "位移动画：按 value（0~1）从 from 移到 to（单位 = 自身尺寸的倍数；其他客户端展开子节点）"},
+    {"musicxx.ScaleTransition", BlockLevel::Client,
+     "Musicxx", AdaptRule::Flatten,
+     "缩放动画：按 value（0~1）从 from 缩放到 to（其他客户端展开子节点）"},
+    {"musicxx.RotationTransition", BlockLevel::Client,
+     "Musicxx", AdaptRule::Flatten,
+     "旋转动画：按 value（0~1）从 from 转到 to（单位 = 圈数；其他客户端展开子节点）"},
 };
 inline constexpr std::size_t kBlockCount = sizeof(kBlockTable) / sizeof(kBlockTable[0]);
 

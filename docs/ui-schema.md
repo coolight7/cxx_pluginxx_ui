@@ -87,6 +87,9 @@
 | `musicxx.AnimatedBuilder` | client | musicxx | `values` `maxFps` `children` | 动画作用域：声明若干通道（each 是一条值表达式），子树每帧重建（其他客户端展开子节点） |
 | `musicxx.SizeTransition` | client | musicxx | `axis` `axisAlignment` `value` `curve` `children` | 尺寸过渡：按 value（0~1）把子节点从 0 撑开 / 收拢（其他客户端展开子节点） |
 | `musicxx.FadeTransition` | client | musicxx | `value` `curve` `children` | 透明度过渡：按 value（0~1）淡入淡出（其他客户端展开子节点） |
+| `musicxx.SlideTransition` | client | musicxx | `from` `to` `value` `curve` `children` | 位移动画：按 value（0~1）从 from 移到 to（单位 = 自身尺寸的倍数；其他客户端展开子节点） |
+| `musicxx.ScaleTransition` | client | musicxx | `from` `to` `value` `curve` `children` | 缩放动画：按 value（0~1）从 from 缩放到 to（其他客户端展开子节点） |
+| `musicxx.RotationTransition` | client | musicxx | `from` `to` `value` `curve` `children` | 旋转动画：按 value（0~1）从 from 转到 to（单位 = 圈数；其他客户端展开子节点） |
 
 `*` = 必填。字段类型：`size` = 上面三种尺寸形态；`edges` = 四边数值；`text` = TextValue；
 `action` = 上面四种动作；`items` = 子块数组；其余同名。
@@ -125,6 +128,9 @@
 | `musicxx.AnimatedBuilder` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
 | `musicxx.SizeTransition` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
 | `musicxx.FadeTransition` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
+| `musicxx.SlideTransition` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
+| `musicxx.ScaleTransition` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
+| `musicxx.RotationTransition` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
 
 适配保证收敛：降级结果只包含客户端声明支持的块，最多降到 `Text`（`terminal` 规则）。
 

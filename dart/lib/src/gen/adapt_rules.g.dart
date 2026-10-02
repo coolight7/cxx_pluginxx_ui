@@ -35,4 +35,7 @@ const Map<String, AdaptRule> kAdaptRules = <String, AdaptRule>{
   'musicxx.AnimatedBuilder': AdaptRule.flatten,
   'musicxx.SizeTransition': AdaptRule.flatten,
   'musicxx.FadeTransition': AdaptRule.flatten,
+  'musicxx.SlideTransition': AdaptRule.flatten,
+  'musicxx.ScaleTransition': AdaptRule.flatten,
+  'musicxx.RotationTransition': AdaptRule.flatten,
 };

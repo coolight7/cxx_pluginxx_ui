@@ -48,6 +48,9 @@ const List<BlockMeta> kBlockTable = <BlockMeta>[
   BlockMeta('musicxx.AnimatedBuilder', BlockLevel.client, 'musicxx', AdaptRule.flatten),
   BlockMeta('musicxx.SizeTransition', BlockLevel.client, 'musicxx', AdaptRule.flatten),
   BlockMeta('musicxx.FadeTransition', BlockLevel.client, 'musicxx', AdaptRule.flatten),
+  BlockMeta('musicxx.SlideTransition', BlockLevel.client, 'musicxx', AdaptRule.flatten),
+  BlockMeta('musicxx.ScaleTransition', BlockLevel.client, 'musicxx', AdaptRule.flatten),
+  BlockMeta('musicxx.RotationTransition', BlockLevel.client, 'musicxx', AdaptRule.flatten),
 ];
 
 /// 全部组件的名字（顺序与定义文件一致）
@@ -82,6 +85,9 @@ const List<String> kBlockNames = <String>[
   'musicxx.AnimatedBuilder',
   'musicxx.SizeTransition',
   'musicxx.FadeTransition',
+  'musicxx.SlideTransition',
+  'musicxx.ScaleTransition',
+  'musicxx.RotationTransition',
 ];
 
 /// 支持的控制形态（第一版）

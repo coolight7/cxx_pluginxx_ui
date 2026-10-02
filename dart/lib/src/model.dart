@@ -455,6 +455,10 @@ class ItemData {
 
   /// 过渡块的控制值（原始 JSON：数字或值表达式节点；非空时以它为准）
   Object? animValue;
+
+  /// 过渡块的起止值（位移是 `[x, y]`，缩放/旋转是数字）
+  Object? animFrom;
+  Object? animTo;
   String axis = 'vertical';
   double axisAlignment = -1;
   String curve = '';
@@ -550,6 +554,8 @@ class ItemData {
     ..resolutionScale = resolutionScale
     ..animValues = animValues
     ..animValue = animValue
+    ..animFrom = animFrom
+    ..animTo = animTo
     ..axis = axis
     ..axisAlignment = axisAlignment
     ..curve = curve
