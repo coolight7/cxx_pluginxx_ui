@@ -10,7 +10,7 @@
 //
 // 组件全集与字段见生成的 docs/ui-schema.md（源：schema/ui.def.json）。
 
-/// 尺寸取值的三种形态
+/// 尺寸取值的四种形态
 enum SizeMode {
   /// 数值（u）
   value,
@@ -20,24 +20,40 @@ enum SizeMode {
 
   /// 占直接父容器可分配空间的比例
   percent,
+
+  /// 值表达式（`{"kind": ...}` 节点）：GUI 侧由客户端每帧求值，终端侧可忽略（按 auto）
+  expr,
 }
 
-/// 尺寸取值：数值（u）/ `auto` / `{ "percent": n }`
+/// 尺寸取值：数值（u）/ `auto` / `{ "percent": n }` / `{ "kind": ... }` 值表达式
 class SizeValue {
-  const SizeValue.value(this.value) : mode = SizeMode.value;
+  const SizeValue.value(this.value)
+      : mode = SizeMode.value,
+        expr = null;
 
   const SizeValue.auto()
       : mode = SizeMode.auto,
-        value = 0;
+        value = 0,
+        expr = null;
 
-  const SizeValue.percent(this.value) : mode = SizeMode.percent;
+  const SizeValue.percent(this.value)
+      : mode = SizeMode.percent,
+        expr = null;
+
+  const SizeValue.expr(this.expr)
+      : mode = SizeMode.expr,
+        value = 0;
 
   final SizeMode mode;
   final double value;
 
+  /// 值表达式的原始 JSON（只在 [SizeMode.expr] 时有意义；客户端用值表达式引擎求值）
+  final Object? expr;
+
   bool get isAuto => mode == SizeMode.auto;
   bool get isPercent => mode == SizeMode.percent;
   bool get isValue => mode == SizeMode.value;
+  bool get isExpr => mode == SizeMode.expr;
 
   static const SizeValue autoValue = SizeValue.auto();
 }
@@ -386,6 +402,9 @@ class ItemData {
 
   // ---- 进度 / 趋势 ----
   double value = 0;
+
+  /// `Progress.value` 写成值表达式时的原始 JSON（非空时以它为准，客户端每帧求值）
+  Object? valueExpr;
   double total = 100;
   String unit = '';
   bool showValue = true;
@@ -483,6 +502,7 @@ class ItemData {
     ..connector = connector
     ..nodes = nodes
     ..value = value
+    ..valueExpr = valueExpr
     ..total = total
     ..unit = unit
     ..showValue = showValue

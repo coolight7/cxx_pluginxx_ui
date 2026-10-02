@@ -21,9 +21,12 @@
 | 数值（u） | `12`、`8.5` | 逻辑长度：GUI 1u = 1 逻辑像素；终端按 `caps.cell` 换算成列/行 |
 | percent | `{ "percent": 50 }` | 占**直接父容器**可分配空间的比例 |
 | auto | `"auto"` 或省略 | 由内容决定 |
+| 值表达式 | `{ "kind": "lfo", "periodMs": 1600, "from": 40, "to": 72 }` | GUI 侧每帧求值（节点表见 `plugin-shader-bundle.md` §7）；终端侧按 auto 忽略 |
 
 相对关系用节点表达：`Expanded{flex}` / `Spacer{flex}` / `Row.main` / `Align`。
 数值不允许为负（解析时负数按 0 处理并记一条日志）。
+
+尺寸字段（以及 `Progress.value`）除了字面量还能写**值表达式**：一个带 `kind` 的对象，GUI 用与着色器参数同一套引擎求值（来源、过渡、动画、组合都在一份声明里，见 `plugin-shader-bundle.md` §7）。求值结果按 u 解释；写 `unit: "percent"` 就是"父容器比例"。
 
 复数字段用 `Edges`：`12` / `{ "horizontal": 20, "vertical": 8 }` / `{ "left": 20, "top": 8 }`。
 

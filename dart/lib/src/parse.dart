@@ -109,16 +109,31 @@ SizeValue _sizeValue(Object? value, ParseReport? report, String what) {
     return SizeValue.autoValue;
   }
   final Map<String, Object?>? map = _asMap(value);
-  if (null != map && map.containsKey('percent')) {
-    final Object? percent = map['percent'];
-    final double p = percent is num ? percent.toDouble() : 0;
-    if (p < 0) {
-      report?.warn('$what 的 percent 为负，按 0 处理');
-      return const SizeValue.percent(0);
+  if (null != map) {
+    // 值表达式：带 `kind` 的对象交给客户端求值（GUI 每帧算；终端侧按 auto 忽略）
+    if (map['kind'] is String) {
+      return SizeValue.expr(value);
     }
-    return SizeValue.percent(p);
+    if (map.containsKey('percent')) {
+      final Object? percent = map['percent'];
+      final double p = percent is num ? percent.toDouble() : 0;
+      if (p < 0) {
+        report?.warn('$what 的 percent 为负，按 0 处理');
+        return const SizeValue.percent(0);
+      }
+      return SizeValue.percent(p);
+    }
   }
   return SizeValue.autoValue;
+}
+
+/// 值表达式节点（带 `kind` 的对象）；不是节点返回 null
+Object? _valueNode(Object? value) {
+  final Map<String, Object?>? map = _asMap(value);
+  if (null != map && map['kind'] is String) {
+    return value;
+  }
+  return null;
 }
 
 Edges _edges(Object? value, ParseReport? report, String what) {
@@ -350,6 +365,7 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
       return item;
     case 'Progress':
       item.value = _num(json, 'value', 0);
+      item.valueExpr = _valueNode(json['value']);
       item.total = _num(json, 'total', 100);
       item.label = _textValue(json['label']);
       item.unit = _has(json, 'unit') ? _str(json, 'unit') : '%';
@@ -747,6 +763,8 @@ Object _sizeValueToJson(SizeValue value) {
       return value.value;
     case SizeMode.percent:
       return <String, Object?>{'percent': value.value};
+    case SizeMode.expr:
+      return value.expr ?? 'auto';
     case SizeMode.auto:
       return 'auto';
   }
@@ -938,7 +956,7 @@ Map<String, Object?> dumpItem(ItemData item) {
       ];
       break;
     case 'Progress':
-      out['value'] = item.value;
+      out['value'] = item.valueExpr ?? item.value;
       out['total'] = item.total;
       if (item.label.isNotEmpty) {
         out['label'] = _textValueToJson(item.label);

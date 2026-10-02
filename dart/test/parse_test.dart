@@ -170,4 +170,60 @@ void main() {
     expect(minimalBack.blocks.length, 1);
     expect(minimalBack.percent, isFalse);
   });
+
+  test('尺寸字段接受值表达式（带 kind 的对象原样保留）', () {
+    // 字面量：数值 / auto / percent 都不变
+    expect(parseBlock(<String, Object?>{'kind': 'Gap', 'size': 12}).size.isValue, isTrue);
+    expect(
+      parseBlock(<String, Object?>{'kind': 'Gap', 'size': 'auto'}).size.isAuto,
+      isTrue,
+    );
+    final ItemData percent = parseBlock(<String, Object?>{
+      'kind': 'SizedBox',
+      'height': <String, Object?>{'percent': 40},
+    });
+    expect(percent.height.isPercent, isTrue);
+    expect(percent.height.value, 40);
+
+    // 值表达式：整份 JSON 保留给客户端求值，往返不丢
+    final Map<String, Object?> node = <String, Object?>{
+      'kind': 'lfo',
+      'periodMs': 1600,
+      'from': 40,
+      'to': 72,
+    };
+    final ItemData item = parseBlock(<String, Object?>{
+      'kind': 'SizedBox',
+      'width': <String, Object?>{'kind': 'const', 'value': 120},
+      'height': node,
+    });
+    expect(item.width.isExpr, isTrue);
+    expect((item.width.expr! as Map)['kind'], 'const');
+    expect(item.height.isExpr, isTrue);
+    expect(dumpItem(item)['height'], node, reason: '值表达式往返保持原样');
+    expect(dumpItem(item)['width'], <String, Object?>{'kind': 'const', 'value': 120});
+  });
+
+  test('Progress.value 接受值表达式', () {
+    final Map<String, Object?> node = <String, Object?>{
+      'kind': 'source',
+      'name': 'plugin.demo.progress',
+    };
+    final ItemData item = parseBlock(<String, Object?>{
+      'kind': 'Progress',
+      'value': node,
+      'total': 100,
+    });
+    expect(item.valueExpr, node);
+    expect(item.value, 0, reason: '写成表达式时数值字段给 0，客户端以表达式为准');
+    expect(dumpItem(item)['value'], node);
+
+    // 数字写法不受影响
+    final ItemData plain = parseBlock(<String, Object?>{
+      'kind': 'Progress',
+      'value': 72,
+    });
+    expect(plain.valueExpr, isNull);
+    expect(plain.value, 72);
+  });
 }

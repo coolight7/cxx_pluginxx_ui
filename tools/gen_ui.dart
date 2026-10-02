@@ -245,7 +245,7 @@ class UiDef {
     }
   }
 
-  /// 校验尺寸取值（size 字段）：数字（u）/ "auto" / "gap" / {"percent": n}
+  /// 校验尺寸取值（size 字段）：数字（u）/ "auto" / "gap" / {"percent": n} / 值表达式（{"kind": …}）
   void _checkSize(Object? value, String what) {
     if (value == null) {
       return;
@@ -258,11 +258,15 @@ class UiDef {
     }
     if (value is String) {
       if (value != 'auto' && value != 'gap') {
-        _fail('$what 的取值只能是数字 / "auto" / "gap" / {"percent":n}');
+        _fail('$what 的取值只能是数字 / "auto" / "gap" / {"percent":n} / {"kind":…}');
       }
       return;
     }
     if (value is Map) {
+      // 值表达式：具体的节点校验在客户端（GUI）侧做，这里只认形状
+      if (value['kind'] is String) {
+        return;
+      }
       final Object? percent = value['percent'];
       if (percent is! num || percent < 0) {
         _fail('$what 的 percent 必须是非负数');
@@ -1051,9 +1055,15 @@ class Generator {
       ..writeln('| 数值（u） | `12`、`8.5` | 逻辑长度：GUI 1u = 1 逻辑像素；终端按 `caps.cell` 换算成列/行 |')
       ..writeln('| percent | `{ "percent": 50 }` | 占**直接父容器**可分配空间的比例 |')
       ..writeln('| auto | `"auto"` 或省略 | 由内容决定 |')
+      ..writeln('| 值表达式 | `{ "kind": "lfo", "periodMs": 1600, "from": 40, "to": 72 }` | GUI 侧每帧求值（节点表见 `plugin-shader-bundle.md` §7）；终端侧按 auto 忽略 |')
       ..writeln()
       ..writeln('相对关系用节点表达：`Expanded{flex}` / `Spacer{flex}` / `Row.main` / `Align`。')
       ..writeln('数值不允许为负（解析时负数按 0 处理并记一条日志）。')
+      ..writeln()
+      ..writeln('尺寸字段（以及 `Progress.value`）除了字面量还能写**值表达式**：'
+          '一个带 `kind` 的对象，GUI 用与着色器参数同一套引擎求值'
+          '（来源、过渡、动画、组合都在一份声明里，见 `plugin-shader-bundle.md` §7）。'
+          '求值结果按 u 解释；写 `unit: "percent"` 就是"父容器比例"。')
       ..writeln()
       ..writeln('复数字段用 `Edges`：`12` / `{ "horizontal": 20, "vertical": 8 }` / `{ "left": 20, "top": 8 }`。')
       ..writeln()
