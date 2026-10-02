@@ -84,6 +84,10 @@ TextValue _textValue(Object? value) {
     }
     return TextValue.empty;
   }
+  // 值表达式：文本字段也能写节点（每帧求值），原样保留
+  if (map['kind'] is String) {
+    return TextValue.ofExpr(value);
+  }
   return TextValue(
     key: _str(map, 'key'),
     fallback: _str(map, 'fallback'),
@@ -125,15 +129,6 @@ SizeValue _sizeValue(Object? value, ParseReport? report, String what) {
     }
   }
   return SizeValue.autoValue;
-}
-
-/// 值表达式节点（带 `kind` 的对象）；不是节点返回 null
-Object? _valueNode(Object? value) {
-  final Map<String, Object?>? map = _asMap(value);
-  if (null != map && map['kind'] is String) {
-    return value;
-  }
-  return null;
 }
 
 Edges _edges(Object? value, ParseReport? report, String what) {
@@ -235,6 +230,10 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
   item.id = _str(json, 'id');
   item.fallback = _str(json, 'fallback');
   item.action = _action(json['action']);
+  // 公共字段：`visible`（布尔字面量或值表达式；求值为假时客户端不画这一块）
+  if (_has(json, 'visible')) {
+    item.visible = ValueField(json['visible']);
+  }
 
   if (_has(json, 'text')) {
     final Object? raw = json['text'];
@@ -364,8 +363,7 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
       item.nodes = _nodes(json['nodes'], ctx, 'Tree.nodes');
       return item;
     case 'Progress':
-      item.value = _num(json, 'value', 0);
-      item.valueExpr = _valueNode(json['value']);
+      item.value = ValueField(null == json['value'] ? 0 : json['value']);
       item.total = _num(json, 'total', 100);
       item.label = _textValue(json['label']);
       item.unit = _has(json, 'unit') ? _str(json, 'unit') : '%';
@@ -479,20 +477,16 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
     case 'musicxx.SlideTransition':
     case 'musicxx.ScaleTransition':
     case 'musicxx.RotationTransition':
-      item.animValue = json['value'];
-      item.value = _num(json, 'value', 1);
+      // 控制值与起止值都保留原始 JSON：字面量直接用，值表达式由客户端每帧求值
+      item.animValue = ValueField(null == json['value'] ? 1 : json['value']);
       item.curve = _enum(json, 'curve', kEnumEase, '');
-      // `from` / `to`：位移用数组（[x, y]），缩放/旋转用数字 —— 原样保留给客户端解释
-      item.animFrom = json['from'];
-      item.animTo = json['to'];
+      final bool numericFromTo = canonical == 'musicxx.ScaleTransition' ||
+          canonical == 'musicxx.RotationTransition';
+      item.animFrom = ValueField(json['from'] ?? (numericFromTo ? 0 : null));
+      item.animTo = ValueField(json['to'] ?? (numericFromTo ? 1 : null));
       if (canonical == 'musicxx.SizeTransition') {
         item.axis = _enum(json, 'axis', kEnumAxis, 'vertical');
         item.axisAlignment = _num(json, 'axisAlignment', -1);
-      }
-      if (canonical == 'musicxx.ScaleTransition' ||
-          canonical == 'musicxx.RotationTransition') {
-        item.animFrom = _num(json, 'from', canonical == 'musicxx.ScaleTransition' ? 0.0 : 0.0);
-        item.animTo = _num(json, 'to', 1.0);
       }
       item.children = children('children', '$canonical.children');
       return item;
@@ -775,6 +769,9 @@ UiDocument parseDocument(
 // ===== 序列化 =====
 
 Object? _textValueToJson(TextValue value) {
+  if (value.isExpr) {
+    return value.expr;
+  }
   if (value.key.isEmpty && null == value.args) {
     return value.fallback;
   }
@@ -839,6 +836,10 @@ Map<String, Object?> dumpItem(ItemData item) {
   }
   if (item.id.isNotEmpty) {
     out['id'] = item.id;
+  }
+  // 公共字段：`visible`（非 false 时不输出，保持往返最小）
+  if (false == item.visible.isEmpty) {
+    out['visible'] = item.visible.raw;
   }
   void putChildren() {
     if (item.children.isNotEmpty) {
@@ -984,7 +985,7 @@ Map<String, Object?> dumpItem(ItemData item) {
       ];
       break;
     case 'Progress':
-      out['value'] = item.valueExpr ?? item.value;
+      out['value'] = item.value.raw ?? 0;
       out['total'] = item.total;
       if (item.label.isNotEmpty) {
         out['label'] = _textValueToJson(item.label);
@@ -1138,14 +1139,14 @@ Map<String, Object?> dumpItem(ItemData item) {
     case 'musicxx.SizeTransition':
       out['axis'] = item.axis;
       out['axisAlignment'] = item.axisAlignment;
-      out['value'] = item.animValue ?? item.value;
+      out['value'] = item.animValue.raw ?? item.value.raw ?? 1;
       if (item.curve.isNotEmpty) {
         out['curve'] = item.curve;
       }
       putChildren();
       break;
     case 'musicxx.FadeTransition':
-      out['value'] = item.animValue ?? item.value;
+      out['value'] = item.animValue.raw ?? item.value.raw ?? 1;
       if (item.curve.isNotEmpty) {
         out['curve'] = item.curve;
       }
@@ -1154,13 +1155,13 @@ Map<String, Object?> dumpItem(ItemData item) {
     case 'musicxx.SlideTransition':
     case 'musicxx.ScaleTransition':
     case 'musicxx.RotationTransition':
-      if (null != item.animFrom) {
-        out['from'] = item.animFrom;
+      if (false == item.animFrom.isEmpty) {
+        out['from'] = item.animFrom.raw;
       }
-      if (null != item.animTo) {
-        out['to'] = item.animTo;
+      if (false == item.animTo.isEmpty) {
+        out['to'] = item.animTo.raw;
       }
-      out['value'] = item.animValue ?? item.value;
+      out['value'] = item.animValue.raw ?? item.value.raw ?? 1;
       if (item.curve.isNotEmpty) {
         out['curve'] = item.curve;
       }

@@ -58,6 +58,54 @@ class SizeValue {
   static const SizeValue autoValue = SizeValue.auto();
 }
 
+/// 值字段：字面量（数字 / 布尔 / 字符串 / 数组 / 颜色串 / `{"percent":n}`）或**值表达式节点**（`{"kind": …}`）
+///
+/// 这是"值位置"的统一表示：尺寸用 [SizeValue]（多一个 `auto`/`percent` 语义），
+/// 其余数值 / 布尔 / 文本值字段都用它。表达式由客户端求值（终端侧可忽略，按字面量缺省处理）。
+class ValueField {
+  const ValueField(this.raw);
+
+  /// 原始 JSON（字面量或节点）
+  final Object? raw;
+
+  static const ValueField none = ValueField(null);
+
+  bool get isEmpty => null == raw;
+
+  /// 是不是值表达式节点（带 `kind` 的对象）
+  bool get isExpr => raw is Map && (raw as Map)['kind'] is String;
+
+  /// 数值（字面量不是数字时给 0；表达式要客户端求值后再取）
+  double get number => raw is num ? (raw as num).toDouble() : 0;
+
+  /// 开关（布尔字面量；数字按非 0；其它按"有值"）
+  bool get flag {
+    final Object? value = raw;
+    if (value is bool) {
+      return value;
+    }
+    if (value is num) {
+      return value != 0;
+    }
+    if (value is String) {
+      return value.isNotEmpty;
+    }
+    return null != value;
+  }
+
+  /// `[x, y]`（缺的补 0）；数字按两轴同值
+  double axisValue(int index) {
+    final Object? value = raw;
+    if (value is num) {
+      return value.toDouble();
+    }
+    if (value is List && index < value.length && value[index] is num) {
+      return (value[index] as num).toDouble();
+    }
+    return 0;
+  }
+}
+
 /// 四边数值（内边距 / 外边距）
 class Edges {
   const Edges({this.left = 0, this.top = 0, this.right = 0, this.bottom = 0});
@@ -80,23 +128,41 @@ class Edges {
   static const Edges zero = Edges();
 }
 
-/// 文本取值：字面字符串，或 `{ key, fallback, args }`
+/// 文本取值：字面字符串 / `{ key, fallback, args }` / **值表达式**（`{"kind": …}`）
 ///
 /// 客户端优先按 [key] 取自己的语言表，取不到用 [fallback]（再取不到用 key 原文）；
-/// [args] 是 `{n: 3}` 这类命名占位参数，用于替换文本里的 `{n}`。
+/// [args] 是 `{n: 3}` 这类命名占位参数，用于替换文本里的 `{n}`；
+/// 写成值表达式时（[expr] 非空）客户端每帧求值后再当文本用，[fallback] 只在求值失败时兜底。
 class TextValue {
-  const TextValue({this.key = '', this.fallback = '', this.args});
+  const TextValue({
+    this.key = '',
+    this.fallback = '',
+    this.args,
+    this.expr,
+  });
 
   const TextValue.of(String text)
       : key = '',
         fallback = text,
-        args = null;
+        args = null,
+        expr = null;
+
+  const TextValue.ofExpr(Object? node)
+      : key = '',
+        fallback = '',
+        args = null,
+        expr = node;
 
   final String key;
   final String fallback;
   final Object? args;
 
-  bool get isEmpty => key.isEmpty && fallback.isEmpty;
+  /// 值表达式节点的原始 JSON（非空时以它为准）
+  final Object? expr;
+
+  bool get isExpr => null != expr;
+
+  bool get isEmpty => !isExpr && key.isEmpty && fallback.isEmpty;
   bool get isNotEmpty => !isEmpty;
   bool get hasKey => key.isNotEmpty;
 
@@ -401,10 +467,8 @@ class ItemData {
   List<TreeNode> nodes = <TreeNode>[];
 
   // ---- 进度 / 趋势 ----
-  double value = 0;
-
-  /// `Progress.value` 写成值表达式时的原始 JSON（非空时以它为准，客户端每帧求值）
-  Object? valueExpr;
+  /// `Progress.value`：数字字面量或值表达式（见 [ValueField]）
+  ValueField value = ValueField.none;
   double total = 100;
   String unit = '';
   bool showValue = true;
@@ -453,15 +517,19 @@ class ItemData {
   /// 动画作用域的通道表（原始 JSON：名字 → 值表达式节点）
   Object? animValues;
 
-  /// 过渡块的控制值（原始 JSON：数字或值表达式节点；非空时以它为准）
-  Object? animValue;
+  /// 过渡块的控制值（数字字面量或值表达式）
+  ValueField animValue = ValueField.none;
 
-  /// 过渡块的起止值（位移是 `[x, y]`，缩放/旋转是数字）
-  Object? animFrom;
-  Object? animTo;
+  /// 过渡块的起止值（位移是 `[x, y]`，缩放/旋转是数字；也可以写值表达式）
+  ValueField animFrom = ValueField.none;
+  ValueField animTo = ValueField.none;
   String axis = 'vertical';
   double axisAlignment = -1;
   String curve = '';
+
+  // ---- 公共字段 ----
+  /// `visible`：布尔字面量或值表达式；求值为假时客户端不画这一块
+  ValueField visible = ValueField.none;
 
   // ---- 动作与兜底 ----
   UiAction? action;
@@ -516,7 +584,6 @@ class ItemData {
     ..connector = connector
     ..nodes = nodes
     ..value = value
-    ..valueExpr = valueExpr
     ..total = total
     ..unit = unit
     ..showValue = showValue
@@ -559,6 +626,7 @@ class ItemData {
     ..axis = axis
     ..axisAlignment = axisAlignment
     ..curve = curve
+    ..visible = visible
     ..action = action
     ..fallback = fallback;
 }

@@ -234,13 +234,13 @@ String? _itemText(ItemData item, _Ctx ctx) {
       return _treeText(item, ctx);
     case 'Progress':
       final double total = item.total > 0 ? item.total : 100;
-      int filled = (_progressBarCells * item.value / total + 0.5).floor();
+      int filled = (_progressBarCells * item.value.number / total + 0.5).floor();
       filled = filled < 0 ? 0 : (filled > _progressBarCells ? _progressBarCells : filled);
       String bar =
           '[${_repeat('#', filled)}${_repeat('-', _progressBarCells - filled)}]';
       final String label = text(item.label);
       if (item.showValue) {
-        bar = '$bar ${formatNumber(item.value)}${item.unit}';
+        bar = '$bar ${formatNumber(item.value.number)}${item.unit}';
       }
       return label.isEmpty ? bar : '$label: $bar';
     case 'Badge':

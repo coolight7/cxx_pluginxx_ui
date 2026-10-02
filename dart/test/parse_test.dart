@@ -233,8 +233,9 @@ void main() {
     expect(size.axis, 'horizontal');
     expect(size.axisAlignment, 0);
     expect(size.curve, 'outCubic');
-    expect((size.animValue! as Map)['name'], 'h');
-    expect(dumpItem(size)['value'], size.animValue);
+    expect(size.animValue.isExpr, isTrue);
+    expect((size.animValue.raw! as Map)['name'], 'h');
+    expect(dumpItem(size)['value'], size.animValue.raw);
 
     // 值是数字时照旧（原始值与数值字段都能拿到）
     final ItemData fade = parseBlock(<String, Object?>{
@@ -244,11 +245,42 @@ void main() {
         <String, Object?>{'kind': 'Text', 'text': '淡入'},
       ],
     });
-    expect(fade.value, 0.5);
-    expect(fade.animValue, 0.5, reason: '数字也留着原始值（求值时以它为准）');
+    expect(fade.animValue.number, 0.5, reason: '数字字面量直接用');
     expect(dumpItem(fade)['value'], 0.5);
   });
 
+  test('文本字段写值表达式 + 公共字段 visible / action', () {
+    // 文本字段：值表达式原样保留，求值交给客户端
+    final ItemData text = parseBlock(<String, Object?>{
+      'kind': 'Text',
+      'text': <String, Object?>{
+        'kind': 'format',
+        'value': <String, Object?>{'kind': 'const', 'value': 42},
+        'text': '进度 {0}%',
+      },
+    });
+    expect(text.text.isExpr, isTrue);
+    expect(dumpItem(text)['text'], text.text.expr);
+
+    // 公共字段：每个块都能写 visible（字面量或值表达式）；action 也收进公共字段
+    final ItemData visible = parseBlock(<String, Object?>{
+      'kind': 'Gap',
+      'size': 12,
+      'visible': false,
+      'action': 'openSettings',
+    });
+    expect(visible.visible.flag, isFalse);
+    expect(visible.action?.isNotEmpty, isTrue);
+    expect(dumpItem(visible)['visible'], false, reason: 'visible 往返不丢');
+    expect(dumpItem(visible)['action'], 'openSettings', reason: 'action 是公共字段（块里不再逐个声明）');
+
+    final ItemData dynamicVisible = parseBlock(<String, Object?>{
+      'kind': 'Text',
+      'text': '条件块',
+      'visible': <String, Object?>{'kind': 'const', 'value': 1},
+    });
+    expect(dynamicVisible.visible.isExpr, isTrue);
+  });
   test('Progress.value 接受值表达式', () {
     final Map<String, Object?> node = <String, Object?>{
       'kind': 'source',
@@ -259,8 +291,9 @@ void main() {
       'value': node,
       'total': 100,
     });
-    expect(item.valueExpr, node);
-    expect(item.value, 0, reason: '写成表达式时数值字段给 0，客户端以表达式为准');
+    expect(item.value.isExpr, isTrue, reason: '值表达式原样保留');
+    expect(item.value.raw, node);
+    expect(item.value.number, 0, reason: '表达式没有字面量数值，客户端求值后才有效');
     expect(dumpItem(item)['value'], node);
 
     // 数字写法不受影响
@@ -268,7 +301,7 @@ void main() {
       'kind': 'Progress',
       'value': 72,
     });
-    expect(plain.valueExpr, isNull);
-    expect(plain.value, 72);
+    expect(plain.value.isExpr, isFalse);
+    expect(plain.value.number, 72);
   });
 }

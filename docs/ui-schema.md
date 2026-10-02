@@ -50,6 +50,17 @@
 控件只在**值变化时立即派发**自己的动作，客户端把 `{"id":…,"value":…}` 合并进参数
 （冲突时以客户端补的为准）；库不提供表单提交层，需要"保存"就自己放一个 `Button`。
 
+## 公共字段
+
+每个块都可以写这两个字段（不必在下面的组件表里逐个列出）：
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `visible` | `value` | 是否渲染（字面量布尔或值表达式；求值为假时不画这一块） |
+| `action` | `action` | 整块可点（写法见「动作」一节） |
+`value` 类型 = 字面量（数字 / 布尔 / 字符串 / 数组 / 颜色串 / `{"percent":n}`）**或值表达式**（`{"kind": …}` 节点，见 `plugin-shader-bundle.md` §7）；
+`visible` 求值为假时这一块**不渲染**（表达式每帧现算，配 `AnimatedBuilder` 就能做显隐动画）。
+
 ## 组件全集
 
 级别：**core** = 两个渲染目标都必须实现；**optional** = 允许客户端不实现（按适配规则降级）；
@@ -57,13 +68,13 @@
 
 | kind | 级别 | 归属 | 字段 | 说明 |
 |---|---|---|---|---|
-| `Text` | core | — | `text`* `type` `tone` `bold` `dim` `mono` `wrap` `maxLines` `align` `action` | 一段文字 |
+| `Text` | core | — | `text`* `type` `tone` `bold` `dim` `mono` `wrap` `maxLines` `align` | 一段文字 |
 | `Divider` | core | — | — | 分隔线（样式由客户端主题决定） |
 | `Gap` | core | — | `size` | 竖直留白（缺省取 defaults.gap） |
-| `Button` | core | — | `label`* `variant` `icon` `disabled` `action` | 按钮（自己处理点击） |
-| `Block` | core | — | `title` `variant` `padding` `margin` `action` `children` | 卡片/内容块 |
-| `Row` | core | — | `gap` `main` `cross` `action` `children` | 横向排列 |
-| `Column` | core | — | `gap` `main` `cross` `action` `children` | 纵向排列 |
+| `Button` | core | — | `label`* `variant` `icon` `disabled` | 按钮（自己处理点击） |
+| `Block` | core | — | `title` `variant` `padding` `margin` `children` | 卡片/内容块 |
+| `Row` | core | — | `gap` `main` `cross` `children` | 横向排列 |
+| `Column` | core | — | `gap` `main` `cross` `children` | 纵向排列 |
 | `Expanded` | core | — | `flex` `children` | 按比例分剩余空间 |
 | `Spacer` | core | — | `flex` | 纯占位（撑开） |
 | `SizedBox` | core | — | `width` `height` `aspect` `children` | 固定尺寸/占位 |
@@ -75,7 +86,7 @@
 | `Tree` | core | — | `connector` `nodes`* | 层级列表 |
 | `Progress` | core | — | `value`* `total` `label` `unit` `showValue` `tone` `thresholds` `width` | 进度/计量 |
 | `Badge` | core | — | `text`* `tone` | 状态小标签 |
-| `Control` | core | — | `control`* `id`* `label` `help` `options` `value` `disabled` `integer` `min` `max` `step` `multiline` `action` | 交互控件（值变化即派发） |
+| `Control` | core | — | `control`* `id`* `label` `help` `options` `value` `disabled` `integer` `min` `max` `step` `multiline` | 交互控件（值变化即派发） |
 | `Markdown` | core | — | `text`* | markdown 源码 |
 | `Icon` | optional | — | `name` `glyph` `size` `tone` `alt` | 图标：GUI 用 name，终端用 glyph（都没有就跳过） |
 | `Stack` | optional | — | `align` `vertical` `children` | 叠放（终端适配为取最后一个子节点） |

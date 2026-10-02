@@ -5,6 +5,10 @@
     "gap": 12,
     "cell": { "width": 8, "height": 20 }
   },
+  "commonFields": [
+    { "name": "visible", "type": "value" },
+    { "name": "action", "type": "action" }
+  ],
   "enums": {
     "textType": ["body", "caption", "title"],
     "tone": [
@@ -82,8 +86,7 @@
         { "name": "mono", "type": "bool", "default": false },
         { "name": "wrap", "type": "bool", "default": true },
         { "name": "maxLines", "type": "int", "default": 0 },
-        { "name": "align", "type": "enum:alignH", "default": "start" },
-        { "name": "action", "type": "action" }
+        { "name": "align", "type": "enum:alignH", "default": "start" }
       ],
       "sample": { "kind": "Text", "text": "一段说明文字", "type": "body", "tone": "hint" }
     },
@@ -109,8 +112,7 @@
         { "name": "label", "type": "text", "required": true },
         { "name": "variant", "type": "enum:buttonVariant", "default": "secondary" },
         { "name": "icon", "type": "string" },
-        { "name": "disabled", "type": "bool", "default": false },
-        { "name": "action", "type": "action" }
+        { "name": "disabled", "type": "bool", "default": false }
       ],
       "sample": { "kind": "Button", "label": "保存", "variant": "primary", "action": "apply" }
     },
@@ -123,7 +125,6 @@
         { "name": "variant", "type": "enum:blockVariant", "default": "card" },
         { "name": "padding", "type": "edges" },
         { "name": "margin", "type": "edges" },
-        { "name": "action", "type": "action" },
         { "name": "children", "type": "items" }
       ],
       "sample": {
@@ -142,7 +143,6 @@
         { "name": "gap", "type": "size" },
         { "name": "main", "type": "enum:mainAxis", "default": "start" },
         { "name": "cross", "type": "enum:alignHV", "default": "start" },
-        { "name": "action", "type": "action" },
         { "name": "children", "type": "items" }
       ],
       "sample": {
@@ -163,7 +163,6 @@
         { "name": "gap", "type": "size" },
         { "name": "main", "type": "enum:mainAxis", "default": "start" },
         { "name": "cross", "type": "enum:alignHV", "default": "start" },
-        { "name": "action", "type": "action" },
         { "name": "children", "type": "items" }
       ],
       "sample": {
@@ -304,7 +303,7 @@
       "level": "core",
       "doc": "进度/计量",
       "fields": [
-        { "name": "value", "type": "float", "required": true },
+        { "name": "value", "type": "value", "required": true },
         { "name": "total", "type": "float", "default": 100 },
         { "name": "label", "type": "text" },
         { "name": "unit", "type": "string", "default": "%" },
@@ -342,14 +341,13 @@
         { "name": "label", "type": "text" },
         { "name": "help", "type": "text" },
         { "name": "options", "type": "options" },
-        { "name": "value", "type": "json" },
+        { "name": "value", "type": "value" },
         { "name": "disabled", "type": "bool", "default": false },
         { "name": "integer", "type": "bool", "default": false },
         { "name": "min", "type": "float" },
         { "name": "max", "type": "float" },
         { "name": "step", "type": "float" },
-        { "name": "multiline", "type": "bool", "default": false },
-        { "name": "action", "type": "action" }
+        { "name": "multiline", "type": "bool", "default": false }
       ],
       "sample": {
         "kind": "Control",
@@ -507,7 +505,7 @@
       "fields": [
         { "name": "axis", "type": "enum:axis", "default": "vertical" },
         { "name": "axisAlignment", "type": "float", "default": -1 },
-        { "name": "value", "type": "json" },
+        { "name": "value", "type": "value" },
         { "name": "curve", "type": "enum:ease" },
         { "name": "children", "type": "items" }
       ],
@@ -524,7 +522,7 @@
       "client": "musicxx",
       "doc": "透明度过渡：按 value（0~1）淡入淡出（其他客户端展开子节点）",
       "fields": [
-        { "name": "value", "type": "json" },
+        { "name": "value", "type": "value" },
         { "name": "curve", "type": "enum:ease" },
         { "name": "children", "type": "items" }
       ],
@@ -540,9 +538,9 @@
       "client": "musicxx",
       "doc": "位移动画：按 value（0~1）从 from 移到 to（单位 = 自身尺寸的倍数；其他客户端展开子节点）",
       "fields": [
-        { "name": "from", "type": "json" },
-        { "name": "to", "type": "json" },
-        { "name": "value", "type": "json" },
+        { "name": "from", "type": "value" },
+        { "name": "to", "type": "value" },
+        { "name": "value", "type": "value" },
         { "name": "curve", "type": "enum:ease" },
         { "name": "children", "type": "items" }
       ],
@@ -560,9 +558,9 @@
       "client": "musicxx",
       "doc": "缩放动画：按 value（0~1）从 from 缩放到 to（其他客户端展开子节点）",
       "fields": [
-        { "name": "from", "type": "float", "default": 0 },
-        { "name": "to", "type": "float", "default": 1 },
-        { "name": "value", "type": "json" },
+        { "name": "from", "type": "value", "default": 0 },
+        { "name": "to", "type": "value", "default": 1 },
+        { "name": "value", "type": "value" },
         { "name": "curve", "type": "enum:ease" },
         { "name": "children", "type": "items" }
       ],
@@ -580,9 +578,9 @@
       "client": "musicxx",
       "doc": "旋转动画：按 value（0~1）从 from 转到 to（单位 = 圈数；其他客户端展开子节点）",
       "fields": [
-        { "name": "from", "type": "float", "default": 0 },
-        { "name": "to", "type": "float", "default": 1 },
-        { "name": "value", "type": "json" },
+        { "name": "from", "type": "value", "default": 0 },
+        { "name": "to", "type": "value", "default": 1 },
+        { "name": "value", "type": "value" },
         { "name": "curve", "type": "enum:ease" },
         { "name": "children", "type": "items" }
       ],

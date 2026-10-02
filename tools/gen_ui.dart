@@ -42,6 +42,7 @@ const Set<String> _fieldTypes = <String>{
   'int',
   'float',
   'size',
+  'value',
   'edges',
   'tone',
   'action',
@@ -146,12 +147,20 @@ class UiDef {
     for (final Map<String, Object?> b in blocks) b['kind']! as String: b,
   };
 
+  /// 所有块都有的字段（定义里的 `commonFields`；校验按"每个块都有"处理，文档单独列一节）
+  late final List<Map<String, Object?>> commonFields = _list(
+    raw['commonFields'] ?? <Object?>[],
+    'commonFields',
+  ).map((Object? v) => _map(v, 'commonFields[]')).toList();
+
   /// 组件名 → （字段名 → 字段类型）
   late final Map<String, Map<String, String>> blockFieldTypes = <String, Map<String, String>>{
     for (final Map<String, Object?> b in blocks)
       b['kind']! as String: <String, String>{
         for (final Object? f in _list(b['fields'] ?? <Object?>[], 'blocks[].fields'))
           _map(f, 'field')['name']! as String: _map(f, 'field')['type']! as String,
+        for (final Map<String, Object?> f in commonFields)
+          f['name']! as String: f['type']! as String,
       },
   };
 
@@ -309,6 +318,41 @@ class UiDef {
     }
   }
 
+    /// 公共字段的说明文本（文档用）
+  static String commonFieldNote(String name) {
+    switch (name) {
+      case 'visible':
+        return '是否渲染（字面量布尔或值表达式；求值为假时不画这一块）';
+      case 'action':
+        return '整块可点（写法见「动作」一节）';
+      default:
+        return '';
+    }
+  }
+
+  /// 校验"值"字段（`type: value`）：字面量（数字 / 布尔 / 字符串 / 数组 / 颜色串）或值表达式节点
+  ///
+  /// 值表达式节点是"带 `kind` 的对象"（具体节点由客户端校验，这里只认形状）。
+  void _checkValue(Object? value, String what) {
+    if (null == value) {
+      return;
+    }
+    if (value is num || value is bool || value is String || value is List) {
+      return;
+    }
+    if (value is Map) {
+      if (value['kind'] is String) {
+        return;
+      }
+      // 无 kind 的字面量对象：目前只认 {"percent": n}
+      if (value['percent'] is num) {
+        return;
+      }
+      _fail('$what 的字面量对象不认识（支持 {"percent": n}，要计算请写带 kind 的值表达式）');
+    }
+    _fail('$what 的取值类型非法：$value');
+  }
+
   /// 校验一个样例节点：组件存在、字段已声明、枚举取值合法、尺寸非负
   void _checkNode(Object? value, String what, int depth) {
     if (depth > 12) {
@@ -339,6 +383,8 @@ class UiDef {
         _checkSize(entry.value, '$what.$name');
       } else if (type == 'edges') {
         _checkEdges(entry.value, '$what.$name');
+      } else if (type == 'value') {
+        _checkValue(entry.value, '$what.$name');
       }
       if (type == 'items') {
         for (final Object? child in _list(entry.value, '$what.$name')) {
@@ -1087,6 +1133,25 @@ class Generator {
       ..writeln()
       ..writeln('控件只在**值变化时立即派发**自己的动作，客户端把 `{"id":…,"value":…}` 合并进参数')
       ..writeln('（冲突时以客户端补的为准）；库不提供表单提交层，需要"保存"就自己放一个 `Button`。')
+      ..writeln()
+        ..writeln('## 公共字段')
+      ..writeln()
+      ..writeln('每个块都可以写这两个字段（不必在下面的组件表里逐个列出）：')
+      ..writeln()
+      ..writeln('| 字段 | 类型 | 说明 |')
+      ..writeln('|---|---|---|')
+      ..writeAll(
+        <String>[
+          for (final Map<String, Object?> field in ui.commonFields)
+            '| `${field['name']}` | `${field['type']}` | '
+                '${UiDef.commonFieldNote(field['name']! as String)} |',
+        ],
+        '\n',
+      )
+      ..writeln()
+      ..writeln('`value` 类型 = 字面量（数字 / 布尔 / 字符串 / 数组 / 颜色串 / `{"percent":n}`）'
+          '**或值表达式**（`{"kind": …}` 节点，见 `plugin-shader-bundle.md` §7）；')
+      ..writeln('`visible` 求值为假时这一块**不渲染**（表达式每帧现算，配 `AnimatedBuilder` 就能做显隐动画）。')
       ..writeln()
       ..writeln('## 组件全集')
       ..writeln()
