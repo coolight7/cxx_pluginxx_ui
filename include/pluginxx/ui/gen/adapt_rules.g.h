@@ -47,6 +47,9 @@ inline constexpr AdaptRuleEntry kAdaptRules[] = {
     {"Sparkline", AdaptRule::PlainTextMono},
     {"Diagram", AdaptRule::PlainTextMono},
     {"musicxx.Shader", AdaptRule::Skip},
+    {"musicxx.AnimatedBuilder", AdaptRule::Flatten},
+    {"musicxx.SizeTransition", AdaptRule::Flatten},
+    {"musicxx.FadeTransition", AdaptRule::Flatten},
 };
 inline constexpr std::size_t kAdaptRuleCount =
     sizeof(kAdaptRules) / sizeof(kAdaptRules[0]);

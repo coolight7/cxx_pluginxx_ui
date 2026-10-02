@@ -468,6 +468,23 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
       item.resolutionScale = _num(json, 'resolutionScale', 1);
       item.shaderArgs = json['args'];
       return item;
+    case 'musicxx.AnimatedBuilder':
+      // 通道表与过渡控制值都保留原始 JSON：值表达式由客户端（GUI）求值
+      item.animValues = json['values'];
+      item.maxFps = _num(json, 'maxFps', 0).toInt();
+      item.children = children('children', 'musicxx.AnimatedBuilder.children');
+      return item;
+    case 'musicxx.SizeTransition':
+    case 'musicxx.FadeTransition':
+      item.animValue = json['value'];
+      item.value = _num(json, 'value', 1);
+      item.curve = _enum(json, 'curve', kEnumEase, '');
+      if (canonical == 'musicxx.SizeTransition') {
+        item.axis = _enum(json, 'axis', kEnumAxis, 'vertical');
+        item.axisAlignment = _num(json, 'axisAlignment', -1);
+      }
+      item.children = children('children', '$canonical.children');
+      return item;
     default:
       return item;
   }
@@ -1097,6 +1114,31 @@ Map<String, Object?> dumpItem(ItemData item) {
       if (item.maxFps > 0) {
         out['maxFps'] = item.maxFps;
       }
+      break;
+    case 'musicxx.AnimatedBuilder':
+      if (null != item.animValues) {
+        out['values'] = item.animValues;
+      }
+      if (item.maxFps > 0) {
+        out['maxFps'] = item.maxFps;
+      }
+      putChildren();
+      break;
+    case 'musicxx.SizeTransition':
+      out['axis'] = item.axis;
+      out['axisAlignment'] = item.axisAlignment;
+      out['value'] = item.animValue ?? item.value;
+      if (item.curve.isNotEmpty) {
+        out['curve'] = item.curve;
+      }
+      putChildren();
+      break;
+    case 'musicxx.FadeTransition':
+      out['value'] = item.animValue ?? item.value;
+      if (item.curve.isNotEmpty) {
+        out['curve'] = item.curve;
+      }
+      putChildren();
       break;
   }
   final Object? action = _actionToJson(item.action);

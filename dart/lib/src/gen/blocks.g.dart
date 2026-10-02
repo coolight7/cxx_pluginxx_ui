@@ -45,6 +45,9 @@ const List<BlockMeta> kBlockTable = <BlockMeta>[
   BlockMeta('Sparkline', BlockLevel.optional, '', AdaptRule.plainTextMono),
   BlockMeta('Diagram', BlockLevel.optional, '', AdaptRule.plainTextMono),
   BlockMeta('musicxx.Shader', BlockLevel.client, 'musicxx', AdaptRule.skip),
+  BlockMeta('musicxx.AnimatedBuilder', BlockLevel.client, 'musicxx', AdaptRule.flatten),
+  BlockMeta('musicxx.SizeTransition', BlockLevel.client, 'musicxx', AdaptRule.flatten),
+  BlockMeta('musicxx.FadeTransition', BlockLevel.client, 'musicxx', AdaptRule.flatten),
 ];
 
 /// 全部组件的名字（顺序与定义文件一致）
@@ -76,6 +79,9 @@ const List<String> kBlockNames = <String>[
   'Sparkline',
   'Diagram',
   'musicxx.Shader',
+  'musicxx.AnimatedBuilder',
+  'musicxx.SizeTransition',
+  'musicxx.FadeTransition',
 ];
 
 /// 支持的控制形态（第一版）
@@ -183,6 +189,28 @@ const List<String> kEnumImageFit = <String>[
   'none',
 ];
 
+/// 枚举 axis 的取值
+const List<String> kEnumAxis = <String>[
+  'vertical',
+  'horizontal',
+];
+
+/// 枚举 ease 的取值
+const List<String> kEnumEase = <String>[
+  'linear',
+  'inQuad',
+  'outQuad',
+  'inOutQuad',
+  'inCubic',
+  'outCubic',
+  'inOutCubic',
+  'inSine',
+  'outSine',
+  'inOutSine',
+  'outBack',
+  'outElastic',
+];
+
 /// 枚举名 → 取值列表
 const Map<String, List<String>> kEnums = <String, List<String>>{
   'textType': kEnumTextType,
@@ -196,4 +224,6 @@ const Map<String, List<String>> kEnums = <String, List<String>>{
   'actionKind': kEnumActionKind,
   'sparkStyle': kEnumSparkStyle,
   'imageFit': kEnumImageFit,
+  'axis': kEnumAxis,
+  'ease': kEnumEase,
 };

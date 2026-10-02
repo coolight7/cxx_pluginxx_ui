@@ -449,6 +449,16 @@ class ItemData {
   bool animate = true;
   double resolutionScale = 1;
 
+  // ---- 客户端专属块：动画（musicxx.AnimatedBuilder / musicxx.*Transition）----
+  /// 动画作用域的通道表（原始 JSON：名字 → 值表达式节点）
+  Object? animValues;
+
+  /// 过渡块的控制值（原始 JSON：数字或值表达式节点；非空时以它为准）
+  Object? animValue;
+  String axis = 'vertical';
+  double axisAlignment = -1;
+  String curve = '';
+
   // ---- 动作与兜底 ----
   UiAction? action;
   String fallback = '';
@@ -538,6 +548,11 @@ class ItemData {
     ..maxFps = maxFps
     ..animate = animate
     ..resolutionScale = resolutionScale
+    ..animValues = animValues
+    ..animValue = animValue
+    ..axis = axis
+    ..axisAlignment = axisAlignment
+    ..curve = curve
     ..action = action
     ..fallback = fallback;
 }

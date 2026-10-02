@@ -29,7 +29,9 @@
     "controlKind": ["buttons", "select", "checkbox", "switch", "text", "number"],
     "actionKind": ["none", "dispatch", "route", "command"],
     "sparkStyle": ["block", "bar"],
-    "imageFit": ["contain", "cover", "fill", "fitWidth", "fitHeight", "none"]
+    "imageFit": ["contain", "cover", "fill", "fitWidth", "fitHeight", "none"],
+    "axis": ["vertical", "horizontal"],
+    "ease": ["linear", "inQuad", "outQuad", "inOutQuad", "inCubic", "outCubic", "inOutCubic", "inSine", "outSine", "inOutSine", "outBack", "outElastic"]
   },
   "adapt": {
     "Text": "terminal",
@@ -58,7 +60,10 @@
       "Diff": "plainTextMono",
       "Sparkline": "plainTextMono",
       "Diagram": "plainTextMono",
-    "musicxx.Shader": "skip"
+    "musicxx.Shader": "skip",
+    "musicxx.AnimatedBuilder": "flatten",
+    "musicxx.SizeTransition": "flatten",
+    "musicxx.FadeTransition": "flatten"
   },
   "blocks": [
     {
@@ -472,6 +477,58 @@
         "bundle": "shader/background.shaderbundle",
         "speed": 1,
         "animate": true
+      }
+    },
+    {
+      "kind": "musicxx.AnimatedBuilder",
+      "level": "client",
+      "client": "musicxx",
+      "doc": "动画作用域：声明若干通道（each 是一条值表达式），子树每帧重建（其他客户端展开子节点）",
+      "fields": [
+        { "name": "values", "type": "json" },
+        { "name": "maxFps", "type": "int" },
+        { "name": "children", "type": "items" }
+      ],
+      "sample": {
+        "kind": "musicxx.AnimatedBuilder",
+        "values": { "h": { "kind": "lfo", "periodMs": 1600, "from": 40, "to": 72 } },
+        "maxFps": 30,
+        "children": [ { "kind": "Text", "text": "动画内容" } ]
+      }
+    },
+    {
+      "kind": "musicxx.SizeTransition",
+      "level": "client",
+      "client": "musicxx",
+      "doc": "尺寸过渡：按 value（0~1）把子节点从 0 撑开 / 收拢（其他客户端展开子节点）",
+      "fields": [
+        { "name": "axis", "type": "enum:axis", "default": "vertical" },
+        { "name": "axisAlignment", "type": "float", "default": -1 },
+        { "name": "value", "type": "json" },
+        { "name": "curve", "type": "enum:ease" },
+        { "name": "children", "type": "items" }
+      ],
+      "sample": {
+        "kind": "musicxx.SizeTransition",
+        "axis": "vertical",
+        "value": { "kind": "const", "value": 1 },
+        "children": [ { "kind": "Text", "text": "撑开的内容" } ]
+      }
+    },
+    {
+      "kind": "musicxx.FadeTransition",
+      "level": "client",
+      "client": "musicxx",
+      "doc": "透明度过渡：按 value（0~1）淡入淡出（其他客户端展开子节点）",
+      "fields": [
+        { "name": "value", "type": "json" },
+        { "name": "curve", "type": "enum:ease" },
+        { "name": "children", "type": "items" }
+      ],
+      "sample": {
+        "kind": "musicxx.FadeTransition",
+        "value": { "kind": "const", "value": 1 },
+        "children": [ { "kind": "Text", "text": "淡入的内容" } ]
       }
     }
   ]

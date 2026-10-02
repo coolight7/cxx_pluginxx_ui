@@ -108,6 +108,15 @@ inline constexpr BlockMeta kBlockTable[] = {
     {"musicxx.Shader", BlockLevel::Client,
      "Musicxx", AdaptRule::Skip,
      "插件着色器（字段集照搬 shader bundle 文档；其他客户端跳过）"},
+    {"musicxx.AnimatedBuilder", BlockLevel::Client,
+     "Musicxx", AdaptRule::Flatten,
+     "动画作用域：声明若干通道（each 是一条值表达式），子树每帧重建（其他客户端展开子节点）"},
+    {"musicxx.SizeTransition", BlockLevel::Client,
+     "Musicxx", AdaptRule::Flatten,
+     "尺寸过渡：按 value（0~1）把子节点从 0 撑开 / 收拢（其他客户端展开子节点）"},
+    {"musicxx.FadeTransition", BlockLevel::Client,
+     "Musicxx", AdaptRule::Flatten,
+     "透明度过渡：按 value（0~1）淡入淡出（其他客户端展开子节点）"},
 };
 inline constexpr std::size_t kBlockCount = sizeof(kBlockTable) / sizeof(kBlockTable[0]);
 
@@ -194,6 +203,24 @@ inline constexpr std::string_view kEnumImageFit[] = {
     "fitWidth",
     "fitHeight",
     "none",
+};
+inline constexpr std::string_view kEnumAxis[] = {
+    "vertical",
+    "horizontal",
+};
+inline constexpr std::string_view kEnumEase[] = {
+    "linear",
+    "inQuad",
+    "outQuad",
+    "inOutQuad",
+    "inCubic",
+    "outCubic",
+    "inOutCubic",
+    "inSine",
+    "outSine",
+    "inOutSine",
+    "outBack",
+    "outElastic",
 };
 
 } // namespace gen

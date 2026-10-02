@@ -204,6 +204,51 @@ void main() {
     expect(dumpItem(item)['width'], <String, Object?>{'kind': 'const', 'value': 120});
   });
 
+  test('动画块（musicxx.AnimatedBuilder / SizeTransition / FadeTransition）解析与往返', () {
+    final ItemData builder = parseBlock(<String, Object?>{
+      'kind': 'musicxx.AnimatedBuilder',
+      'values': <String, Object?>{
+        'h': <String, Object?>{'kind': 'const', 'value': 40},
+      },
+      'maxFps': 24,
+      'children': <Object?>[
+        <String, Object?>{'kind': 'Text', 'text': '动画子树'},
+      ],
+    });
+    expect(builder.kind, 'musicxx.AnimatedBuilder');
+    expect((builder.animValues! as Map)['h'], isNotNull);
+    expect(builder.maxFps, 24);
+    expect(builder.children.length, 1);
+
+    final ItemData size = parseBlock(<String, Object?>{
+      'kind': 'musicxx.SizeTransition',
+      'axis': 'horizontal',
+      'axisAlignment': 0,
+      'value': <String, Object?>{'kind': 'source', 'name': 'h'},
+      'curve': 'outCubic',
+      'children': <Object?>[
+        <String, Object?>{'kind': 'Text', 'text': '撑开'},
+      ],
+    });
+    expect(size.axis, 'horizontal');
+    expect(size.axisAlignment, 0);
+    expect(size.curve, 'outCubic');
+    expect((size.animValue! as Map)['name'], 'h');
+    expect(dumpItem(size)['value'], size.animValue);
+
+    // 值是数字时照旧（原始值与数值字段都能拿到）
+    final ItemData fade = parseBlock(<String, Object?>{
+      'kind': 'musicxx.FadeTransition',
+      'value': 0.5,
+      'children': <Object?>[
+        <String, Object?>{'kind': 'Text', 'text': '淡入'},
+      ],
+    });
+    expect(fade.value, 0.5);
+    expect(fade.animValue, 0.5, reason: '数字也留着原始值（求值时以它为准）');
+    expect(dumpItem(fade)['value'], 0.5);
+  });
+
   test('Progress.value 接受值表达式', () {
     final Map<String, Object?> node = <String, Object?>{
       'kind': 'source',

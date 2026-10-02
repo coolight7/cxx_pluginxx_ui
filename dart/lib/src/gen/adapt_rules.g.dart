@@ -32,4 +32,7 @@ const Map<String, AdaptRule> kAdaptRules = <String, AdaptRule>{
   'Sparkline': AdaptRule.plainTextMono,
   'Diagram': AdaptRule.plainTextMono,
   'musicxx.Shader': AdaptRule.skip,
+  'musicxx.AnimatedBuilder': AdaptRule.flatten,
+  'musicxx.SizeTransition': AdaptRule.flatten,
+  'musicxx.FadeTransition': AdaptRule.flatten,
 };

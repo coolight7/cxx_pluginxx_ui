@@ -84,6 +84,9 @@
 | `Sparkline` | optional | — | `data`* `height` `glyphStyle` `min` `max` `tone` `colors` `showLast` | 迷你趋势图（未实现时适配为末值文本） |
 | `Diagram` | optional | — | `mermaid`* | 状态图（未实现时适配为等宽文本） |
 | `musicxx.Shader` | client | musicxx | `bundle`* `args` `speed` `maxFps` `animate` `resolutionScale` | 插件着色器（字段集照搬 shader bundle 文档；其他客户端跳过） |
+| `musicxx.AnimatedBuilder` | client | musicxx | `values` `maxFps` `children` | 动画作用域：声明若干通道（each 是一条值表达式），子树每帧重建（其他客户端展开子节点） |
+| `musicxx.SizeTransition` | client | musicxx | `axis` `axisAlignment` `value` `curve` `children` | 尺寸过渡：按 value（0~1）把子节点从 0 撑开 / 收拢（其他客户端展开子节点） |
+| `musicxx.FadeTransition` | client | musicxx | `value` `curve` `children` | 透明度过渡：按 value（0~1）淡入淡出（其他客户端展开子节点） |
 
 `*` = 必填。字段类型：`size` = 上面三种尺寸形态；`edges` = 四边数值；`text` = TextValue；
 `action` = 上面四种动作；`items` = 子块数组；其余同名。
@@ -119,6 +122,9 @@
 | `Sparkline` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
 | `Diagram` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
 | `musicxx.Shader` | `skip` | 跳过（无降级形态） |
+| `musicxx.AnimatedBuilder` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
+| `musicxx.SizeTransition` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
+| `musicxx.FadeTransition` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
 
 适配保证收敛：降级结果只包含客户端声明支持的块，最多降到 `Text`（`terminal` 规则）。
 
