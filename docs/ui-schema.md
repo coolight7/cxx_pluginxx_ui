@@ -90,7 +90,7 @@
 | `Markdown` | core | — | `text`* | markdown 源码 |
 | `Icon` | optional | — | `name` `glyph` `size` `tone` `alt` | 图标：GUI 用 name，终端用 glyph（都没有就跳过） |
 | `Stack` | optional | — | `align` `vertical` `children` | 叠放（终端适配为取最后一个子节点） |
-| `Image` | optional | — | `source` `src` `width` `height` `aspect` `radius` `fit` `alt` | 图片：source 不做限制（惯例 cover/file/asset/url），取不到用 alt 兜底 |
+| `Image` | optional | — | `source` `src` `width` `height` `aspect` `radius` `blur` `opacity` `fit` `alt` | 图片：source 不做限制（惯例 cover/file/asset/url），取不到用 alt 兜底；支持圆角、模糊与不透明度 |
 | `Diff` | optional | — | `path` `oldStr` `newStr` | 差异对比（未实现时适配为等宽文本） |
 | `Sparkline` | optional | — | `data`* `height` `glyphStyle` `min` `max` `tone` `colors` `showLast` | 迷你趋势图（未实现时适配为末值文本） |
 | `Diagram` | optional | — | `mermaid`* | 状态图（未实现时适配为等宽文本） |

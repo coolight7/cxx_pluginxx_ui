@@ -95,7 +95,7 @@ inline constexpr BlockMeta kBlockTable[] = {
      "叠放（终端适配为取最后一个子节点）"},
     {"Image", BlockLevel::Optional,
      "", AdaptRule::AltText,
-     "图片：source 不做限制（惯例 cover/file/asset/url），取不到用 alt 兜底"},
+     "图片：source 不做限制（惯例 cover/file/asset/url），取不到用 alt 兜底；支持圆角、模糊与不透明度"},
     {"Diff", BlockLevel::Optional,
      "", AdaptRule::PlainTextMono,
      "差异对比（未实现时适配为等宽文本）"},

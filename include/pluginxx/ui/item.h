@@ -286,6 +286,8 @@ struct Item {
     SizeValue   keyWidth;         ///< KV.keyWidth（Auto = 按最长键自适应）
     double      aspect = 0.0;     ///< >0 = 纵横比（宽/高）
     double      radius = 0.0;     ///< 圆角（Image）
+    double      blur = 0.0;       ///< 模糊强度（Image.blur，sigma，逻辑像素；0 = 不模糊）
+    double      opacity = 1.0;    ///< 不透明度（Image.opacity，0~1）
     std::string fit;              ///< Image.fit（contain/cover/…）
     int         flex = 1;         ///< Expanded.flex / Spacer.flex（≥1）
 

@@ -434,6 +434,12 @@ class ItemData {
   SizeValue keyWidth = SizeValue.autoValue;
   double aspect = 0;
   double radius = 0;
+
+  /// `Image.blur`：模糊强度（sigma，逻辑像素；0 = 不模糊）
+  double blur = 0;
+
+  /// `Image.opacity`：不透明度（0~1；1 = 完全不透明）
+  double opacity = 1;
   String fit = 'contain';
   int flex = 1;
 
@@ -560,6 +566,8 @@ class ItemData {
     ..keyWidth = keyWidth
     ..aspect = aspect
     ..radius = radius
+    ..blur = blur
+    ..opacity = opacity
     ..fit = fit
     ..flex = flex
     ..hasGap = hasGap

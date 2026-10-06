@@ -54,6 +54,17 @@ String _enum(Map<String, Object?> json, String key, List<String> values, String 
 String _tone(Map<String, Object?> json, String key, [String fallback = 'normal']) =>
     _enum(json, key, kEnumTone, fallback);
 
+/// 数值钳制（解析时的范围保护：NaN 与越界值都退化成边界值）
+double _clampRange(double value, double min, double max) {
+  if (value.isNaN || value < min) {
+    return min;
+  }
+  if (value > max) {
+    return max;
+  }
+  return value;
+}
+
 /// 取上限（0 = 不限制）：解析规模限制已移除，`Limits` 的默认值就是 0
 int _limitCount(int value, int limit) =>
     (limit > 0 && value > limit) ? limit : value;
@@ -425,6 +436,9 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
       item.src = _str(json, 'src');
       item.aspect = _num(json, 'aspect', 0);
       item.radius = _num(json, 'radius', 0);
+      // 模糊与不透明度：写错值只退化成边界值（负数按 0、超过上限按上限）
+      item.blur = _clampRange(_num(json, 'blur', 0), 0, 64);
+      item.opacity = _clampRange(_num(json, 'opacity', 1), 0, 1);
       item.fit = _enum(json, 'fit', kEnumImageFit, 'contain');
       item.alt = _textValue(json['alt']);
       if (_has(json, 'width')) {
@@ -1083,6 +1097,12 @@ Map<String, Object?> dumpItem(ItemData item) {
       }
       if (item.radius > 0) {
         out['radius'] = item.radius;
+      }
+      if (item.blur > 0) {
+        out['blur'] = item.blur;
+      }
+      if (item.opacity < 1) {
+        out['opacity'] = item.opacity;
       }
       out['fit'] = item.fit;
       if (item.alt.isNotEmpty) {

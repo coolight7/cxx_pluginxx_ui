@@ -729,6 +729,11 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
         item.src      = fieldString(json, "src");
         item.aspect   = fieldNumber(json, "aspect", 0.0);
         item.radius   = fieldNumber(json, "radius", 0.0);
+        // 模糊与不透明度：写错值只退化成边界值（NaN 与负数按 0、超过上限按上限）
+        const double blurValue = fieldNumber(json, "blur", 0.0);
+        item.blur    = (blurValue >= 0.0) ? ((blurValue <= 64.0) ? blurValue : 64.0) : 0.0;
+        const double opacityValue = fieldNumber(json, "opacity", 1.0);
+        item.opacity = (opacityValue >= 0.0) ? ((opacityValue <= 1.0) ? opacityValue : 1.0) : 0.0;
         item.fit      = fieldEnum(json, "fit", PLUGINXX_UI_ENUM(gen::kEnumImageFit), "contain");
         item.alt      = textValueOf(json["alt"]);
         if (fieldHas(json, "width")) {
@@ -1229,6 +1234,12 @@ Json dumpBlockImpl(const Item& item) {
         }
         if (item.radius > 0.0) {
             out["radius"] = item.radius;
+        }
+        if (item.blur > 0.0) {
+            out["blur"] = item.blur;
+        }
+        if (item.opacity < 1.0) {
+            out["opacity"] = item.opacity;
         }
         out["fit"] = item.fit;
         if (!item.alt.empty()) {

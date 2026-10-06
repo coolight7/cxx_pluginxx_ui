@@ -399,7 +399,7 @@
     {
       "kind": "Image",
       "level": "optional",
-      "doc": "图片：source 不做限制（惯例 cover/file/asset/url），取不到用 alt 兜底",
+      "doc": "图片：source 不做限制（惯例 cover/file/asset/url），取不到用 alt 兜底；支持圆角、模糊与不透明度",
       "fields": [
         { "name": "source", "type": "string", "default": "file" },
         { "name": "src", "type": "string" },
@@ -407,6 +407,8 @@
         { "name": "height", "type": "size" },
         { "name": "aspect", "type": "float" },
         { "name": "radius", "type": "float" },
+        { "name": "blur", "type": "float", "default": 0, "min": 0, "max": 64 },
+        { "name": "opacity", "type": "float", "default": 1, "min": 0, "max": 1 },
         { "name": "fit", "type": "enum:imageFit", "default": "contain" },
         { "name": "alt", "type": "text" }
       ],
