@@ -894,7 +894,7 @@ class Generator {
       ..writeln('// 参数用 utilxx_base::Json 传（对象），键即组件参数名：')
       ..writeln('//   $namespace::listRow({{"title", "切歌次数"}, {"trailing", "3"}})')
       ..writeln('// 传 env（客户端能力摘要）时按目标选择更合适的变体；不传 env 时产出中立描述，')
-      ..writeln('// 由客户端的 adapt() 收口。')
+      ..writeln('// 由客户端的 adapt() 决定最终形态。')
       ..writeln()
       ..writeln('#include <pluginxx/ui/item.h>')
       ..writeln('#include <pluginxx/ui/kit_runtime.h>')
@@ -1226,7 +1226,7 @@ class Generator {
       ..writeln('> 本文件由 `tools/gen_ui.dart` 生成。')
       ..writeln()
       ..writeln('纪律：① 只写数值单位 u（8 / 12 / 20 这类）；② 不引用客户端专属块；③ 不含逻辑（只装配）。')
-      ..writeln('需要项目特有的间距口径时，由扩展 kit 覆盖同名组件实现。')
+      ..writeln('需要项目特有的间距规则时，由扩展 kit 覆盖同名组件实现。')
       ..writeln()
       ..writeln('| 组件 | 参数 | 说明 |')
       ..writeln('|---|---|---|');

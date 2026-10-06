@@ -90,7 +90,7 @@ PLUGINXX_UI_TEST(kit_按目标选择变体) {
     PLUGINXX_UI_CHECK_EQ(text.kind, std::string("Text"), "不支持 Icon 时退成文本");
     PLUGINXX_UI_CHECK_EQ(text.text.fallback, std::string("▶"), "用 glyph");
 
-    // 目标未知（没有 env）：给中立描述，由客户端的 adapt() 收口
+    // 目标未知（没有 env）：给中立描述，由客户端的 adapt() 决定最终形态
     const Item neutral = pluginxx::ui::kit::icon({{"name", "play"}, {"glyph", "▶"}});
     PLUGINXX_UI_CHECK_EQ(neutral.kind, std::string("Icon"), "中立描述用第一个变体");
 }

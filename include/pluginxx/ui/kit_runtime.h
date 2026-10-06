@@ -34,7 +34,7 @@ using KitTemplateLookup = utilxx_base::Json (*)(std::string_view name);
 
 /// 展开 kit 组件
 /// - `params` 是参数对象（键 = 参数名；缺的参数用模板里的默认值）
-/// - `env` 为空 = 目标未知（产出中立描述，由客户端的 adapt() 收口）
+/// - `env` 为空 = 目标未知（产出中立描述，由客户端的 adapt() 决定最终形态）
 /// - 组件名未知时返回 kind 为空的项
 PLUGINXX_UI_API Item
     expandKit(std::string_view name, const utilxx_base::Json& params, const Capabilities* env,

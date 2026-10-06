@@ -21,7 +21,7 @@ class KitRuntime {
   /// 展开一个 kit 组件
   ///
   /// - [params] 是参数表（缺的参数用模板里的默认值）
-  /// - [env] 为空 = 目标未知（产出中立描述，由客户端的 adapt() 收口）
+  /// - [env] 为空 = 目标未知（产出中立描述，由客户端的 adapt() 决定最终形态）
   /// - [templates] 是生成的模板表（如 gen/kit.g.dart 的 `kKitTemplates`）
   static Map<String, Object?>? expand(
     String name,

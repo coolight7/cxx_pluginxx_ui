@@ -122,9 +122,9 @@ PLUGINXX_UI_TEST(纯文本的标题与副标题) {
     PLUGINXX_UI_CHECK(contains(out, "全部核心组件各一份"), "副标题（缺键回退 + 占位替换）");
 }
 
-PLUGINXX_UI_TEST(纯文本两侧一致的口径) {
+PLUGINXX_UI_TEST(纯文本两侧结果一致) {
     // 同一批夹具在 C++ 与 Dart 两侧跑纯文本降级，结果必须逐字节一致。
-    // 金文件由本用例在设置 PLUGINXX_UI_WRITE_GOLDEN=1 时重写（改口径后要重跑一次并提交）。
+    // 金文件由本用例在设置 PLUGINXX_UI_WRITE_GOLDEN=1 时重写（改了规则后要重跑一次并提交）。
     static const char* kFixtures[] = {
         "core.json",
         "gui_heavy.json",

@@ -26,7 +26,7 @@ bool present(const Json& value) {
     return true;
 }
 
-/// `$require` 的判空口径：null、空字符串、空数组都算"空"
+/// `$require` 的判空规则：null、空字符串、空数组都算"空"
 bool isEmptyValue(const Json& value) {
     if (!present(value)) {
         return true;

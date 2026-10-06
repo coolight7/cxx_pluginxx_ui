@@ -57,7 +57,7 @@ class _Ctx {
   final int width;
   final String Function(String key)? lookup;
 
-  /// 留白换算基准：`Padding` 的左留白（u）按它折算成缩进列数（与 C++ 侧同口径）
+  /// 留白换算基准：`Padding` 的左留白（u）按它折算成缩进列数（与 C++ 侧规则一致）
   final double cellWidth;
 
   String text(TextValue value) => value.resolve(lookup: lookup);
@@ -112,7 +112,7 @@ List<String> wrapLines(String text, int width) {
 
 String _linesOf(String text, _Ctx ctx) => wrapLines(text, ctx.width).join('\n');
 
-/// `Padding` 的左留白折算成缩进列数（u → 列，四舍五入；与 C++ 侧同口径）
+/// `Padding` 的左留白折算成缩进列数（u → 列，四舍五入；与 C++ 侧规则一致）
 int _indentColumns(ItemData item, _Ctx ctx) {
   final double cell = ctx.cellWidth > 0 ? ctx.cellWidth : kDefaultCellWidth;
   final double left = item.hasPadding ? item.padding.left : 0;
@@ -193,7 +193,7 @@ String? _itemText(ItemData item, _Ctx ctx) {
       return column.isEmpty ? null : column;
     case 'Padding':
       // 留白按左留白折算成缩进列数（u → 列，四舍五入）：折行宽度扣掉缩进，每行加前导空格。
-      // 与 C++ 侧同口径（见 src/plain_text.cpp 的 Padding 分支）。
+      // 与 C++ 侧规则一致（见 src/plain_text.cpp 的 Padding 分支）。
       final int indent = _indentColumns(item, ctx);
       final String body =
           _childrenText(item.children, ctx.withWidth(ctx.availableWidth(indent)));

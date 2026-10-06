@@ -1,6 +1,6 @@
 // 插件界面描述层的规范模型（Dart 绑定，schema v1）
 //
-// 与 C++ 绑定（include/pluginxx/ui/item.h）一一对应：字段名、默认值、解析口径都
+// 与 C++ 绑定（include/pluginxx/ui/item.h）一一对应：字段名、默认值、解析规则都
 // 保持一致，两端由 fixtures/ 下的同一批夹具约束。
 //
 // 三条约定（与 C++ 侧相同）：
@@ -214,7 +214,7 @@ class TextValue {
   static const TextValue empty = TextValue();
 }
 
-/// 值 → 文本（占位替换与字符串插值共用；与 C++ 侧口径一致）
+/// 值 → 文本（占位替换与字符串插值共用；与 C++ 侧规则一致）
 String stringifyValue(Object? value) {
   if (null == value) {
     return '';

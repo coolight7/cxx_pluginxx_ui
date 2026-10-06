@@ -689,7 +689,7 @@ std::string plainTextJson(const utilxx_base::Json& json, const int width, const 
     return plainTextDocument(parseDocument(json), width, lookup);
 }
 
-// ===== 显示列宽辅助（终端渲染与文本降级共用同一口径）=====
+// ===== 显示列宽辅助（终端渲染与文本降级共用同一套规则）=====
 
 std::string_view prefixByWidth(const std::string_view text, const int maxWidth, int& usedWidth) {
     usedWidth = 0;

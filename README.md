@@ -21,7 +21,7 @@ include/pluginxx/ui/
   parse.h           JSON → 模型（校验 + 上限 + 提示）
   adapt.h           模型 + 能力 → 客户端可渲染的模型（降级规则）
   plain_text.h      模型 → 纯文本（日志 / CLI / 降级）
-  display_width.h   显示列宽口径（CJK=2 列）
+  display_width.h   显示列宽的算法（CJK 算 2 列）
   build.h           构建器（header-only）
   kit_runtime.h     kit 模板展开（具体组件见生成的 gen/kit.g.h）
   lint.h            开发期检查
@@ -84,7 +84,7 @@ cd dart && dart test
 node tools/kit_js_test.js
 ```
 
-纯文本金文件（`fixtures/plaintext.golden.json`）由 C++ 侧生成：口径调整后跑一次
+纯文本金文件（`fixtures/plaintext.golden.json`）由 C++ 侧生成：改了规则后跑一次
 `PLUGINXX_UI_WRITE_GOLDEN=1 <测试可执行文件>` 并提交新文件，Dart 侧会自动比对。
 
 ## 扩展 kit（各客户端自己）

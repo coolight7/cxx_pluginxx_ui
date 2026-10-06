@@ -44,7 +44,7 @@ PLUGINXX_UI_API bool
 /// 数值格式化（两端一致的文本形态）：整数不带小数点，小数最多两位且去掉尾随 0
 PLUGINXX_UI_API std::string formatNumber(double value);
 
-/// 忽略大小写的相等比较（组件名与枚举值都按这个口径比较）
+/// 忽略大小写的相等比较（组件名与枚举值都用它比较）
 PLUGINXX_UI_API bool iequals(std::string_view a, std::string_view b);
 
 } // namespace detail
