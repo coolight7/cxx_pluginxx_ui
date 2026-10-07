@@ -93,7 +93,7 @@ dart run tools/gen_ui.dart --check    # 提交前检查：生成物与定义不�
 | `controls` | 真正实现了的控件形态（`buttons` / `select` / `checkbox` / `switch` / `text` / `number`） |
 | `cell` | 只有格子模型的客户端才有：每个字符格相当于多少 u（默认 `{8, 20}`）；GUI 省略 = 1u 就是 1 逻辑像素 |
 | `gap` | 本客户端的默认行距（`Gap.size` 缺省时用它，默认 12） |
-| `icons` | 可选：认识的图标名清单（各客户端各自定义，插件据此选 `Icon.name`，不认识就用 `glyph`） |
+| `icons` | 可选：认识的图标名清单 —— **只有"客户端自己有一套固定图标"时才写**；客户端没有这套东西（图标由插件自带资源提供，如 musicxx 的 `resource/svg/`）就不要写这一项，`Icon.name` 的含义由客户端在自己的文档里约定 |
 | `percent` / `aspect` | 是否支持这两种尺寸形态（支持就照实写，不支持由 `adapt` 换掉） |
 | `limits` | 解析与渲染上限（层级/数量/文本长度/表格行列…）；不填取库默认值 |
 
@@ -113,7 +113,7 @@ final PluginCapabilities caps = PluginCapabilities(
   kind: 'gui',
   blocks: ExternPluginUiCaps_c.blocks,
   controls: ExternPluginUiCaps_c.controls,
-  icons: ExternPluginUiCaps_c.icons,
+  // 没有图标清单：musicxx 的图标由插件自带（resource/svg/），客户端不发布 icons
 );
 ```
 
@@ -371,7 +371,8 @@ kit 复制进示例插件目录）。
 
 ### 8.2 可选组件（不实现就靠 `adapt` 降级，**不要声明进能力段**）
 
-`Icon`（GUI 用 `name`、终端用 `glyph`；两边都没有就跳过）、`Image`（取不到源用 `alt`）、
+`Icon`（GUI 用 `name`：含义由客户端约定 —— musicxx 里是插件自带的 svg 名，没有就退回 `glyph`；
+终端用 `glyph`；两边都没有就跳过）、`Image`（取不到源用 `alt`）、
 `Stack`、`Diff`、`Sparkline`、`Diagram`，以及各客户端的专属块（如 `musicxx.Shader`）。
 
 ### 8.3 动作与控件通道
