@@ -74,7 +74,7 @@ scripts: [pluginxx_ui_kit.js, <client>_ui_kit.js, plugin.js]
 
 ```bash
 dart run tools/gen_ui.dart            # 重新生成
-dart run tools/gen_ui.dart --check    # 提交前门禁：生成物与定义不一致时退出码 1
+dart run tools/gen_ui.dart --check    # 提交前检查：生成物与定义不一致时退出码 1
 ```
 
 ---
