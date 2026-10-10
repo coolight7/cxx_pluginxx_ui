@@ -5,7 +5,7 @@
 | 角色 | 要做的事 | 看哪几节 |
 |---|---|---|
 | **客户端**（真正的渲染器：终端界面、Flutter 界面） | 声明并发布自己的能力，解析插件的描述、适配、渲染、把控件与动作接起来 | §2、§4（控件与动作）、§8（新增渲染器清单） |
-| **宿主**（转发内容、不渲染，例如 musicxx 的原生宿主库） | 只把能力段与内容原样搬运，更新 C ABI 配置 | §3 |
+| **插件框架**（转发内容、不渲染，例如主程序的原生插件框架库） | 只把能力段与内容原样搬运，更新 C ABI 配置 | §3 |
 | **插件作者** | 用构建器或 kit 组装描述，按能力协商选择组件 | §5、§6 |
 
 组件的字段、枚举与适配规则见生成的 [`ui-schema.md`](ui-schema.md)，基础 kit 见
@@ -24,7 +24,7 @@ target_link_libraries(<你的目标> PRIVATE cxx_pluginxx_ui_static)
 
 - `cxx_pluginxx_ui`（INTERFACE，只有头）：只写构建器、只序列化 `<pluginxx/ui.h>` 里的模型时够用；
 - `cxx_pluginxx_ui_static`（静态库）：用到 `parse*` / `adapt*` / `plainText*` / `lint*` /
-  `capabilitiesToJson` 这些有实现的部分时必须链接它（宿主库与插件 SDK 都要链，插件才画得出描述）。
+  `capabilitiesToJson` 这些有实现的部分时必须链接它（插件框架库与插件 SDK 都要链，插件才画得出描述）。
 
 库本身依赖 `cxx_utilxx_base`（JSON）与 `fmt`，由 CMake 的 `find_dependency` 自动解析；
 头文件部分零依赖（`item.h` 只用标准库）。
@@ -63,7 +63,7 @@ scripts: [pluginxx_ui_kit.js, <client>_ui_kit.js, plugin.js]
 ```
 
 脚本执行后全局有 `pluginxx.ui.kit`（扩展 kit 与基础 kit 写的是同一个对象，后加载的覆盖同名组件）。
-宿主**不要**内置预置 kit：改了 kit 就会影响已经装好的插件。
+主程序与插件框架**不要**内置预置 kit：改了 kit 就会影响已经装好的插件。
 
 ### 1.4 子模块与生成物
 
@@ -127,7 +127,7 @@ final PluginCapabilities caps = PluginCapabilities(
 | 客户端 | 通道 | 插件侧读法 |
 |---|---|---|
 | agentxx（TUI） | 客户端状态快照 `get_client_state()` 的 `ui` 段：由 `PluginUiAdapter::uiCapabilitiesJson()` 提供（TUI 适配器直接返回 `capabilitiesToJson(tuiUiCapabilities())`，与渲染前 `adaptItems` 用的是同一份能力，不会分叉） | `ClientPluginBase::uiCapabilities()` / `supportsBlock()` |
-| musicxx（Flutter） | ① 宿主配置 `MusicxxPluginRuntimeConfig.uiCapabilities` → `musicxx.host.info().ui`；② 调用插件能力取页面时作为参数传（`{"view":"…","ui":{…}}`）；③ 管理页「调试」分页展示 | JS `musicxx.host.info().ui` / `musicxx.ui.support(name)`；原生 `host.get_info` |
+| musicxx（Flutter） | ① 主程序配置 `MusicxxPluginRuntimeConfig.uiCapabilities` → `musicxx.host.info().ui`；② 调用插件能力取页面时作为参数传（`{"view":"…","ui":{…}}`）；③ 管理页「调试」分页展示 | JS `musicxx.host.info().ui` / `musicxx.ui.support(name)`；原生 `host.get_info` |
 
 能力段在客户端生命周期内不变，插件侧按实例缓存解析结果即可。
 
@@ -213,16 +213,16 @@ auto renderable = pluginxx::ui::adaptDocument(doc, myCaps(), &adaptReport);
 
 ---
 
-## 3. 宿主接入（转发方，不渲染）
+## 3. 插件框架接入（转发方，不渲染）
 
-宿主不需要理解组件：它只搬运 JSON。
+插件框架不需要理解组件：它只搬运 JSON。
 
-- 把客户端的能力段原样放进宿主信息（例如 C ABI 配置结构体加一个字符串字段
-  `ui_capabilities`），宿主只校验"是不是 JSON 对象"，不解析内容；
+- 把客户端的能力段原样放进框架信息（例如 C ABI 配置结构体加一个字符串字段
+  `ui_capabilities`），插件框架只校验"是不是 JSON 对象"，不解析内容；
 - 取内容时把能力段作为参数传给插件（`{"view":"…","ui":{…}}`），插件在生成内容的那一刻就能
   按目标挑选组件；
-- **宿主不做适配、不读组件表**：内容由客户端解析与降级。宿主里再放一份组件清单只会多一处要同步；
-- 改了 C ABI 结构体（加字段）后：重新生成 Dart 绑定（ffigen）、宿主与 Dart 侧一起更新
+- **插件框架不做适配、不读组件表**：内容由主程序解析与降级。框架里再放一份组件清单只会多一处要同步；
+- 改了 C ABI 结构体（加字段）后：重新生成 Dart 绑定（ffigen）、插件框架与 Dart 侧一起更新
   （`struct_size` 会校验，混用新旧版本会直接报错）。
 
 ---
@@ -340,7 +340,7 @@ kit 复制进示例插件目录）。
 | 控件操作后界面没变化 | 控件没写 `action`，或写成了旧名（`capability` / `action`） | 动作只认 `dispatch` / `route` / `command` / `none`；字符串短写等于 `dispatch` |
 | `percent` 宽度没效果 | 父容器在这一轴无界（例如自动高度的纵向容器） | 高度基准会退化成内容尺寸；改父容器的尺寸约束 |
 | 终端里图片/着色器不见了 | 它们是可选级，`adapt` 按能力降级 | 插件侧用 `env.hasBlock('Image')` 之类挑替代结构 |
-| JS 插件报 `pluginxx is not defined` | 清单没写 `scripts`（kit 随插件目录分发，宿主不预置） | 清单加 `scripts: [pluginxx_ui_kit.js, <client>_ui_kit.js, plugin.js]` |
+| JS 插件报 `pluginxx is not defined` | 清单没写 `scripts`（kit 随插件目录分发，插件框架不预置） | 清单加 `scripts: [pluginxx_ui_kit.js, <client>_ui_kit.js, plugin.js]` |
 | 扩展 kit 与基础 kit 同名组件 | 两边的命名空间/加载顺序 | C++：各在自己的命名空间，可同时包含；JS：后加载的覆盖同名的 |
 
 ---

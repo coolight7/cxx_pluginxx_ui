@@ -41,7 +41,7 @@ endif ()
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/xx_platform_macros.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/xx_rpath.cmake")
 
-# 库产物安装目录: 嵌套构建时由宿主 superbuild 传入, 独立构建时随标准库目录
+# 库产物安装目录: 嵌套构建时由顶层 superbuild 传入, 独立构建时随标准库目录
 if (NOT DEFINED XX_EXEC_INSTALL_PREFIX)
   set(XX_EXEC_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 endif ()

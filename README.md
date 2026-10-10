@@ -40,7 +40,7 @@ tests/              C++ 单元测试
 
 | 绑定 | 内容 | 谁用 | 依赖 |
 |---|---|---|---|
-| C++ | 模型 + 解析 + 适配 + 文本降级 + 构建器 + 生成的常量与 kit | 宿主与动态库插件 | 头文件零依赖；实现依赖 `cxx_utilxx_base`（JSON） |
+| C++ | 模型 + 解析 + 适配 + 文本降级 + 构建器 + 生成的常量与 kit | 主程序与动态库插件 | 头文件零依赖；实现依赖 `cxx_utilxx_base`（JSON） |
 | Dart | 模型 + 解析 + 适配 + 文本降级 + 生成的常量与 kit | Flutter 渲染层 | 纯 Dart（无三方依赖） |
 | JS | 生成的基础 kit（构建器 + recipe 展开） | JS 插件 | 无 |
 
@@ -62,7 +62,7 @@ tests/              C++ 单元测试
 - **未知不致命**：未知组件走 `fallback` 或跳过；未知字段忽略；未知枚举值取默认值；超限截断。
 
 组件全集、字段与适配规则见生成的 [`docs/ui-schema.md`](docs/ui-schema.md)，基础 kit 见
-[`docs/kit.md`](docs/kit.md)；客户端 / 宿主 / 插件作者怎么接入见
+[`docs/kit.md`](docs/kit.md)；客户端 / 主程序 / 插件作者怎么接入见
 [`docs/integration.md`](docs/integration.md)（含"新增渲染器接入清单"）。
 
 ## 构建与测试
@@ -116,7 +116,7 @@ dart run tools/gen_ui.dart --ext-kit <客户端 kit 定义> \
 | 项目 | 接入 | 说明 |
 |---|---|---|
 | agentxx | `agent/third_party/cxx_pluginxx_ui` | TUI 渲染器消费适配后的模型；将来 GUI 客户端复用同一份描述层 |
-| mymusic | `package_extend/musicxx_extern_plugin/src/third_party/cxx_pluginxx_ui` | Flutter 渲染层用 Dart 绑定；宿主与插件用 C++ 绑定；JS 插件用生成的 kit |
+| mymusic | `package_extend/musicxx_extern_plugin/src/third_party/cxx_pluginxx_ui` | Flutter 渲染层用 Dart 绑定；主程序与插件用 C++ 绑定；JS插件用生成的 kit |
 
 ## 版本
 
