@@ -55,7 +55,7 @@ for (final ItemData block in renderable.blocks) {
 
 ### 1.3 JS
 
-把 `js/pluginxx_ui_kit.js`（或客户端扩展 kit）**随插件目录分发**，让插件清单按顺序装载它：
+把 `js/pluginxx_ui_kit.js`（或客户端扩展 kit）**随插件目录分发**，让插件清单按顺序加载它：
 
 ```yaml
 # plugin.yaml
