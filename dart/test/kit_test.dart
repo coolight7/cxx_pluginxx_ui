@@ -20,7 +20,7 @@ PluginCapabilities capsWithout(List<String> remove) {
 }
 
 void main() {
-  test('kit 列表行按参数装配', () {
+  test('kit 列表行按参数加载', () {
     final Map<String, Object?> row = listRow(title: '切歌次数', trailing: '3');
     expect(row['kind'], 'Block');
     expect(row['variant'], 'inset');
