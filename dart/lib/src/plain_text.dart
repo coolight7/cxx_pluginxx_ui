@@ -289,6 +289,9 @@ String? _itemText(ItemData item, _Ctx ctx) {
       return lines.isEmpty ? null : lines.join('\n');
     case 'Sparkline':
       return _sparklineText(item);
+    case 'ListViewBase':
+    case 'ListView':
+      return _listText(item, ctx);
     case 'Diagram':
       return item.mermaid.isEmpty ? null : _linesOf(item.mermaid, ctx);
     case 'musicxx.Shader':
@@ -314,6 +317,10 @@ String _controlValueText(ItemData item, _Ctx ctx) {
   if (item.control == 'checkbox' || item.control == 'switch') {
     return raw == true ? 'true' : 'false';
   }
+  // 密码不回显：纯文本固定打码（与 C++ 侧规则一致）
+  if (item.control == 'password') {
+    return raw == null || stringifyValue(raw).isEmpty ? '' : '***';
+  }
   if (item.control == 'buttons' || item.control == 'select') {
     for (final ControlOption option in item.options) {
       if (option.value == raw && option.label.isNotEmpty) {
@@ -322,6 +329,31 @@ String _controlValueText(ItemData item, _Ctx ctx) {
     }
   }
   return stringifyValue(raw);
+}
+
+/// 列表块 → 纯文本：每项一行（`title` + `" - "` + 副标题 + 两个空格 + 右侧文字）
+///
+/// 空列表输出 `emptyText`（没给就没有内容）；与 C++ 侧逐字节一致。
+String? _listText(ItemData item, _Ctx ctx) {
+  if (item.items.isEmpty) {
+    final String empty = ctx.text(item.emptyText);
+    return empty.isEmpty ? null : empty;
+  }
+  final List<String> lines = <String>[];
+  for (final ListItem listItem in item.items) {
+    final String title = ctx.text(listItem.title);
+    final String subtitle = ctx.text(listItem.subtitle);
+    final String trailing = ctx.text(listItem.trailing);
+    String line = title;
+    if (subtitle.isNotEmpty) {
+      line = '$line - $subtitle';
+    }
+    if (trailing.isNotEmpty) {
+      line = '$line  $trailing';
+    }
+    lines.add(line);
+  }
+  return lines.join('\n');
 }
 
 String? _tableText(ItemData item, _Ctx ctx) {

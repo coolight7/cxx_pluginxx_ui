@@ -40,6 +40,13 @@ PLUGINXX_UI_API Item
     expandKit(std::string_view name, const utilxx_base::Json& params, const Capabilities* env,
               KitTemplateLookup lookup);
 
+/// 展开 kit 组件，但**不转成块**：给产出“数据对象”的模板用（例如列表项，没有 kind）
+///
+/// 参数与变体规则与 [expandKit] 完全一致；组件名未知或展开结果不是对象时返回空 Json。
+PLUGINXX_UI_API utilxx_base::Json
+    expandKitJson(std::string_view name, const utilxx_base::Json& params, const Capabilities* env,
+                  KitTemplateLookup lookup);
+
 /// 展开 kit 模板（不含参数默认值填充；`values` 即已合并的参数）
 PLUGINXX_UI_API utilxx_base::Json expandKitTemplate(
     const utilxx_base::Json& templateNode,

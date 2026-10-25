@@ -228,6 +228,10 @@ std::string controlValueText(const Item& item, const Ctx& ctx) {
     if (item.control == "checkbox" || item.control == "switch") {
         return raw == "true" ? "true" : "false";
     }
+    // 密码不回显：纯文本固定打码（与 Dart 侧规则一致）
+    if (item.control == "password") {
+        return (raw.empty() || raw == "\"\"") ? std::string() : std::string("***");
+    }
     if (item.control == "buttons" || item.control == "select") {
         for (const ControlOption& option : item.options) {
             if (option.valueJson == raw && !option.label.empty()) {
@@ -246,6 +250,31 @@ bool itemText(const Item& item, const Ctx& ctx, std::string& out) {
         return ctx.text(value);
     };
 
+    if (item.kind == "ListViewBase" || item.kind == "ListView") {
+        if (item.items.empty()) {
+            out = text(item.emptyText);
+            return !out.empty();
+        }
+        std::string body;
+        for (std::size_t i = 0; i < item.items.size(); ++i) {
+            const ListItem& listItem = item.items[i];
+            std::string     line     = text(listItem.title);
+            const std::string subtitle = text(listItem.subtitle);
+            const std::string trailing = text(listItem.trailing);
+            if (!subtitle.empty()) {
+                line += " - " + subtitle;
+            }
+            if (!trailing.empty()) {
+                line += "  " + trailing;
+            }
+            if (i > 0) {
+                body.push_back('\n');
+            }
+            body.append(line);
+        }
+        out = body;
+        return true;
+    }
     if (item.kind == "Text") {
         const std::string value = text(item.text);
         if (value.empty()) {

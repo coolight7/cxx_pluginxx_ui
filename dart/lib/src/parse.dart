@@ -472,6 +472,40 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
     case 'Diagram':
       item.mermaid = _clampBytes(_str(json, 'mermaid'), ctx.limits.maxTextBytes);
       return item;
+    case 'ListViewBase':
+    case 'ListView':
+      item.items = _listItems(json['items'], ctx, '$canonical.items');
+      item.layout = _enum(json, 'layout', kEnumListLayout, 'auto');
+      item.variant = _enum(json, 'variant', kEnumListVariant, 'card');
+      if (_has(json, 'height')) {
+        item.height = _sizeValue(json['height'], ctx.report, '$canonical.height');
+      }
+      if (_has(json, 'padding')) {
+        item.padding = _edges(json['padding'], ctx.report, '$canonical.padding');
+        item.hasPadding = true;
+      }
+      item.headerBlocks = children('header', '$canonical.header');
+      item.footerBlocks = children('footer', '$canonical.footer');
+      item.emptyText = _textValue(json['emptyText']);
+      item.itemAction = _action(json['itemAction']);
+      if (canonical == 'ListView') {
+        item.toolbar = children('toolbar', 'ListView.toolbar');
+        item.menu = _menuItems(json['menu'], ctx, 'ListView.menu');
+        item.itemMenu = _menuItems(json['itemMenu'], ctx, 'ListView.itemMenu');
+        item.editAction = _action(json['editAction']);
+        item.saveAction = _action(json['saveAction']);
+        item.addAction = _action(json['addAction']);
+        item.removeAction = _action(json['removeAction']);
+        item.removeCheckedAction = _action(json['removeCheckedAction']);
+        item.positionAction = _action(json['positionAction']);
+        item.refreshAction = _action(json['refreshAction']);
+        item.loadMoreAction = _action(json['loadMoreAction']);
+        item.removeTipTitle = _textValue(json['removeTipTitle']);
+        item.enableCheck = _bool(json, 'enableCheck', true);
+        item.enableDrop = _bool(json, 'enableDrop', true);
+        item.showCount = _bool(json, 'showCount', false);
+      }
+      return item;
     case 'musicxx.Shader':
       item.bundle = _str(json, 'bundle');
       item.speed = _num(json, 'speed', 1);
@@ -693,6 +727,66 @@ List<String> _tones(Object? value, _Ctx ctx) {
         break;
       }
     }
+  }
+  return out;
+}
+
+/// 列表项数组（`listItems`）：非对象元素直接忽略（列表项没有短写形态）
+List<ListItem> _listItems(Object? value, _Ctx ctx, String what) {
+  if (value is! List) {
+    return <ListItem>[];
+  }
+  final int count = _limitCount(value.length, ctx.limits.maxItems);
+  if (count < value.length) {
+    ctx.truncate('$what 的条目超过上限，已截断');
+  }
+  final List<ListItem> out = <ListItem>[];
+  for (int i = 0; i < count; i++) {
+    final Map<String, Object?>? map = _asMap(value[i]);
+    if (null == map) {
+      ctx.warn('$what[$i] 不是对象，已跳过');
+      continue;
+    }
+    out.add(
+      ListItem(
+        id: _str(map, 'id'),
+        title: _textValue(map['title']),
+        subtitle: _textValue(map['subtitle']),
+        trailing: _textValue(map['trailing']),
+        image: _str(map, 'image'),
+        icon: _str(map, 'icon'),
+        tone: _tone(map, 'tone'),
+        selected: _bool(map, 'selected', false),
+        action: _action(map['action']),
+      ),
+    );
+  }
+  return out;
+}
+
+/// 菜单项数组（`menuItems`）：非对象元素直接忽略
+List<MenuItem> _menuItems(Object? value, _Ctx ctx, String what) {
+  if (value is! List) {
+    return <MenuItem>[];
+  }
+  final int count = _limitCount(value.length, ctx.limits.maxItems);
+  if (count < value.length) {
+    ctx.truncate('$what 的条目超过上限，已截断');
+  }
+  final List<MenuItem> out = <MenuItem>[];
+  for (int i = 0; i < count; i++) {
+    final Map<String, Object?>? map = _asMap(value[i]);
+    if (null == map) {
+      ctx.warn('$what[$i] 不是对象，已跳过');
+      continue;
+    }
+    out.add(
+      MenuItem(
+        title: _textValue(map['title']),
+        icon: _str(map, 'icon'),
+        action: _action(map['action']),
+      ),
+    );
   }
   return out;
 }
@@ -1135,6 +1229,68 @@ Map<String, Object?> dumpItem(ItemData item) {
     case 'Diagram':
       out['mermaid'] = item.mermaid;
       break;
+    case 'ListViewBase':
+    case 'ListView':
+      out['items'] = <Object?>[
+        for (final ListItem listItem in item.items) _listItemToJson(listItem),
+      ];
+      out['layout'] = item.layout;
+      out['variant'] = item.variant;
+      if (!item.height.isAuto) {
+        out['height'] = _sizeValueToJson(item.height);
+      }
+      if (item.hasPadding) {
+        out['padding'] = _edgesToJson(item.padding);
+      }
+      if (item.headerBlocks.isNotEmpty) {
+        out['header'] = dumpBlocks(item.headerBlocks);
+      }
+      if (item.footerBlocks.isNotEmpty) {
+        out['footer'] = dumpBlocks(item.footerBlocks);
+      }
+      if (item.emptyText.isNotEmpty) {
+        out['emptyText'] = _textValueToJson(item.emptyText);
+      }
+      if (null != _actionToJson(item.itemAction)) {
+        out['itemAction'] = _actionToJson(item.itemAction);
+      }
+      if (item.kind == 'ListView') {
+        if (item.toolbar.isNotEmpty) {
+          out['toolbar'] = dumpBlocks(item.toolbar);
+        }
+        if (item.menu.isNotEmpty) {
+          out['menu'] = <Object?>[
+            for (final MenuItem menuItem in item.menu) _menuItemToJson(menuItem),
+          ];
+        }
+        if (item.itemMenu.isNotEmpty) {
+          out['itemMenu'] = <Object?>[
+            for (final MenuItem menuItem in item.itemMenu) _menuItemToJson(menuItem),
+          ];
+        }
+        void putAction(String key, UiAction? action) {
+          final Object? value = _actionToJson(action);
+          if (null != value) {
+            out[key] = value;
+          }
+        }
+
+        putAction('editAction', item.editAction);
+        putAction('saveAction', item.saveAction);
+        putAction('addAction', item.addAction);
+        putAction('removeAction', item.removeAction);
+        putAction('removeCheckedAction', item.removeCheckedAction);
+        putAction('positionAction', item.positionAction);
+        putAction('refreshAction', item.refreshAction);
+        putAction('loadMoreAction', item.loadMoreAction);
+        if (item.removeTipTitle.isNotEmpty) {
+          out['removeTipTitle'] = _textValueToJson(item.removeTipTitle);
+        }
+        out['enableCheck'] = item.enableCheck;
+        out['enableDrop'] = item.enableDrop;
+        out['showCount'] = item.showCount;
+      }
+      break;
     case 'musicxx.Shader':
       out['bundle'] = item.bundle;
       if (null != item.shaderArgs) {
@@ -1194,6 +1350,26 @@ Map<String, Object?> dumpItem(ItemData item) {
   }
   return out;
 }
+
+/// 列表项 → JSON（没给的可选字段不输出）
+Map<String, Object?> _listItemToJson(ListItem item) => <String, Object?>{
+      if (item.id.isNotEmpty) 'id': item.id,
+      'title': _textValueToJson(item.title),
+      if (item.subtitle.isNotEmpty) 'subtitle': _textValueToJson(item.subtitle),
+      if (item.trailing.isNotEmpty) 'trailing': _textValueToJson(item.trailing),
+      if (item.image.isNotEmpty) 'image': item.image,
+      if (item.icon.isNotEmpty) 'icon': item.icon,
+      if (item.tone != 'normal') 'tone': item.tone,
+      if (item.selected) 'selected': true,
+      if (null != _actionToJson(item.action)) 'action': _actionToJson(item.action),
+    };
+
+/// 菜单项 → JSON
+Map<String, Object?> _menuItemToJson(MenuItem item) => <String, Object?>{
+      'title': _textValueToJson(item.title),
+      if (item.icon.isNotEmpty) 'icon': item.icon,
+      if (null != _actionToJson(item.action)) 'action': _actionToJson(item.action),
+    };
 
 Map<String, Object?> _treeNodeToJson(TreeNode node) => <String, Object?>{
       'label': _textValueToJson(node.label),

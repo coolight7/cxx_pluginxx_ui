@@ -312,6 +312,64 @@ std::vector<ControlOption> optionsOf(const Json& value, const Ctx& ctx, const st
     return out;
 }
 
+/// 列表项数组（`listItems`）：非对象元素记提示后跳过
+std::vector<ListItem> listItemsOf(const Json& value, const Ctx& ctx, const std::string& what) {
+    std::vector<ListItem> out;
+    if (!value.is_array()) {
+        return out;
+    }
+    const std::size_t count = clampCount(value.size(), ctx.limits->maxItems);
+    if (count < value.size()) {
+        ctx.truncate(what + " 的条目超过上限，已截断");
+    }
+    out.reserve(count);
+    for (std::size_t i = 0; i < count; ++i) {
+        const Json& node = value[i];
+        if (!node.is_object()) {
+            ctx.warn(what + "[" + std::to_string(i) + "] 不是对象，已跳过");
+            continue;
+        }
+        ListItem listItem;
+        listItem.id       = fieldString(node, "id");
+        listItem.title    = textValueOf(node["title"]);
+        listItem.subtitle = textValueOf(node["subtitle"]);
+        listItem.trailing = textValueOf(node["trailing"]);
+        listItem.image    = fieldString(node, "image");
+        listItem.icon     = fieldString(node, "icon");
+        listItem.tone     = fieldTone(node, "tone");
+        listItem.selected = fieldBool(node, "selected", false);
+        listItem.action   = actionOf(node["action"]);
+        out.push_back(std::move(listItem));
+    }
+    return out;
+}
+
+/// 菜单项数组（`menuItems`）：非对象元素记提示后跳过
+std::vector<MenuItem> menuItemsOf(const Json& value, const Ctx& ctx, const std::string& what) {
+    std::vector<MenuItem> out;
+    if (!value.is_array()) {
+        return out;
+    }
+    const std::size_t count = clampCount(value.size(), ctx.limits->maxItems);
+    if (count < value.size()) {
+        ctx.truncate(what + " 的条目超过上限，已截断");
+    }
+    out.reserve(count);
+    for (std::size_t i = 0; i < count; ++i) {
+        const Json& node = value[i];
+        if (!node.is_object()) {
+            ctx.warn(what + "[" + std::to_string(i) + "] 不是对象，已跳过");
+            continue;
+        }
+        MenuItem menuItem;
+        menuItem.title  = textValueOf(node["title"]);
+        menuItem.icon   = fieldString(node, "icon");
+        menuItem.action = actionOf(node["action"]);
+        out.push_back(std::move(menuItem));
+    }
+    return out;
+}
+
 std::vector<Threshold> thresholdsOf(const Json& value, const Ctx& ctx, const std::string& what) {
     std::vector<Threshold> out;
     if (!value.is_array()) {
@@ -772,6 +830,40 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
         item.mermaid = clampTextBytes(fieldString(json, "mermaid"), ctx.limits->maxTextBytes);
         return item;
     }
+    if (canonical == "ListViewBase" || canonical == "ListView") {
+        item.items     = listItemsOf(json["items"], ctx, item.kind + ".items");
+        item.layout    = fieldEnum(json, "layout", PLUGINXX_UI_ENUM(gen::kEnumListLayout), "auto");
+        item.variant   = fieldEnum(json, "variant", PLUGINXX_UI_ENUM(gen::kEnumListVariant), "card");
+        if (fieldHas(json, "height")) {
+            item.height = sizeValueOf(json["height"], ctx.report, item.kind + ".height");
+        }
+        if (fieldHas(json, "padding")) {
+            item.padding    = edgesOf(json["padding"], ctx.report, item.kind + ".padding");
+            item.hasPadding = true;
+        }
+        item.headerBlocks = parseChildren(json["header"], ctx, depth, item.kind + ".header");
+        item.footerBlocks = parseChildren(json["footer"], ctx, depth, item.kind + ".footer");
+        item.emptyText    = textValueOf(json["emptyText"]);
+        item.itemAction   = actionOf(json["itemAction"]);
+        if (canonical == "ListView") {
+            item.toolbar = parseChildren(json["toolbar"], ctx, depth, "ListView.toolbar");
+            item.menu     = menuItemsOf(json["menu"], ctx, "ListView.menu");
+            item.itemMenu = menuItemsOf(json["itemMenu"], ctx, "ListView.itemMenu");
+            item.editAction           = actionOf(json["editAction"]);
+            item.saveAction           = actionOf(json["saveAction"]);
+            item.addAction            = actionOf(json["addAction"]);
+            item.removeAction         = actionOf(json["removeAction"]);
+            item.removeCheckedAction  = actionOf(json["removeCheckedAction"]);
+            item.positionAction       = actionOf(json["positionAction"]);
+            item.refreshAction        = actionOf(json["refreshAction"]);
+            item.loadMoreAction       = actionOf(json["loadMoreAction"]);
+            item.removeTipTitle       = textValueOf(json["removeTipTitle"]);
+            item.enableCheck          = fieldBool(json, "enableCheck", true);
+            item.enableDrop           = fieldBool(json, "enableDrop", true);
+            item.showCount            = fieldBool(json, "showCount", false);
+        }
+        return item;
+    }
     if (canonical == "musicxx.Shader") {
         item.bundle           = fieldString(json, "bundle");
         item.speed            = fieldNumber(json, "speed", 1.0);
@@ -936,6 +1028,50 @@ Json actionToJson(const Action& action) {
 }
 
 Json dumpBlockImpl(const Item& item);
+
+/// 列表项 → JSON（没给的可选字段不输出）
+Json dumpListItemImpl(const ListItem& listItem) {
+    Json out     = Json::object();
+    if (!listItem.id.empty()) {
+        out["id"] = listItem.id;
+    }
+    out["title"] = textValueToJson(listItem.title);
+    if (!listItem.subtitle.empty()) {
+        out["subtitle"] = textValueToJson(listItem.subtitle);
+    }
+    if (!listItem.trailing.empty()) {
+        out["trailing"] = textValueToJson(listItem.trailing);
+    }
+    if (!listItem.image.empty()) {
+        out["image"] = listItem.image;
+    }
+    if (!listItem.icon.empty()) {
+        out["icon"] = listItem.icon;
+    }
+    if (listItem.tone != "normal") {
+        out["tone"] = listItem.tone;
+    }
+    if (listItem.selected) {
+        out["selected"] = true;
+    }
+    if (!listItem.action.empty()) {
+        out["action"] = actionToJson(listItem.action);
+    }
+    return out;
+}
+
+/// 菜单项 → JSON
+Json dumpMenuItemImpl(const MenuItem& menuItem) {
+    Json out     = Json::object();
+    out["title"] = textValueToJson(menuItem.title);
+    if (!menuItem.icon.empty()) {
+        out["icon"] = menuItem.icon;
+    }
+    if (!menuItem.action.empty()) {
+        out["action"] = actionToJson(menuItem.action);
+    }
+    return out;
+}
 
 /// 树节点（递归）
 Json dumpTreeNodeImpl(const TreeNode& node) {
@@ -1276,6 +1412,70 @@ Json dumpBlockImpl(const Item& item) {
         }
     } else if (item.kind == "Diagram") {
         out["mermaid"] = item.mermaid;
+    } else if (item.kind == "ListViewBase" || item.kind == "ListView") {
+        Json items = Json::array();
+        for (const ListItem& listItem : item.items) {
+            items.push_back(dumpListItemImpl(listItem));
+        }
+        out["items"]   = items;
+        out["layout"]  = item.layout;
+        out["variant"] = item.variant;
+        if (!item.height.isAuto()) {
+            out["height"] = sizeValueToJson(item.height);
+        }
+        if (item.hasPadding) {
+            out["padding"] = edgesToJson(item.padding);
+        }
+        if (!item.headerBlocks.empty()) {
+            out["header"] = dumpBlocks(item.headerBlocks);
+        }
+        if (!item.footerBlocks.empty()) {
+            out["footer"] = dumpBlocks(item.footerBlocks);
+        }
+        if (!item.emptyText.empty()) {
+            out["emptyText"] = textValueToJson(item.emptyText);
+        }
+        if (!item.itemAction.empty()) {
+            out["itemAction"] = actionToJson(item.itemAction);
+        }
+        if (item.kind == "ListView") {
+            if (!item.toolbar.empty()) {
+                out["toolbar"] = dumpBlocks(item.toolbar);
+            }
+            if (!item.menu.empty()) {
+                Json menu = Json::array();
+                for (const MenuItem& menuItem : item.menu) {
+                    menu.push_back(dumpMenuItemImpl(menuItem));
+                }
+                out["menu"] = menu;
+            }
+            if (!item.itemMenu.empty()) {
+                Json itemMenu = Json::array();
+                for (const MenuItem& menuItem : item.itemMenu) {
+                    itemMenu.push_back(dumpMenuItemImpl(menuItem));
+                }
+                out["itemMenu"] = itemMenu;
+            }
+            const auto putAction = [&out](const char* key, const Action& action) {
+                if (!action.empty()) {
+                    out[key] = actionToJson(action);
+                }
+            };
+            putAction("editAction", item.editAction);
+            putAction("saveAction", item.saveAction);
+            putAction("addAction", item.addAction);
+            putAction("removeAction", item.removeAction);
+            putAction("removeCheckedAction", item.removeCheckedAction);
+            putAction("positionAction", item.positionAction);
+            putAction("refreshAction", item.refreshAction);
+            putAction("loadMoreAction", item.loadMoreAction);
+            if (!item.removeTipTitle.empty()) {
+                out["removeTipTitle"] = textValueToJson(item.removeTipTitle);
+            }
+            out["enableCheck"] = item.enableCheck;
+            out["enableDrop"]  = item.enableDrop;
+            out["showCount"]   = item.showCount;
+        }
     } else if (item.kind == "musicxx.Shader") {
         out["bundle"] = item.bundle;
         if (!item.shaderArgsJson.empty()) {

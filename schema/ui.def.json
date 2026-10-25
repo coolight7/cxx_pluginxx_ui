@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "uiApiVersion": 1,
+  "uiApiVersion": 2,
   "defaults": {
     "gap": 12,
     "cell": { "width": 8, "height": 20 }
@@ -30,7 +30,9 @@
     "mainAxis": ["start", "center", "end", "spaceBetween"],
     "blockVariant": ["card", "inset", "plain"],
     "buttonVariant": ["primary", "secondary", "ghost", "link"],
-    "controlKind": ["buttons", "select", "checkbox", "switch", "text", "number"],
+    "controlKind": ["buttons", "select", "checkbox", "switch", "text", "number", "password"],
+    "listLayout": ["auto", "list", "grid", "multiList"],
+    "listVariant": ["card", "plain"],
     "actionKind": ["none", "dispatch", "route", "command"],
     "sparkStyle": ["block", "bar"],
     "imageFit": ["contain", "cover", "fill", "fitWidth", "fitHeight", "none"],
@@ -64,6 +66,8 @@
       "Diff": "plainTextMono",
       "Sparkline": "plainTextMono",
       "Diagram": "plainTextMono",
+      "ListViewBase": "plainTextMono",
+      "ListView": "plainTextMono",
     "musicxx.Shader": "skip",
     "musicxx.AnimatedBuilder": "flatten",
     "musicxx.SizeTransition": "flatten",
@@ -461,6 +465,106 @@
       "doc": "状态图（未实现时适配为等宽文本）",
       "fields": [{ "name": "mermaid", "type": "string", "required": true }],
       "sample": { "kind": "Diagram", "mermaid": "stateDiagram-v2\n  a --> b" }
+    },
+    {
+      "kind": "ListViewBase",
+      "level": "optional",
+      "doc": "按应用的列表组件显示多条数据（只显示，没有工具条与编辑）",
+      "fields": [
+        { "name": "id", "type": "string" },
+        { "name": "items", "type": "listItems", "required": true },
+        { "name": "layout", "type": "enum:listLayout", "default": "auto" },
+        { "name": "variant", "type": "enum:listVariant", "default": "card" },
+        { "name": "height", "type": "size" },
+        { "name": "padding", "type": "edges" },
+        { "name": "header", "type": "items" },
+        { "name": "footer", "type": "items" },
+        { "name": "emptyText", "type": "text" },
+        { "name": "itemAction", "type": "action" }
+      ],
+      "sample": {
+        "kind": "ListViewBase",
+        "id": "subs",
+        "layout": "auto",
+        "variant": "card",
+        "emptyText": "还没有订阅",
+        "items": [
+          {
+            "id": "weekly",
+            "title": "每周新歌",
+            "subtitle": "每周一更新",
+            "trailing": "12 首",
+            "image": "cover",
+            "action": { "kind": "dispatch", "name": "openPlaylist", "args": { "name": "每周新歌" } }
+          },
+          {
+            "id": "fav",
+            "title": "我的收藏",
+            "trailing": "38 首",
+            "icon": "resource/svg/star.svg",
+            "action": "openPlaylist"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "ListView",
+      "level": "optional",
+      "doc": "带工具条的列表（编辑 / 多选 / 加删 / 定位 / 菜单 / 下拉刷新 / 加载更多）",
+      "fields": [
+        { "name": "id", "type": "string" },
+        { "name": "items", "type": "listItems", "required": true },
+        { "name": "layout", "type": "enum:listLayout", "default": "auto" },
+        { "name": "variant", "type": "enum:listVariant", "default": "card" },
+        { "name": "height", "type": "size" },
+        { "name": "padding", "type": "edges" },
+        { "name": "header", "type": "items" },
+        { "name": "footer", "type": "items" },
+        { "name": "emptyText", "type": "text" },
+        { "name": "itemAction", "type": "action" },
+        { "name": "toolbar", "type": "items" },
+        { "name": "menu", "type": "menuItems" },
+        { "name": "itemMenu", "type": "menuItems" },
+        { "name": "editAction", "type": "action" },
+        { "name": "saveAction", "type": "action" },
+        { "name": "addAction", "type": "action" },
+        { "name": "removeAction", "type": "action" },
+        { "name": "removeCheckedAction", "type": "action" },
+        { "name": "removeTipTitle", "type": "text" },
+        { "name": "positionAction", "type": "action" },
+        { "name": "refreshAction", "type": "action" },
+        { "name": "loadMoreAction", "type": "action" },
+        { "name": "enableCheck", "type": "bool", "default": true },
+        { "name": "enableDrop", "type": "bool", "default": true },
+        { "name": "showCount", "type": "bool", "default": false }
+      ],
+      "sample": {
+        "kind": "ListView",
+        "id": "subs",
+        "layout": "list",
+        "items": [
+          { "id": "weekly", "title": "每周新歌", "subtitle": "每周一更新", "trailing": "12 首" },
+          { "id": "fav", "title": "我的收藏", "trailing": "38 首" }
+        ],
+        "toolbar": [{ "kind": "Text", "text": "共 12 项", "type": "caption", "tone": "hint" }],
+        "menu": [
+          { "title": "全部刷新", "icon": "resource/svg/refresh.svg", "action": "refreshAll" },
+          { "title": "打开设置", "action": { "kind": "route", "route": "ext://demo/settings" } }
+        ],
+        "itemMenu": [
+          { "title": "重命名", "action": "rename" },
+          { "title": "删除这一项", "action": "removeItem" }
+        ],
+        "editAction": "beginEdit",
+        "saveAction": "saveOrder",
+        "addAction": "addItem",
+        "removeAction": "removeSelected",
+        "removeCheckedAction": "removeChecked",
+        "removeTipTitle": "确认删除",
+        "positionAction": "locateCurrent",
+        "refreshAction": "reload",
+        "loadMoreAction": "loadMore"
+      }
     },
     {
       "kind": "musicxx.Shader",

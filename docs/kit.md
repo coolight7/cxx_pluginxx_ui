@@ -1,4 +1,4 @@
-# 基础 kit（v1）
+# 基础 kit（v2）
 
 > 本文件由 `tools/gen_ui.dart` 生成。
 
@@ -22,6 +22,8 @@
 | `kv` | `pairs`* `sep` | 键值块（键列按最长键自适应） |
 | `table` | `columns`* `rows` `header`=true | 表格（未指定的列宽由客户端自动分配） |
 | `tree` | `nodes`* `connector`=true | 层级列表 |
+| `listItem` | `id` `title`* `subtitle` `trailing` `image` `icon` `tone`=normal `selected`=false `action` | 列表项（数据对象，给 ListViewBase / ListView 的 items 用） |
+| `menuItem` | `title`* `icon` `action` | 菜单项（数据对象，给 ListView 的 menu / itemMenu 用） |
 | `sparkline` | `data`* `height`=1 `glyphStyle`=block `showLast`=true `tone`=accent | 迷你趋势图 |
 | `progressRow` | `label` `value`* `total`=100 `unit` | 一行进度（左侧标签 + 进度条） |
 

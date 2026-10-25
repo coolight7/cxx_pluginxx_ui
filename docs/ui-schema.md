@@ -1,4 +1,4 @@
-# 组件描述 schema v1
+# 组件描述 schema v2
 
 > 本文件由 `tools/gen_ui.dart` 生成，源是 `schema/ui.def.json`。
 
@@ -94,6 +94,8 @@
 | `Diff` | optional | — | `path` `oldStr` `newStr` | 差异对比（未实现时适配为等宽文本） |
 | `Sparkline` | optional | — | `data`* `height` `glyphStyle` `min` `max` `tone` `colors` `showLast` | 迷你趋势图（未实现时适配为末值文本） |
 | `Diagram` | optional | — | `mermaid`* | 状态图（未实现时适配为等宽文本） |
+| `ListViewBase` | optional | — | `id` `items`* `layout` `variant` `height` `padding` `header` `footer` `emptyText` `itemAction` | 按应用的列表组件显示多条数据（只显示，没有工具条与编辑） |
+| `ListView` | optional | — | `id` `items`* `layout` `variant` `height` `padding` `header` `footer` `emptyText` `itemAction` `toolbar` `menu` `itemMenu` `editAction` `saveAction` `addAction` `removeAction` `removeCheckedAction` `removeTipTitle` `positionAction` `refreshAction` `loadMoreAction` `enableCheck` `enableDrop` `showCount` | 带工具条的列表（编辑 / 多选 / 加删 / 定位 / 菜单 / 下拉刷新 / 加载更多） |
 | `musicxx.Shader` | client | musicxx | `bundle`* `args` `speed` `maxFps` `animate` `resolutionScale` | 插件着色器（字段集照搬 shader bundle 文档；其他客户端跳过） |
 | `musicxx.AnimatedBuilder` | client | musicxx | `values` `maxFps` `children` | 动画作用域：声明若干通道（each 是一条值表达式），子树每帧重建（其他客户端展开子节点） |
 | `musicxx.SizeTransition` | client | musicxx | `axis` `axisAlignment` `value` `curve` `children` | 尺寸过渡：按 value（0~1）把子节点从 0 撑开 / 收拢（其他客户端展开子节点） |
@@ -135,6 +137,8 @@
 | `Diff` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
 | `Sparkline` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
 | `Diagram` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
+| `ListViewBase` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
+| `ListView` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
 | `musicxx.Shader` | `skip` | 跳过（无降级形态） |
 | `musicxx.AnimatedBuilder` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
 | `musicxx.SizeTransition` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
@@ -149,7 +153,7 @@
 
 ```jsonc
 {
-  "apiVersion": 1,
+  "apiVersion": 2,
   "kind": "gui",                       // tui / gui，只用于粗判断
   "blocks": ["Text", "Divider", "…"],  // 实际支持的块
   "controls": ["buttons", "select", "…"],

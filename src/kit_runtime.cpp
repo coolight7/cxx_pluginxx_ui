@@ -202,12 +202,21 @@ Json expandKitTemplate(const Json& templateNode, const Json& values, const Capab
 
 Item expandKit(const std::string_view name, const Json& params, const Capabilities* env,
                const KitTemplateLookup lookup) {
-    if (lookup == nullptr) {
+    const Json result = expandKitJson(name, params, env, lookup);
+    if (!result.is_object()) {
         return {};
+    }
+    return parseBlock(result);
+}
+
+Json expandKitJson(const std::string_view name, const Json& params, const Capabilities* env,
+                   const KitTemplateLookup lookup) {
+    if (lookup == nullptr) {
+        return Json();
     }
     const Json definition = lookup(name);
     if (!definition.is_object()) {
-        return {};
+        return Json();
     }
     Json values = definition["params"].is_object() ? definition["params"] : Json::object();
     if (params.is_object()) {
@@ -217,13 +226,10 @@ Item expandKit(const std::string_view name, const Json& params, const Capabiliti
     }
     const Json templateNode = pickVariant(definition, env);
     if (!templateNode.is_object()) {
-        return {};
+        return Json();
     }
     const Json result = expandNode(templateNode, values, env);
-    if (!result.is_object()) {
-        return {};
-    }
-    return parseBlock(result);
+    return result.is_object() ? result : Json();
 }
 
 } // namespace detail

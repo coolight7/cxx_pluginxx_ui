@@ -23,7 +23,7 @@ namespace ui {
 namespace kit {
 
 /// kit 版本
-inline constexpr int kKitVersion = 1;
+inline constexpr int kKitVersion = 2;
 
 /// 组件模板（键 = 组件名，值是 {variants, params} 的 JSON 文本）
 inline pluginxx::ui::Json kitTemplate(const std::string_view name) {
@@ -58,6 +58,10 @@ inline pluginxx::ui::Json kitTemplate(const std::string_view name) {
          R"KIT({"variants":[{"template":{"kind":"Table","header":"$header","columns":"$columns","rows":"$rows"}}],"params":{"columns":null,"rows":null,"header":true}})KIT"},
         {"tree",
          R"KIT({"variants":[{"template":{"kind":"Tree","connector":"$connector","nodes":"$nodes"}}],"params":{"nodes":null,"connector":true}})KIT"},
+        {"listItem",
+         R"KIT({"variants":[{"template":{"id":"$id","title":"$title","subtitle":"$subtitle","trailing":"$trailing","image":"$image","icon":"$icon","tone":"$tone","selected":"$selected","action":"$action"}}],"params":{"id":null,"title":null,"subtitle":null,"trailing":null,"image":null,"icon":null,"tone":"normal","selected":false,"action":null}})KIT"},
+        {"menuItem",
+         R"KIT({"variants":[{"template":{"title":"$title","icon":"$icon","action":"$action"}}],"params":{"title":null,"icon":null,"action":null}})KIT"},
         {"sparkline",
          R"KIT({"variants":[{"template":{"kind":"Sparkline","data":"$data","height":"$height","glyphStyle":"$glyphStyle","showLast":"$showLast","tone":"$tone"}}],"params":{"data":null,"height":1,"glyphStyle":"block","showLast":true,"tone":"accent"}})KIT"},
         {"progressRow",
@@ -216,6 +220,24 @@ inline pluginxx::ui::Item tree(
     const pluginxx::ui::Capabilities* env = nullptr
 ) {
     return pluginxx::ui::detail::expandKit("tree", params, env, &kitTemplate);
+}
+
+/// 列表项（数据对象，给 ListViewBase / ListView 的 items 用）
+/// 参数：id(string)、title(text, 必填)、subtitle(text)、trailing(text)、image(string)、icon(string)、tone(tone, 默认 normal)、selected(bool, 默认 false)、action(action)
+inline utilxx_base::Json listItem(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
+) {
+    return pluginxx::ui::detail::expandKitJson("listItem", params, env, &kitTemplate);
+}
+
+/// 菜单项（数据对象，给 ListView 的 menu / itemMenu 用）
+/// 参数：title(text, 必填)、icon(string)、action(action)
+inline utilxx_base::Json menuItem(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
+) {
+    return pluginxx::ui::detail::expandKitJson("menuItem", params, env, &kitTemplate);
 }
 
 /// 迷你趋势图

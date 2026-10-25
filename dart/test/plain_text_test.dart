@@ -135,6 +135,35 @@ void main() {
     );
   });
 
+  test('列表块与密码的纯文本', () {
+    // 列表项：标题 + " - " + 副标题 + 两个空格 + 右侧文字；空列表输出 emptyText
+    final List<ItemData> items = parseBlocks(<Object?>[
+      <String, Object?>{
+        'kind': 'ListViewBase',
+        'items': <Object?>[
+          <String, Object?>{'title': '每周新歌', 'subtitle': '每周一更新', 'trailing': '12 首'},
+          <String, Object?>{'title': '我的收藏'},
+        ],
+      },
+      <String, Object?>{
+        'kind': 'ListView',
+        'emptyText': '还没有订阅',
+        'items': <Object?>[],
+      },
+      <String, Object?>{
+        'kind': 'Control',
+        'control': 'password',
+        'id': 'token',
+        'label': '访问令牌',
+        'value': 'secret',
+      },
+    ]);
+    expect(
+      plainText(items),
+      '每周新歌 - 每周一更新  12 首\n我的收藏\n还没有订阅\n访问令牌: ***',
+    );
+  });
+
   test('显示列宽', () {
     expect(displayWidth('abc'), 3);
     expect(displayWidth('中文'), 4);

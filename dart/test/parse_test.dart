@@ -281,6 +281,103 @@ void main() {
     });
     expect(dynamicVisible.visible.isExpr, isTrue);
   });
+  test('列表块（ListViewBase / ListView）解析与往返', () {
+    final ItemData base = parseBlock(<String, Object?>{
+      'kind': 'ListViewBase',
+      'id': 'subs',
+      'layout': 'grid',
+      'variant': 'plain',
+      'emptyText': '还没有订阅',
+      'items': <Object?>[
+        <String, Object?>{
+          'id': 'weekly',
+          'title': '每周新歌',
+          'subtitle': '每周一更新',
+          'trailing': '12 首',
+          'image': 'cover',
+          'selected': true,
+          'action': 'openPlaylist',
+        },
+        <String, Object?>{'title': '我的收藏', 'tone': 'hint'},
+      ],
+    });
+    expect(base.kind, 'ListViewBase');
+    expect(base.layout, 'grid');
+    expect(base.variant, 'plain');
+    expect(base.emptyText.fallback, '还没有订阅');
+    expect(base.items.length, 2);
+    expect(base.items.first.id, 'weekly');
+    expect(base.items.first.title.fallback, '每周新歌');
+    expect(base.items.first.subtitle.fallback, '每周一更新');
+    expect(base.items.first.trailing.fallback, '12 首');
+    expect(base.items.first.image, 'cover');
+    expect(base.items.first.selected, isTrue);
+    expect(base.items.first.action?.name, 'openPlaylist');
+    expect(base.items[1].tone, 'hint');
+    // 默认值：没写 layout / variant / 工具条字段
+    final ItemData plain = parseBlock(<String, Object?>{
+      'kind': 'ListView',
+      'items': <Object?>[],
+    });
+    expect(plain.layout, 'auto');
+    expect(plain.variant, 'card');
+    expect(plain.enableCheck, isTrue);
+    expect(plain.enableDrop, isTrue);
+    expect(plain.showCount, isFalse);
+    expect(plain.editAction, isNull);
+
+    final ItemData full = parseBlock(<String, Object?>{
+      'kind': 'ListView',
+      'items': <Object?>[],
+      'toolbar': <Object?>[
+        <String, Object?>{'kind': 'Text', 'text': '共 12 项'},
+      ],
+      'menu': <Object?>[
+        <String, Object?>{'title': '全部刷新', 'icon': 'resource/svg/refresh.svg', 'action': 'refreshAll'},
+      ],
+      'itemMenu': <Object?>[
+        <String, Object?>{'title': '重命名', 'action': 'rename'},
+      ],
+      'editAction': 'beginEdit',
+      'saveAction': 'saveOrder',
+      'removeTipTitle': '确认删除',
+      'showCount': true,
+    });
+    expect(full.toolbar.length, 1);
+    expect(full.menu.first.title.fallback, '全部刷新');
+    expect(full.menu.first.icon, 'resource/svg/refresh.svg');
+    expect(full.itemMenu.first.action?.name, 'rename');
+    expect(full.editAction?.name, 'beginEdit');
+    expect(full.saveAction?.name, 'saveOrder');
+    expect(full.removeTipTitle.fallback, '确认删除');
+    expect(full.showCount, isTrue);
+
+    // 往返稳定
+    final Map<String, Object?> dumped = dumpItem(full);
+    final Object secondDump = dumpItem(parseBlock(dumped));
+    expect(jsonEncode(secondDump), jsonEncode(dumped));
+    // 列表项的非对象元素只记提示，不使整份描述失效
+    final ParseReport report = ParseReport();
+    final ItemData mixed = parseBlock(<String, Object?>{
+      'kind': 'ListViewBase',
+      'items': <Object?>['乱写的', 3],
+    }, report: report);
+    expect(mixed.items, isEmpty);
+    expect(report.warnings, isNotEmpty);
+  });
+
+  test('控件形态包含 password', () {
+    expect(kControlKinds.contains('password'), isTrue);
+    final ItemData item = parseBlock(<String, Object?>{
+      'kind': 'Control',
+      'control': 'PASSWORD',
+      'id': 'token',
+      'value': 'abc',
+    });
+    expect(item.control, 'password');
+    expect(item.controlValue, 'abc');
+  });
+
   test('Progress.value 接受值表达式', () {
     final Map<String, Object?> node = <String, Object?>{
       'kind': 'source',

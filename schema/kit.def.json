@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "kitVersion": 1,
+  "kitVersion": 2,
   "doc": "基础 kit：共享便捷组件（只装配、不含逻辑、不引用客户端专属块）",
   "components": [
     {
@@ -224,6 +224,50 @@
         { "name": "connector", "type": "bool", "default": true }
       ],
       "variants": [{ "template": { "kind": "Tree", "connector": "$connector", "nodes": "$nodes" } }]
+    },
+    {
+      "name": "listItem",
+      "doc": "列表项（数据对象，给 ListViewBase / ListView 的 items 用）",
+      "returns": "object",
+      "params": [
+        { "name": "id", "type": "string" },
+        { "name": "title", "type": "text", "required": true },
+        { "name": "subtitle", "type": "text" },
+        { "name": "trailing", "type": "text" },
+        { "name": "image", "type": "string" },
+        { "name": "icon", "type": "string" },
+        { "name": "tone", "type": "tone", "default": "normal" },
+        { "name": "selected", "type": "bool", "default": false },
+        { "name": "action", "type": "action" }
+      ],
+      "variants": [
+        {
+          "template": {
+            "id": "$id",
+            "title": "$title",
+            "subtitle": "$subtitle",
+            "trailing": "$trailing",
+            "image": "$image",
+            "icon": "$icon",
+            "tone": "$tone",
+            "selected": "$selected",
+            "action": "$action"
+          }
+        }
+      ]
+    },
+    {
+      "name": "menuItem",
+      "doc": "菜单项（数据对象，给 ListView 的 menu / itemMenu 用）",
+      "returns": "object",
+      "params": [
+        { "name": "title", "type": "text", "required": true },
+        { "name": "icon", "type": "string" },
+        { "name": "action", "type": "action" }
+      ],
+      "variants": [
+        { "template": { "title": "$title", "icon": "$icon", "action": "$action" } }
+      ]
     },
     {
       "name": "sparkline",

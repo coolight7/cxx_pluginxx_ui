@@ -9,7 +9,7 @@ import '../kit_runtime.dart';
 import 'blocks.g.dart';
 
 /// kit 版本
-const int kKitVersion = 1;
+const int kKitVersion = 2;
 
 /// 组件模板（组件名 → {variants, params}）
 const Map<String, Map<String, Object?>> kKitTemplates = <String, Map<String, Object?>>{
@@ -72,6 +72,14 @@ const Map<String, Map<String, Object?>> kKitTemplates = <String, Map<String, Obj
   'tree': <String, Object?>{
     'params': <String, Object?>{'nodes': null, 'connector': true},
     'variants': <Object?>[<String, Object?>{'template': <String, Object?>{'kind': 'Tree', 'connector': '\$connector', 'nodes': '\$nodes'}}],
+  },
+  'listItem': <String, Object?>{
+    'params': <String, Object?>{'id': null, 'title': null, 'subtitle': null, 'trailing': null, 'image': null, 'icon': null, 'tone': 'normal', 'selected': false, 'action': null},
+    'variants': <Object?>[<String, Object?>{'template': <String, Object?>{'id': '\$id', 'title': '\$title', 'subtitle': '\$subtitle', 'trailing': '\$trailing', 'image': '\$image', 'icon': '\$icon', 'tone': '\$tone', 'selected': '\$selected', 'action': '\$action'}}],
+  },
+  'menuItem': <String, Object?>{
+    'params': <String, Object?>{'title': null, 'icon': null, 'action': null},
+    'variants': <Object?>[<String, Object?>{'template': <String, Object?>{'title': '\$title', 'icon': '\$icon', 'action': '\$action'}}],
   },
   'sparkline': <String, Object?>{
     'params': <String, Object?>{'data': null, 'height': 1, 'glyphStyle': 'block', 'showLast': true, 'tone': 'accent'},
@@ -180,6 +188,18 @@ Map<String, Object?> table({required Object columns, Object? rows, bool? header,
 /// 参数：nodes(nodes, 必填)、connector(bool, 默认 true)
 Map<String, Object?> tree({required Object nodes, bool? connector, PluginCapabilities? env}) =>
     KitRuntime.expand('tree', <String, Object?>{'nodes': nodes, 'connector': connector}, env, kKitTemplates) ??
+        <String, Object?>{};
+
+/// 列表项（数据对象，给 ListViewBase / ListView 的 items 用）
+/// 参数：id(string)、title(text, 必填)、subtitle(text)、trailing(text)、image(string)、icon(string)、tone(tone, 默认 normal)、selected(bool, 默认 false)、action(action)
+Map<String, Object?> listItem({String? id, required Object title, Object? subtitle, Object? trailing, String? image, String? icon, String? tone, bool? selected, Object? action, PluginCapabilities? env}) =>
+    KitRuntime.expand('listItem', <String, Object?>{'id': id, 'title': title, 'subtitle': subtitle, 'trailing': trailing, 'image': image, 'icon': icon, 'tone': tone, 'selected': selected, 'action': action}, env, kKitTemplates) ??
+        <String, Object?>{};
+
+/// 菜单项（数据对象，给 ListView 的 menu / itemMenu 用）
+/// 参数：title(text, 必填)、icon(string)、action(action)
+Map<String, Object?> menuItem({required Object title, String? icon, Object? action, PluginCapabilities? env}) =>
+    KitRuntime.expand('menuItem', <String, Object?>{'title': title, 'icon': icon, 'action': action}, env, kKitTemplates) ??
         <String, Object?>{};
 
 /// 迷你趋势图

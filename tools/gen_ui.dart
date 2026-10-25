@@ -56,6 +56,8 @@ const Set<String> _fieldTypes = <String>{
   'numbers',
   'tones',
   'json',
+  'listItems',
+  'menuItems',
 };
 
 /// 允许的适配规则（只允许"降级到更简单的块或文本"，不做样式级微调）
@@ -353,6 +355,78 @@ class UiDef {
     _fail('$what 的取值类型非法：$value');
   }
 
+  /// 校验列表项数组（`listItems` 字段）：每项是对象，至少给 `title`
+  void _checkListItems(Object? value, String what) {
+    final List<Object?> list = _list(value, what);
+    int index = 0;
+    for (final Object? element in list) {
+      final String itemWhat = '$what[$index]';
+      index++;
+      final Map<String, Object?> item = _map(element, itemWhat);
+      const Set<String> keys = <String>{
+        'id',
+        'title',
+        'subtitle',
+        'trailing',
+        'image',
+        'icon',
+        'tone',
+        'selected',
+        'action',
+      };
+      for (final MapEntry<String, Object?> entry in item.entries) {
+        if (!keys.contains(entry.key)) {
+          _fail('$itemWhat 使用了未声明的列表项字段 `${entry.key}`');
+        }
+      }
+      if (!item.containsKey('title')) {
+        _fail('$itemWhat 缺少必填字段 title');
+      }
+      final Object? tone = item['tone'];
+      if (tone is String && !enums['tone']!.contains(tone)) {
+        _fail('$itemWhat.tone 的取值 `$tone` 不在枚举 tone 中');
+      }
+      if (item.containsKey('action')) {
+        _checkAction(item['action'], '$itemWhat.action');
+      }
+    }
+  }
+
+  /// 校验菜单项数组（`menuItems` 字段）：每项是对象，至少给 `title`
+  void _checkMenuItems(Object? value, String what) {
+    final List<Object?> list = _list(value, what);
+    int index = 0;
+    for (final Object? element in list) {
+      final String itemWhat = '$what[$index]';
+      index++;
+      final Map<String, Object?> item = _map(element, itemWhat);
+      const Set<String> keys = <String>{'title', 'icon', 'action'};
+      for (final MapEntry<String, Object?> entry in item.entries) {
+        if (!keys.contains(entry.key)) {
+          _fail('$itemWhat 使用了未声明的菜单项字段 `${entry.key}`');
+        }
+      }
+      if (!item.containsKey('title')) {
+        _fail('$itemWhat 缺少必填字段 title');
+      }
+      if (item.containsKey('action')) {
+        _checkAction(item['action'], '$itemWhat.action');
+      }
+    }
+  }
+
+  /// 校验动作取值：字符串短写（dispatch）或 `{kind: dispatch|route|command|none}`
+  void _checkAction(Object? value, String what) {
+    if (value is String) {
+      return;
+    }
+    final Map<String, Object?> action = _map(value, what);
+    final Object? kind = action['kind'];
+    if (kind is! String || !enums['actionKind']!.contains(kind)) {
+      _fail('$what 的 kind 必须是 ${enums['actionKind']!.join(' / ')}');
+    }
+  }
+
   /// 校验一个样例节点：组件存在、字段已声明、枚举取值合法、尺寸非负
   void _checkNode(Object? value, String what, int depth) {
     if (depth > 12) {
@@ -385,6 +459,10 @@ class UiDef {
         _checkEdges(entry.value, '$what.$name');
       } else if (type == 'value') {
         _checkValue(entry.value, '$what.$name');
+      } else if (type == 'listItems') {
+        _checkListItems(entry.value, '$what.$name');
+      } else if (type == 'menuItems') {
+        _checkMenuItems(entry.value, '$what.$name');
       }
       if (type == 'items') {
         for (final Object? child in _list(entry.value, '$what.$name')) {
@@ -439,6 +517,10 @@ class KitDef {
         _fail('kit 组件 $name 重复定义');
       }
       final Set<String> params = paramNamesOf(name);
+      final String returns = (c['returns'] as String?) ?? 'block';
+      if (returns != 'block' && returns != 'object') {
+        _fail('$name 的 returns 只能是 block / object');
+      }
       for (final Object? p in _list(c['params'] ?? <Object?>[], '$name.params')) {
         final Map<String, Object?> param = _map(p, '$name.param');
         _str(param['name'], '$name.param.name');
@@ -481,6 +563,9 @@ class KitDef {
         for (final Object? p in _list(byName[name]!['params'] ?? <Object?>[], '$name.params'))
           _map(p, '$name.param')['name']! as String,
       };
+
+  /// 组件产出的是块（`has kind`）还是普通数据对象（没有 `kind`，例如列表项）
+  String returnsOf(String name) => (byName[name]?['returns'] as String?) ?? 'block';
 
   /// 参数默认值表（默认值是 `"gap"` 表示"用客户端默认行距" → 缺省为空）
   Map<String, Object?> defaultsOf(String name) =>
@@ -954,16 +1039,23 @@ class Generator {
       ..writeln('/// kit 组件（参数说明见生成的 docs/kit.md）');
     for (final Map<String, Object?> c in components) {
       final String cname = c['name']! as String;
+      // 数据对象（没有 kind 的模板，例如列表项）：C++ 侧返回 Json，其余两端本来就返回对象
+      final bool asObject = ((c['returns'] as String?) ?? 'block') == 'object';
       out
         ..writeln()
         ..writeln('/// ${c['doc'] as String? ?? ''}')
         ..writeln('/// 参数：${_paramDoc(c)}')
-        ..writeln('inline pluginxx::ui::Item $cname(')
+        ..writeln(asObject
+            ? 'inline utilxx_base::Json $cname('
+            : 'inline pluginxx::ui::Item $cname(')
         ..writeln('    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),')
         ..writeln('    const pluginxx::ui::Capabilities* env = nullptr')
         ..writeln(') {')
-        ..writeln('    return pluginxx::ui::detail::expandKit('
-            '"$cname", params, env, &kitTemplate);')
+        ..writeln(asObject
+            ? '    return pluginxx::ui::detail::expandKitJson('
+                '"$cname", params, env, &kitTemplate);'
+            : '    return pluginxx::ui::detail::expandKit('
+                '"$cname", params, env, &kitTemplate);')
         ..writeln('}');
     }
     out.writeln();
@@ -1290,6 +1382,8 @@ class Generator {
         'int' => 'int',
         'float' => 'num',
         'items' => 'List<Object?>',
+        'listItems' => 'List<Object?>',
+        'menuItems' => 'List<Object?>',
         'numbers' => 'List<num>',
         'tone' => 'String',
         'string' => 'String',

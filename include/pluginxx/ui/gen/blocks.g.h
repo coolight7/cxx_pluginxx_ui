@@ -16,7 +16,7 @@ namespace gen {
 /// 定义文件结构版本（字段/组件结构变化时递增）
 inline constexpr int kSchemaVersion = 1;
 /// 组件词汇版本（新增 kind / 字段 / 枚举值时递增，只增不改）
-inline constexpr int kUiApiVersion = 1;
+inline constexpr int kUiApiVersion = 2;
 
 /// 默认留白（u）：Gap.size 的缺省值与基础 kit 的默认行距
 inline constexpr double kDefaultGap = 12;
@@ -105,6 +105,12 @@ inline constexpr BlockMeta kBlockTable[] = {
     {"Diagram", BlockLevel::Optional,
      "", AdaptRule::PlainTextMono,
      "状态图（未实现时适配为等宽文本）"},
+    {"ListViewBase", BlockLevel::Optional,
+     "", AdaptRule::PlainTextMono,
+     "按应用的列表组件显示多条数据（只显示，没有工具条与编辑）"},
+    {"ListView", BlockLevel::Optional,
+     "", AdaptRule::PlainTextMono,
+     "带工具条的列表（编辑 / 多选 / 加删 / 定位 / 菜单 / 下拉刷新 / 加载更多）"},
     {"musicxx.Shader", BlockLevel::Client,
      "Musicxx", AdaptRule::Skip,
      "插件着色器（字段集照搬 shader bundle 文档；其他客户端跳过）"},
@@ -137,6 +143,7 @@ inline constexpr std::string_view kControlKinds[] = {
     "switch",
     "text",
     "number",
+    "password",
 };
 
 /// 枚举取值表（解析时校验，未知取值退到默认值）
@@ -194,6 +201,17 @@ inline constexpr std::string_view kEnumControlKind[] = {
     "switch",
     "text",
     "number",
+    "password",
+};
+inline constexpr std::string_view kEnumListLayout[] = {
+    "auto",
+    "list",
+    "grid",
+    "multiList",
+};
+inline constexpr std::string_view kEnumListVariant[] = {
+    "card",
+    "plain",
 };
 inline constexpr std::string_view kEnumActionKind[] = {
     "none",

@@ -352,6 +352,56 @@ class TreeNode {
       1 + children.fold<int>(0, (int sum, TreeNode child) => sum + child.count);
 }
 
+/// 列表项（`ListViewBase.items` / `ListView.items` 的元素）
+///
+/// 它是**数据**而不是块：没有 `kind`、不能带子块。列表项的外观由客户端统一决定
+/// （列表：图片/图标 + 主标题 + 副标题 + 右侧文字；网格：封面 + 标题）。
+class ListItem {
+  const ListItem({
+    this.id = '',
+    this.title = TextValue.empty,
+    this.subtitle = TextValue.empty,
+    this.trailing = TextValue.empty,
+    this.image = '',
+    this.icon = '',
+    this.tone = 'normal',
+    this.selected = false,
+    this.action,
+  });
+
+  /// 稳定标识（动作参数里作为 `itemId` 带上；编辑保存 / 批量删除用它认出哪一项）
+  final String id;
+  final TextValue title;
+  final TextValue subtitle;
+  final TextValue trailing;
+
+  /// 前置图片：`cover`（当前歌曲封面）或相对插件目录的路径（取不到就留空）
+  final String image;
+
+  /// 前置图标（插件自己带的 svg 相对路径）；与 [image] 同时给时 [image] 优先
+  final String icon;
+
+  /// 主标题的语义色
+  final String tone;
+
+  /// 是否高亮（只由插件给的数据决定，客户端不做点击自动高亮）
+  final bool selected;
+  final UiAction? action;
+}
+
+/// 菜单项（`ListView.menu` / `ListView.itemMenu` 的元素）
+///
+/// 同样是数据：点击后客户端按 [action] 派发（带 `index` / `itemId` / `item`）。
+class MenuItem {
+  const MenuItem({this.title = TextValue.empty, this.icon = '', this.action});
+
+  final TextValue title;
+
+  /// 图标（插件目录里的 svg 相对路径）
+  final String icon;
+  final UiAction? action;
+}
+
 /// 组件级别
 enum BlockLevel {
   /// 两个渲染目标都必须实现
@@ -506,6 +556,51 @@ class ItemData {
   String newStr = '';
   String mermaid = '';
 
+  // ---- 列表块（ListViewBase / ListView）----
+  /// 列表项（`items`）
+  List<ListItem> items = <ListItem>[];
+
+  /// 空列表提示
+  TextValue emptyText = TextValue.empty;
+
+  /// 列表头 / 尾（任意块；对应列表组件的 `headerBuilder` / `footerBuilder`）
+  ///
+  /// 字段名故意与 `Table.header`（布尔）区分：描述里两者都叫 `header`，模型里不能重名。
+  List<ItemData> headerBlocks = <ItemData>[];
+  List<ItemData> footerBlocks = <ItemData>[];
+
+  /// 顶部工具条中间的自定义内容（任意块，`ListView` 才有）
+  List<ItemData> toolbar = <ItemData>[];
+
+  /// 所有列表项共用的点击动作（项自己的 `action` 优先）
+  UiAction? itemAction;
+
+  /// 顶部“更多”菜单（完全由插件定义，组件内置项不显示）
+  List<MenuItem> menu = <MenuItem>[];
+
+  /// 每项的菜单（长按 / 右键）
+  List<MenuItem> itemMenu = <MenuItem>[];
+
+  /// 列表布局：`auto` / `list` / `grid` / `multiList`
+  String layout = 'auto';
+
+  // 列表工具条 / 编辑相关的动作（没写的就不出现对应按钮）
+  UiAction? editAction;
+  UiAction? saveAction;
+  UiAction? addAction;
+  UiAction? removeAction;
+  UiAction? removeCheckedAction;
+  UiAction? positionAction;
+  UiAction? refreshAction;
+  UiAction? loadMoreAction;
+
+  /// 编辑态删除选中项时的确认弹窗标题
+  TextValue removeTipTitle = TextValue.empty;
+
+  bool enableCheck = true;
+  bool enableDrop = true;
+  bool showCount = false;
+
   // ---- 图片 ----
   String source = 'file';
   String src = '';
@@ -542,7 +637,11 @@ class ItemData {
   String fallback = '';
 
   /// 是否含可交互内容（控件 / 带动作的可点组件）
-  bool get interactive => kind == 'Control' || (action?.isNotEmpty ?? false);
+  bool get interactive =>
+      kind == 'Control' || isListKind || (action?.isNotEmpty ?? false);
+
+  /// 是否列表块（两个列表块的交互在项上，不算整块可点）
+  bool get isListKind => kind == 'ListViewBase' || kind == 'ListView';
 
   /// 结构完全相同的副本（适配时不改动调用方给的原对象）
   ItemData clone() => ItemData(kind: kind)
@@ -618,6 +717,27 @@ class ItemData {
     ..oldStr = oldStr
     ..newStr = newStr
     ..mermaid = mermaid
+    ..items = items
+    ..emptyText = emptyText
+    ..headerBlocks = headerBlocks
+    ..footerBlocks = footerBlocks
+    ..toolbar = toolbar
+    ..itemAction = itemAction
+    ..menu = menu
+    ..itemMenu = itemMenu
+    ..layout = layout
+    ..editAction = editAction
+    ..saveAction = saveAction
+    ..addAction = addAction
+    ..removeAction = removeAction
+    ..removeCheckedAction = removeCheckedAction
+    ..positionAction = positionAction
+    ..refreshAction = refreshAction
+    ..loadMoreAction = loadMoreAction
+    ..removeTipTitle = removeTipTitle
+    ..enableCheck = enableCheck
+    ..enableDrop = enableDrop
+    ..showCount = showCount
     ..source = source
     ..src = src
     ..alt = alt

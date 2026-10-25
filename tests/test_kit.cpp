@@ -114,6 +114,46 @@ PLUGINXX_UI_TEST(kit_展开结果可以直接解析) {
     PLUGINXX_UI_CHECK_EQ(again.children.size(), row.children.size(), "结构一致");
 }
 
+PLUGINXX_UI_TEST(kit_列表项是数据对象) {
+    // 列表项 / 菜单项产出的是普通数据对象（没有 kind），不进组件表也不能当块用
+    const Json listItem = pluginxx::ui::kit::listItem(
+        {{"id", "weekly"},
+         {"title", "每周新歌"},
+         {"subtitle", "每周一更新"},
+         {"trailing", "12 首"},
+         {"selected", true},
+         {"action", "openPlaylist"}}
+    );
+    const auto text = [](const Json& node, const char* key) {
+        return node.contains(key) && node[key].is_string()
+                   ? std::string(node[key].get_string_view())
+                   : std::string();
+    };
+    PLUGINXX_UI_CHECK(listItem.is_object(), "产出对象");
+    PLUGINXX_UI_CHECK(!listItem.contains("kind"), "数据对象没有 kind");
+    PLUGINXX_UI_CHECK_EQ(text(listItem, "title"), std::string("每周新歌"), "主标题");
+    PLUGINXX_UI_CHECK_EQ(text(listItem, "subtitle"), std::string("每周一更新"), "副标题");
+    PLUGINXX_UI_CHECK_EQ(text(listItem, "trailing"), std::string("12 首"), "右侧文字");
+    PLUGINXX_UI_CHECK_EQ(text(listItem, "action"), std::string("openPlaylist"), "动作短写");
+
+    const Json menuItem = pluginxx::ui::kit::menuItem({{"title", "重命名"}});
+    PLUGINXX_UI_CHECK_EQ(text(menuItem, "title"), std::string("重命名"), "菜单项标题");
+    PLUGINXX_UI_CHECK(!menuItem.contains("icon"), "没给的字段省略");
+
+    // 数据对象能直接放进列表块的 items 里并被解析回来
+    Json items = Json::array();
+    items.push_back(listItem);
+    const Json document = Json::object(
+        {{"kind", "ListView"}, {"items", items}, {"emptyText", "空"}, {"showCount", true}}
+    );
+    const Item list = pluginxx::ui::parseBlock(document);
+    PLUGINXX_UI_CHECK(list.known, "列表块可解析");
+    PLUGINXX_UI_CHECK_EQ(list.items.size(), static_cast<std::size_t>(1), "一项列表项");
+    PLUGINXX_UI_CHECK_EQ(list.items[0].title.resolve(), std::string("每周新歌"), "项标题");
+    PLUGINXX_UI_CHECK_EQ(list.emptyText.resolve(), std::string("空"), "空列表提示");
+    PLUGINXX_UI_CHECK(list.showCount, "工具条标记项数");
+}
+
 PLUGINXX_UI_TEST(kit_按格换算) {
     PLUGINXX_UI_CHECK_EQ(pluginxx::ui::kit::cols(2), 16.0, "默认格宽 8u");
     PLUGINXX_UI_CHECK_EQ(pluginxx::ui::kit::rows(3), 60.0, "默认格高 20u");
@@ -125,9 +165,9 @@ PLUGINXX_UI_TEST(kit_按格换算) {
 }
 
 PLUGINXX_UI_TEST(kit_组件表与定义一致) {
-    PLUGINXX_UI_CHECK_EQ(pluginxx::ui::kit::kKitVersion, 1, "kit 版本");
+    PLUGINXX_UI_CHECK_EQ(pluginxx::ui::kit::kKitVersion, 2, "kit 版本");
     PLUGINXX_UI_CHECK_EQ(
-        pluginxx::ui::gen::kBlockCount, static_cast<std::size_t>(27), "组件数量"
+        pluginxx::ui::gen::kBlockCount, static_cast<std::size_t>(35), "组件数量"
     );
     PLUGINXX_UI_CHECK(pluginxx::ui::isKnownBlock("musicxx.Shader"), "客户端专属块在表里");
     PLUGINXX_UI_CHECK(

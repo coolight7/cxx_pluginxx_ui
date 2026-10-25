@@ -7,7 +7,7 @@ import '../model.dart';
 /// 定义文件结构版本
 const int kSchemaVersion = 1;
 /// 组件词汇版本（新增 kind / 字段 / 枚举值时递增，只增不改）
-const int kUiApiVersion = 1;
+const int kUiApiVersion = 2;
 
 /// 默认留白（u）：Gap.size 的缺省值与基础 kit 的默认行距
 const double kDefaultGap = 12;
@@ -44,6 +44,8 @@ const List<BlockMeta> kBlockTable = <BlockMeta>[
   BlockMeta('Diff', BlockLevel.optional, '', AdaptRule.plainTextMono),
   BlockMeta('Sparkline', BlockLevel.optional, '', AdaptRule.plainTextMono),
   BlockMeta('Diagram', BlockLevel.optional, '', AdaptRule.plainTextMono),
+  BlockMeta('ListViewBase', BlockLevel.optional, '', AdaptRule.plainTextMono),
+  BlockMeta('ListView', BlockLevel.optional, '', AdaptRule.plainTextMono),
   BlockMeta('musicxx.Shader', BlockLevel.client, 'musicxx', AdaptRule.skip),
   BlockMeta('musicxx.AnimatedBuilder', BlockLevel.client, 'musicxx', AdaptRule.flatten),
   BlockMeta('musicxx.SizeTransition', BlockLevel.client, 'musicxx', AdaptRule.flatten),
@@ -81,6 +83,8 @@ const List<String> kBlockNames = <String>[
   'Diff',
   'Sparkline',
   'Diagram',
+  'ListViewBase',
+  'ListView',
   'musicxx.Shader',
   'musicxx.AnimatedBuilder',
   'musicxx.SizeTransition',
@@ -98,6 +102,7 @@ const List<String> kControlKinds = <String>[
   'switch',
   'text',
   'number',
+  'password',
 ];
 
 /// 枚举 textType 的取值
@@ -169,6 +174,21 @@ const List<String> kEnumControlKind = <String>[
   'switch',
   'text',
   'number',
+  'password',
+];
+
+/// 枚举 listLayout 的取值
+const List<String> kEnumListLayout = <String>[
+  'auto',
+  'list',
+  'grid',
+  'multiList',
+];
+
+/// 枚举 listVariant 的取值
+const List<String> kEnumListVariant = <String>[
+  'card',
+  'plain',
 ];
 
 /// 枚举 actionKind 的取值
@@ -227,6 +247,8 @@ const Map<String, List<String>> kEnums = <String, List<String>>{
   'blockVariant': kEnumBlockVariant,
   'buttonVariant': kEnumButtonVariant,
   'controlKind': kEnumControlKind,
+  'listLayout': kEnumListLayout,
+  'listVariant': kEnumListVariant,
   'actionKind': kEnumActionKind,
   'sparkStyle': kEnumSparkStyle,
   'imageFit': kEnumImageFit,

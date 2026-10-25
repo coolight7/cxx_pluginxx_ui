@@ -136,6 +136,80 @@ PLUGINXX_UI_TEST(解析与序列化往返稳定) {
     PLUGINXX_UI_CHECK_EQ(dumped.dump(), second.dump(), "dump(parse(dump(parse(x)))) 稳定");
 }
 
+PLUGINXX_UI_TEST(列表块解析与往返) {
+    const std::string text = R"JSON(
+{
+  "kind": "ListView",
+  "id": "subs",
+  "layout": "grid",
+  "variant": "plain",
+  "items": [
+    { "id": "weekly", "title": "每周新歌", "subtitle": "每周一更新", "trailing": "12 首",
+      "image": "cover", "selected": true, "action": "openPlaylist" },
+    { "title": "我的收藏", "tone": "hint" }
+  ],
+  "toolbar": [ { "kind": "Text", "text": "共 2 项" } ],
+  "menu": [ { "title": "全部刷新", "icon": "resource/svg/refresh.svg", "action": "refreshAll" } ],
+  "itemMenu": [ { "title": "重命名", "action": "rename" } ],
+  "editAction": "beginEdit",
+  "saveAction": "saveOrder",
+  "removeTipTitle": "确认删除",
+  "showCount": true
+}
+)JSON";
+    const Item item = pluginxx::ui::parseBlock(Json::parse(text));
+    PLUGINXX_UI_CHECK(item.known, "列表块被识别");
+    PLUGINXX_UI_CHECK_EQ(item.layout, std::string("grid"), "布局取值");
+    PLUGINXX_UI_CHECK_EQ(item.variant, std::string("plain"), "列表变体");
+    PLUGINXX_UI_CHECK(item.items.size() == 2, "两项");
+    PLUGINXX_UI_CHECK_EQ(item.items[0].id, std::string("weekly"), "项 id");
+    PLUGINXX_UI_CHECK_EQ(item.items[0].title.resolve(), std::string("每周新歌"), "项标题");
+    PLUGINXX_UI_CHECK_EQ(item.items[0].subtitle.resolve(), std::string("每周一更新"), "项副标题");
+    PLUGINXX_UI_CHECK_EQ(item.items[0].trailing.resolve(), std::string("12 首"), "项右侧文字");
+    PLUGINXX_UI_CHECK_EQ(item.items[0].image, std::string("cover"), "项封面");
+    PLUGINXX_UI_CHECK(item.items[0].selected, "项高亮");
+    PLUGINXX_UI_CHECK(item.items[0].action.kind == pluginxx::ui::Action::Kind::Dispatch, "项动作");
+    PLUGINXX_UI_CHECK_EQ(item.items[1].tone, std::string("hint"), "项语义色");
+    PLUGINXX_UI_CHECK(item.toolbar.size() == 1, "工具条块");
+    PLUGINXX_UI_CHECK(item.menu.size() == 1, "顶部菜单");
+    PLUGINXX_UI_CHECK_EQ(item.menu[0].icon, std::string("resource/svg/refresh.svg"), "菜单图标");
+    PLUGINXX_UI_CHECK(item.itemMenu.size() == 1, "每项菜单");
+    PLUGINXX_UI_CHECK(item.editAction.kind == pluginxx::ui::Action::Kind::Dispatch, "编辑动作");
+    PLUGINXX_UI_CHECK(item.saveAction.kind == pluginxx::ui::Action::Kind::Dispatch, "保存动作");
+    PLUGINXX_UI_CHECK_EQ(item.removeTipTitle.resolve(), std::string("确认删除"), "删除确认标题");
+    PLUGINXX_UI_CHECK(item.showCount, "显示条数");
+
+    // 默认值
+    const Item plain = pluginxx::ui::parseBlock(
+        Json::object({{"kind", "ListViewBase"}, {"items", Json::array()}})
+    );
+    PLUGINXX_UI_CHECK_EQ(plain.layout, std::string("auto"), "默认布局");
+    PLUGINXX_UI_CHECK_EQ(plain.variant, std::string("card"), "默认变体");
+    PLUGINXX_UI_CHECK(plain.items.empty(), "默认空列表");
+
+    // 往返稳定
+    const Json dumped = pluginxx::ui::dumpItem(item);
+    PLUGINXX_UI_CHECK_EQ(dumped.dump(), pluginxx::ui::dumpItem(pluginxx::ui::parseBlock(dumped)).dump(),
+                         "列表块 dump/parse 稳定");
+
+    // 非对象项只记提示，不使整份描述失效
+    ParseReport report;
+    const Item  mixed = pluginxx::ui::parseBlock(
+        Json::parse(R"JSON({ "kind": "ListViewBase", "items": ["乱写的", 3] })JSON"),
+        {},
+        &report
+    );
+    PLUGINXX_UI_CHECK(mixed.items.empty(), "非对象项被跳过");
+    PLUGINXX_UI_CHECK(!report.warnings.empty(), "记了提示");
+}
+
+PLUGINXX_UI_TEST(控件形态包含密码) {
+    const Item item = pluginxx::ui::parseBlock(Json::parse(
+        R"JSON({ "kind": "Control", "control": "PASSWORD", "id": "token", "value": "abc" })JSON"
+    ));
+    PLUGINXX_UI_CHECK_EQ(item.control, std::string("password"), "形态归一化");
+}
+
 PLUGINXX_UI_TEST(不再按数量上限截断) {
     Json array = Json::array();
     for (int i = 0; i < 600; ++i) {

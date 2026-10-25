@@ -222,6 +222,29 @@ struct TreeNode {
     }
 };
 
+/// 列表项（`ListViewBase.items` / `ListView.items` 的元素）
+///
+/// 它是**数据**而不是块：没有 kind、不能带子块。外观由客户端统一决定
+/// （列表：图片/图标 + 主标题 + 副标题 + 右侧文字；网格：封面 + 标题）。
+struct ListItem {
+    std::string id;       ///< 稳定标识（动作参数里作为 `itemId`）
+    TextValue   title;    ///< 主标题
+    TextValue   subtitle; ///< 副标题
+    TextValue   trailing; ///< 右侧状态文本
+    std::string image;    ///< 前置图片（`cover` 或插件目录相对路径）
+    std::string icon;     ///< 前置图标（插件目录相对路径；image 优先）
+    std::string tone = "normal"; ///< 主标题语义色
+    bool        selected = false; ///< 是否高亮（只由插件给的数据决定）
+    Action      action;   ///< 点这一项派发的动作
+};
+
+/// 菜单项（`ListView.menu` / `ListView.itemMenu` 的元素）
+struct MenuItem {
+    TextValue   title;
+    std::string icon;
+    Action      action;
+};
+
 // ===== 组件元信息（由 schema 生成，见 gen/blocks.g.h） =====
 
 /// 组件级别
@@ -360,6 +383,42 @@ struct Item {
     std::string src;    ///< Image.src
     TextValue   alt;    ///< 取不到图时的替代文本
 
+    // ---- 列表块（ListViewBase / ListView）----
+    std::vector<ListItem> items;     ///< items
+    TextValue             emptyText; ///< 空列表提示
+
+    /// 列表头 / 尾（任意块；对应列表组件的 headerBuilder / footerBuilder）
+    ///
+    /// 字段名故意与 `header`（Table 的布尔）区分：描述里两者都叫 `header`，模型里不能重名。
+    std::vector<Item> headerBlocks;
+    std::vector<Item> footerBlocks;
+
+    /// 顶部工具条中间的自定义内容（任意块，ListView 才有）
+    std::vector<Item> toolbar;
+
+    Action itemAction; ///< 所有项共用的点击动作（项自己的 action 优先）
+
+    std::vector<MenuItem> menu;     ///< 顶部“更多”菜单（完全由插件定义）
+    std::vector<MenuItem> itemMenu; ///< 每项的菜单（长按 / 右键）
+
+    std::string layout = "auto"; ///< auto / list / grid / multiList
+
+    // 工具条 / 编辑相关动作（没写的就不出现对应按钮）
+    Action editAction;
+    Action saveAction;
+    Action addAction;
+    Action removeAction;
+    Action removeCheckedAction;
+    Action positionAction;
+    Action refreshAction;
+    Action loadMoreAction;
+
+    TextValue removeTipTitle; ///< 编辑态删除选中项时的确认弹窗标题
+
+    bool enableCheck = true;
+    bool enableDrop  = true;
+    bool showCount   = false;
+
     // ---- 客户端专属块：musicxx.Shader ----
     std::string bundle;
     std::string shaderArgsJson;
@@ -374,7 +433,12 @@ struct Item {
 
     /// 是否含可交互内容（控件 / 带动作的可点组件）
     bool interactive() const {
-        return kind == "Control" || !action.empty();
+        return kind == "Control" || isListKind() || !action.empty();
+    }
+
+    /// 是否列表块（交互在项上，不算整块可点）
+    bool isListKind() const {
+        return kind == "ListViewBase" || kind == "ListView";
     }
 };
 

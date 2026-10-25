@@ -171,6 +171,31 @@ PLUGINXX_UI_TEST(纯文本两侧结果一致) {
     }
 }
 
+PLUGINXX_UI_TEST(列表块与密码的纯文本) {
+    const Item item = pluginxx::ui::parseBlock(Json::parse(R"JSON(
+{
+  "kind": "ListViewBase",
+  "items": [
+    { "title": "每周新歌", "subtitle": "每周一更新", "trailing": "12 首" },
+    { "title": "我的收藏" }
+  ]
+})JSON"));
+    PLUGINXX_UI_CHECK_EQ(pluginxx::ui::plainTextItem(item),
+                         std::string("每周新歌 - 每周一更新  12 首\n我的收藏"), "列表行格式");
+
+    const Item empty = pluginxx::ui::parseBlock(Json::parse(
+        R"JSON({ "kind": "ListView", "emptyText": "还没有订阅", "items": [] })JSON"
+    ));
+    PLUGINXX_UI_CHECK_EQ(pluginxx::ui::plainTextItem(empty), std::string("还没有订阅"), "空列表提示");
+
+    const Item password = pluginxx::ui::parseBlock(Json::parse(
+        R"JSON({ "kind": "Control", "control": "password", "id": "t", "label": "访问令牌",
+                 "value": "secret" })JSON"
+    ));
+    PLUGINXX_UI_CHECK_EQ(pluginxx::ui::plainTextItem(password), std::string("访问令牌: ***"),
+                         "密码打码");
+}
+
 PLUGINXX_UI_TEST(显示列宽) {
     PLUGINXX_UI_CHECK_EQ(pluginxx::ui::displayWidth("abc"), 3, "ASCII");
     PLUGINXX_UI_CHECK_EQ(pluginxx::ui::displayWidth("中文"), 4, "汉字按两列");
