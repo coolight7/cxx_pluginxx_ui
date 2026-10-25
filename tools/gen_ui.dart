@@ -615,6 +615,21 @@ class KitDef {
         }
         _fail('$name 的模板里 $kind 使用了未声明的字段 `$key`');
       }
+      // 动作字段写成对象时，里面的 `kind` 是**动作类型**（dispatch / route / command），
+      // 不是块：只查参数引用，不当成块节点校验
+      final Map<String, String> fieldTypes = ui.blockFieldTypes[kind]!;
+      for (final MapEntry<String, Object?> entry in node.entries) {
+        if (entry.key == 'kind' || entry.key == r'$require') {
+          continue;
+        }
+        if (fieldTypes[entry.key] == 'action') {
+          _checkParamRefs(entry.value, name, params);
+          continue;
+        }
+        _checkParamRefs(entry.value, name, params);
+        _checkTemplate(entry.value, name, params, depth + 1);
+      }
+      return;
     }
     for (final MapEntry<String, Object?> entry in node.entries) {
       if (entry.key == 'kind' || entry.key == r'$require') {
