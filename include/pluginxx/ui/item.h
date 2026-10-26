@@ -256,7 +256,7 @@ enum class BlockLevel : std::uint8_t {
 
 /// 适配规则（客户端不支持某个块时怎么降级）
 enum class AdaptRule : std::uint8_t {
-    Terminal      = 0, ///< 收敛终点（Text）
+    Terminal      = 0, ///< 最终降级目标（Text）
     PlainTextMono = 1, ///< 该节点的纯文本，包成 Text(mono=true)
     Flatten       = 2, ///< 展开子节点
     Skip          = 3, ///< 跳过
@@ -427,7 +427,7 @@ struct Item {
     bool        animate         = true;
     double      resolutionScale = 1.0;
 
-    // ---- 动作与兜底 ----
+    // ---- 动作与回退 ----
     Action      action;   ///< 点击动作（可点组件）
     std::string fallback; ///< 客户端不认识这个块时显示的文本
 

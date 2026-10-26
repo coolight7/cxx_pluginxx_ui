@@ -85,7 +85,7 @@ struct Capabilities {
 
     /// 全部组件与控件都支持（GUI 客户端的默认能力）
     static Capabilities full();
-    /// 最小实现：只有 Text（适配的收敛终点）
+    /// 最小实现：只有 Text（适配的最终降级目标）
     static Capabilities minimal();
 };
 

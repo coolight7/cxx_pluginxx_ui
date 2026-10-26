@@ -57,7 +57,7 @@ tests/              C++ 单元测试
   取不到用 `fallback`，`args` 做 `{n}` 命名占位替换。
 - **动作**：`dispatch`（字符串短写）/ `route` / `command` / `none`；控件只在**值变化时**派发，
   客户端把 `{id, value}` 合并进参数；库**不提供**表单提交层。
-- **降级适配保证收敛**：适配结果只包含客户端声明支持的组件，最多降到 `Text`。
+- **降级适配保证最终落到 Text**：适配结果只包含客户端声明支持的组件，最多降到 `Text`。
   规则表在 `schema/ui.def.json` 的 `adapt` 段，由生成器产出，客户端不要再写一套判断。
 - **未知不致命**：未知组件走 `fallback` 或跳过；未知字段忽略；未知枚举值取默认值；超限截断。
 
@@ -109,13 +109,13 @@ dart run tools/gen_ui.dart --ext-kit <客户端 kit 定义> \
 - JS 产物写的是同一个全局 `pluginxx.ui.kit`（内容是合并后的超集）：先加载基础 kit 再加载扩展 kit
   时，扩展 kit 的同名组件覆盖基础 kit 的。只加载扩展 kit 也够用（它自带全部基础组件）。
 - 生成前会校验合并后的组件表：扩展 kit 里的 `params`/`variants` 只引用已声明的参数与组件，
-  尺寸取值非负，且每个组件都有无条件的兜底变体。
+  尺寸取值非负，且每个组件都有无条件的回退分支。
 
 ## 接入位置
 
 | 项目 | 接入 | 说明 |
 |---|---|---|
-| agentxx | `agent/third_party/cxx_pluginxx_ui` | TUI 渲染器消费适配后的模型；将来 GUI 客户端复用同一份描述层 |
+| agentxx | `agent/third_party/cxx_pluginxx_ui` | TUI 渲染器处理适配后的模型；将来 GUI 客户端复用同一份描述层 |
 | mymusic | `package_extend/musicxx_extern_plugin/src/third_party/cxx_pluginxx_ui` | Flutter 渲染层用 Dart 绑定；主程序与插件用 C++ 绑定；JS插件用生成的 kit |
 
 ## 版本

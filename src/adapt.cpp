@@ -144,7 +144,7 @@ std::vector<Item> adaptItemImpl(const Item& item, const Capabilities& caps, Adap
     // 不支持 → 按规则降级
     switch (adaptRuleOf(item.kind)) {
         case AdaptRule::Terminal:
-            // 收敛终点：即使能力表里没写也保留（客户端至少能画文字）
+            // 最终降级目标：即使能力表里没写也保留（客户端至少能画文字）
             out.push_back(item);
             return out;
 

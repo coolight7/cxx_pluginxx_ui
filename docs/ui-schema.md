@@ -90,7 +90,7 @@
 | `Markdown` | core | — | `text`* | markdown 源码 |
 | `Icon` | optional | — | `name` `glyph` `size` `tone` `alt` | 图标：GUI 用 name，终端用 glyph（都没有就跳过） |
 | `Stack` | optional | — | `align` `vertical` `children` | 叠放（终端适配为取最后一个子节点） |
-| `Image` | optional | — | `source` `src` `width` `height` `aspect` `radius` `blur` `opacity` `fit` `alt` | 图片：source 不做限制（惯例 cover/file/asset/url），取不到用 alt 兜底；支持圆角、模糊与不透明度 |
+| `Image` | optional | — | `source` `src` `width` `height` `aspect` `radius` `blur` `opacity` `fit` `alt` | 图片：source 不做限制（惯例 cover/file/asset/url），取不到用 alt 回退；支持圆角、模糊与不透明度 |
 | `Diff` | optional | — | `path` `oldStr` `newStr` | 差异对比（未实现时适配为等宽文本） |
 | `Sparkline` | optional | — | `data`* `height` `glyphStyle` `min` `max` `tone` `colors` `showLast` | 迷你趋势图（未实现时适配为末值文本） |
 | `Diagram` | optional | — | `mermaid`* | 状态图（未实现时适配为等宽文本） |
@@ -111,7 +111,7 @@
 
 | kind | 规则 | 含义 |
 |---|---|---|
-| `Text` | `terminal` | 收敛终点（Text）：任何客户端都必须支持 |
+| `Text` | `terminal` | 最终降级目标（Text）：任何客户端都必须支持 |
 | `Divider` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
 | `Gap` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
 | `Button` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
@@ -147,7 +147,7 @@
 | `musicxx.ScaleTransition` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
 | `musicxx.RotationTransition` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
 
-适配保证收敛：降级结果只包含客户端声明支持的块，最多降到 `Text`（`terminal` 规则）。
+适配保证最终落到 Text：降级结果只包含客户端声明支持的块，最多降到 `Text`（`terminal` 规则）。
 
 ## 能力段（客户端如实上报）
 

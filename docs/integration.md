@@ -126,7 +126,7 @@ final PluginCapabilities caps = PluginCapabilities(
 
 | 客户端 | 通道 | 插件侧读法 |
 |---|---|---|
-| agentxx（TUI） | 客户端状态快照 `get_client_state()` 的 `ui` 段：由 `PluginUiAdapter::uiCapabilitiesJson()` 提供（TUI 适配器直接返回 `capabilitiesToJson(tuiUiCapabilities())`，与渲染前 `adaptItems` 用的是同一份能力，不会分叉） | `ClientPluginBase::uiCapabilities()` / `supportsBlock()` |
+| agentxx（TUI） | 客户端状态快照 `get_client_state()` 的 `ui` 段：由 `PluginUiAdapter::uiCapabilitiesJson()` 提供（TUI 适配器直接返回 `capabilitiesToJson(tuiUiCapabilities())`，与渲染前 `adaptItems` 用的是同一份能力，不会出现差异） | `ClientPluginBase::uiCapabilities()` / `supportsBlock()` |
 | musicxx（Flutter） | ① 主程序配置 `MusicxxPluginRuntimeConfig.uiCapabilities` → `musicxx.host.info().ui`；② 调用插件能力取页面时作为参数传（`{"view":"…","ui":{…}}`）；③ 管理页「调试」分页展示 | JS `musicxx.host.info().ui` / `musicxx.ui.support(name)`；原生 `host.get_info` |
 
 能力段在客户端生命周期内不变，插件侧按实例缓存解析结果即可。
@@ -150,13 +150,13 @@ auto renderable = pluginxx::ui::adaptDocument(doc, myCaps(), &adaptReport);
 ```
 
 - 纯函数：同一输入 + 同一能力 → 同一输出；
-- **保证收敛**：结果只包含 `caps.blocks` 里声明的组件，最多降到 `Text`（`Icon` → `glyph` 文本、
+- **保证降级到底**：结果只包含 `caps.blocks` 里声明的组件，最多降到 `Text`（`Icon` → `glyph` 文本、
   `Image` → `alt` 文本、`Stack` → 最后一个子节点、`Sparkline`/`Diff`/`Diagram`/`Markdown` 不支持时
   降成等宽文本、尺寸形态不支持时换内容尺寸…）；
 - 规则表在 `schema/ui.def.json` 的 `adapt` 段，由生成器产出（`gen/adapt_rules.g.h` /
   `gen/adapt_rules.g.dart`）。
 
-**渲染层不要再写"我不支持谁"的分支**：那是两套实现，早晚与规则表分叉。渲染层只需要处理
+**渲染层不要再写"我不支持谁"的分支**：那是两套实现，早晚与规则表不一致。渲染层只需要处理
 "`caps.blocks` 里的组件"，其余情况在 `adapt` 那一步已经解决。
 
 ### 2.5 渲染要点
@@ -194,7 +194,7 @@ auto renderable = pluginxx::ui::adaptDocument(doc, myCaps(), &adaptReport);
 | 控件派发 | 值变化（勾选、输入完成、候选项点击）即派发：客户端把 `{"id":…,"value":…}` 合并进参数（插件自己写的 `args` 保留，冲突时以客户端补的为准） |
 | 控件值类型 | `checkbox`/`switch` → 布尔；`text` → 字符串；`number` → 数值；`buttons`/`select` → 候选项 `value` 原值 |
 | 控件状态 | 客户端维护（焦点、编辑中的文本、选中项、**本地覆盖值**），不属于描述；`value` 只在没有状态时作初值。**新视图到达时清空本地覆盖值**，否则插件改过配置后界面还显示旧值 |
-| 校验 | 客户端做能立刻判断的校验（`number` 的 `min`/`max`/`step`、`select` 无候选项），失败在控件附近提示；插件自己仍要兜底 |
+| 校验 | 客户端做能立刻判断的校验（`number` 的 `min`/`max`/`step`、`select` 无候选项），失败在控件附近提示；插件自己仍要回退 |
 | 未知 `control` 形态 | 退化成只读展示（`label` + 当前值），不影响页面其余部分 |
 
 需要"一组值一起提交"时，**由客户端域内实现**（收自己维护的控件状态 + 自定义提交动作 id），
@@ -206,7 +206,7 @@ auto renderable = pluginxx::ui::adaptDocument(doc, myCaps(), &adaptReport);
 - `lintWithCaps(items, caps)`：开发期检查（u 值不是格的整数倍、同一行里固定宽度与 flex 混用、
   `percent` 出现在高度无界的父容器里、表格列宽合计超出、`wrap:false` 与 `maxLines` 互相抵消）。
   在 debug 构建里调用并记日志即可，不参与渲染。
-- `plainText*`：模型 → 纯文本，用于日志、CLI、FFI 输出与"画不出来时的兜底"。客户端把内容同时
+- `plainText*`：模型 → 纯文本，用于日志、CLI、FFI 输出与"画不出来时的回退"。客户端把内容同时
   降级成纯文本后，排障时不用开图形界面也能看到插件给了什么。
 - `ParseReport` / `AdaptReport` 的提示要落日志（`--debug` 或文件日志），它们是"插件为什么没显示"
   的第一手线索。
@@ -274,7 +274,7 @@ const items = [
 
 - 只写一个数值单位 u（图形界面里 1u = 1 逻辑像素）；终端会按自己的能力换算，别写"多少列"；
 - 相对布局优先：能 `Expanded` 就不要固定宽度，能 `auto` 就不要写高度；
-- 不认识的字段与组件会被忽略，不要把内容塞在兜底字段里指望客户端读。
+- 不认识的字段与组件会被忽略，不要把内容塞在回退字段里指望客户端读。
 
 ---
 
@@ -304,12 +304,12 @@ dart run tools/gen_ui.dart --ext-kit <客户端 kit 定义> \
 ```jsonc
 "variants": [
   { "requires": ["Image"], "template": { "kind": "Image", "src": "$cover", "alt": "$title" } },
-  { "template": { "kind": "Text", "text": "$title" } }        // 兜底变体（必须有无条件的那一个）
+  { "template": { "kind": "Text", "text": "$title" } }        // 回退变体（必须有无条件的那一个）
 ]
 ```
 
 生成器会校验：枚举取值齐全、recipe 只引用已声明的组件与字段、尺寸取值非负、每个组件都有
-无条件的兜底变体。**改 kit 后重新生成并把生成物一起提交**（kit 版本随插件冻结）。
+无条件的回退分支。**改 kit 后重新生成并把生成物一起提交**（kit 版本随插件冻结）。
 
 JS 插件目录要带 kit 文件：有的项目用脚本同步（musicxx 的 `tools/sync_ui_kit.ps1` 把基础 + 扩展
 kit 复制进示例插件目录）。

@@ -63,7 +63,7 @@ PLUGINXX_UI_TEST(尺寸的三种形态) {
     PLUGINXX_UI_CHECK(c.size.isPercent(), "percent");
     PLUGINXX_UI_CHECK_EQ(c.size.value, 40.0, "percent 大小");
 
-    // 缺省 = auto（客户端用 caps.gap 兜底）
+    // 缺省 = auto（客户端用 caps.gap 回退）
     const Item d = pluginxx::ui::parseBlock(Json::parse(R"({"kind":"Gap"})"));
     PLUGINXX_UI_CHECK(d.size.isAuto(), "缺省 auto");
 }
