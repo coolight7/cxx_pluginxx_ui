@@ -698,6 +698,17 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
         item.children = parseChildren(json["children"], ctx, depth, "Collapse.children");
         return item;
     }
+    if (canonical == "Scroll") {
+        if (fieldHas(json, "height")) {
+            item.height = sizeValueOf(json["height"], ctx.report, "Scroll.height");
+        }
+        if (fieldHas(json, "padding")) {
+            item.padding    = edgesOf(json["padding"], ctx.report, "Scroll.padding");
+            item.hasPadding = true;
+        }
+        item.children = parseChildren(json["children"], ctx, depth, "Scroll.children");
+        return item;
+    }
     if (canonical == "KV") {
         item.pairs    = pairsOf(json["pairs"], ctx, "KV.pairs");
         item.sep      = fieldHas(json, "sep") ? fieldString(json, "sep") : std::string(" : ");

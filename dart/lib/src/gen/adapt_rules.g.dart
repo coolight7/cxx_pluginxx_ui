@@ -18,6 +18,7 @@ const Map<String, AdaptRule> kAdaptRules = <String, AdaptRule>{
   'Padding': AdaptRule.flatten,
   'Align': AdaptRule.flatten,
   'Collapse': AdaptRule.flatten,
+  'Scroll': AdaptRule.flatten,
   'KV': AdaptRule.plainTextMono,
   'Table': AdaptRule.plainTextMono,
   'Tree': AdaptRule.plainTextMono,

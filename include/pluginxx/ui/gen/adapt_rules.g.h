@@ -33,6 +33,7 @@ inline constexpr AdaptRuleEntry kAdaptRules[] = {
     {"Padding", AdaptRule::Flatten},
     {"Align", AdaptRule::Flatten},
     {"Collapse", AdaptRule::Flatten},
+    {"Scroll", AdaptRule::Flatten},
     {"KV", AdaptRule::PlainTextMono},
     {"Table", AdaptRule::PlainTextMono},
     {"Tree", AdaptRule::PlainTextMono},

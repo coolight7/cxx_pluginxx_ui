@@ -357,6 +357,16 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
       item.expanded = _bool(json, 'expanded', true);
       item.children = children('children', 'Collapse.children');
       return item;
+    case 'Scroll':
+      if (_has(json, 'height')) {
+        item.height = _sizeValue(json['height'], ctx.report, 'Scroll.height');
+      }
+      if (_has(json, 'padding')) {
+        item.padding = _edges(json['padding'], ctx.report, 'Scroll.padding');
+        item.hasPadding = true;
+      }
+      item.children = children('children', 'Scroll.children');
+      return item;
     case 'KV':
       item.pairs = _pairs(json['pairs'], ctx, 'KV.pairs');
       item.sep = _has(json, 'sep') ? _str(json, 'sep') : ' : ';

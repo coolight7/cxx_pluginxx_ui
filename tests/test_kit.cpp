@@ -196,7 +196,7 @@ PLUGINXX_UI_TEST(kit_按格换算) {
 PLUGINXX_UI_TEST(kit_组件表与定义一致) {
   PLUGINXX_UI_CHECK_EQ(pluginxx::ui::kit::kKitVersion, 2, "kit 版本");
   PLUGINXX_UI_CHECK_EQ(pluginxx::ui::gen::kBlockCount,
-                       static_cast<std::size_t>(35), "组件数量");
+                       static_cast<std::size_t>(36), "组件数量");
   PLUGINXX_UI_CHECK(pluginxx::ui::isKnownBlock("musicxx.Shader"),
                     "客户端专属块在表里");
   PLUGINXX_UI_CHECK(pluginxx::ui::findBlockMeta("musicxx.Shader")->level ==

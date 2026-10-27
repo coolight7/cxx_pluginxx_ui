@@ -53,6 +53,7 @@
       "Padding": "flatten",
       "Align": "flatten",
       "Collapse": "flatten",
+      "Scroll": "flatten",
       "KV": "plainTextMono",
       "Table": "plainTextMono",
       "Tree": "plainTextMono",
@@ -248,6 +249,21 @@
         "title": "详细信息",
         "expanded": false,
         "children": [{ "kind": "Text", "text": "折叠内容" }]
+      }
+    },
+    {
+      "kind": "Scroll",
+      "level": "core",
+      "doc": "可滚动容器（给 height 就固定高度；不给就填满父给的可用高度 —— 父必须是有界区域，例如 Column + Expanded）",
+      "fields": [
+        { "name": "height", "type": "size" },
+        { "name": "padding", "type": "edges" },
+        { "name": "children", "type": "items" }
+      ],
+      "sample": {
+        "kind": "Scroll",
+        "height": 200,
+        "children": [{ "kind": "Text", "text": "可滚动的内容" }]
       }
     },
     {
