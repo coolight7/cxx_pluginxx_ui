@@ -338,7 +338,12 @@ std::vector<ListItem> listItemsOf(const Json& value, const Ctx& ctx, const std::
         listItem.icon     = fieldString(node, "icon");
         listItem.tone     = fieldTone(node, "tone");
         listItem.selected = fieldBool(node, "selected", false);
-        listItem.action   = actionOf(node["action"]);
+        listItem.path     = fieldString(node, "path");
+        listItem.isDir    = fieldBool(node, "isDir", false);
+        // 自定义内容算第 1 层（列表块自身是第 0 层）
+        listItem.custom = parseChildren(node["custom"], ctx, 0,
+                                        what + "[" + std::to_string(i) + "].custom");
+        listItem.action = actionOf(node["action"]);
         out.push_back(std::move(listItem));
     }
     return out;
@@ -698,17 +703,6 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
         item.children = parseChildren(json["children"], ctx, depth, "Collapse.children");
         return item;
     }
-    if (canonical == "Scroll") {
-        if (fieldHas(json, "height")) {
-            item.height = sizeValueOf(json["height"], ctx.report, "Scroll.height");
-        }
-        if (fieldHas(json, "padding")) {
-            item.padding    = edgesOf(json["padding"], ctx.report, "Scroll.padding");
-            item.hasPadding = true;
-        }
-        item.children = parseChildren(json["children"], ctx, depth, "Scroll.children");
-        return item;
-    }
     if (canonical == "KV") {
         item.pairs    = pairsOf(json["pairs"], ctx, "KV.pairs");
         item.sep      = fieldHas(json, "sep") ? fieldString(json, "sep") : std::string(" : ");
@@ -873,6 +867,37 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
             item.enableDrop           = fieldBool(json, "enableDrop", true);
             item.showCount            = fieldBool(json, "showCount", false);
         }
+        return item;
+    }
+    if (canonical == "musicxx.DirListView") {
+        item.items    = listItemsOf(json["items"], ctx, "musicxx.DirListView.items");
+        item.dirPath  = textValueOf(json["path"]);
+        item.multi    = fieldBool(json, "multi", false);
+        item.showPath = fieldBool(json, "showPath", true);
+        item.variant  = fieldEnum(json, "variant", PLUGINXX_UI_ENUM(gen::kEnumListVariant), "card");
+        if (fieldHas(json, "height")) {
+            item.height = sizeValueOf(json["height"], ctx.report, "musicxx.DirListView.height");
+        }
+        if (fieldHas(json, "padding")) {
+            item.padding    = edgesOf(json["padding"], ctx.report, "musicxx.DirListView.padding");
+            item.hasPadding = true;
+        }
+        item.emptyText    = textValueOf(json["emptyText"]);
+        item.itemAction   = actionOf(json["itemAction"]);
+        item.pathAction   = actionOf(json["pathAction"]);
+        item.selectAction = actionOf(json["selectAction"]);
+        return item;
+    }
+    if (canonical == "musicxx.AdaptLayout") {
+        item.columnBody = parseChildren(json["columnBody"], ctx, depth, "musicxx.AdaptLayout.columnBody");
+        item.rowBody    = parseChildren(json["rowBody"], ctx, depth, "musicxx.AdaptLayout.rowBody");
+        item.columnSecondBody =
+            parseChildren(json["columnSecondBody"], ctx, depth, "musicxx.AdaptLayout.columnSecondBody");
+        item.rowSecondBody =
+            parseChildren(json["rowSecondBody"], ctx, depth, "musicxx.AdaptLayout.rowSecondBody");
+        item.rowBodyRatio    = fieldNumber(json, "rowBodyRatio", 0.5);
+        item.columnBodyRatio = fieldNumber(json, "columnBodyRatio", 0.5);
+        item.animate         = fieldBool(json, "enableAnimations", false);
         return item;
     }
     if (canonical == "musicxx.Shader") {
@@ -1064,6 +1089,19 @@ Json dumpListItemImpl(const ListItem& listItem) {
     }
     if (listItem.selected) {
         out["selected"] = true;
+    }
+    if (!listItem.path.empty()) {
+        out["path"] = listItem.path;
+    }
+    if (listItem.isDir) {
+        out["isDir"] = true;
+    }
+    if (!listItem.custom.empty()) {
+        Json custom = Json::array();
+        for (const Item& child : listItem.custom) {
+            custom.push_back(dumpBlockImpl(child));
+        }
+        out["custom"] = std::move(custom);
     }
     if (!listItem.action.empty()) {
         out["action"] = actionToJson(listItem.action);
@@ -1486,6 +1524,50 @@ Json dumpBlockImpl(const Item& item) {
             out["enableCheck"] = item.enableCheck;
             out["enableDrop"]  = item.enableDrop;
             out["showCount"]   = item.showCount;
+        }
+    } else if (item.kind == "musicxx.DirListView") {
+        Json items = Json::array();
+        for (const ListItem& listItem : item.items) {
+            items.push_back(dumpListItemImpl(listItem));
+        }
+        out["items"] = std::move(items);
+        if (!item.dirPath.empty()) {
+            out["path"] = textValueToJson(item.dirPath);
+        }
+        out["multi"]    = item.multi;
+        out["showPath"] = item.showPath;
+        out["variant"]  = item.variant;
+        if (!item.height.isAuto()) {
+            out["height"] = sizeValueToJson(item.height);
+        }
+        if (item.hasPadding) {
+            out["padding"] = edgesToJson(item.padding);
+        }
+        if (!item.emptyText.empty()) {
+            out["emptyText"] = textValueToJson(item.emptyText);
+        }
+        if (!item.itemAction.empty()) {
+            out["itemAction"] = actionToJson(item.itemAction);
+        }
+        if (!item.pathAction.empty()) {
+            out["pathAction"] = actionToJson(item.pathAction);
+        }
+        if (!item.selectAction.empty()) {
+            out["selectAction"] = actionToJson(item.selectAction);
+        }
+    } else if (item.kind == "musicxx.AdaptLayout") {
+        out["columnBody"] = dumpBlocks(item.columnBody);
+        out["rowBody"]    = dumpBlocks(item.rowBody);
+        if (!item.columnSecondBody.empty()) {
+            out["columnSecondBody"] = dumpBlocks(item.columnSecondBody);
+        }
+        if (!item.rowSecondBody.empty()) {
+            out["rowSecondBody"] = dumpBlocks(item.rowSecondBody);
+        }
+        out["rowBodyRatio"]    = item.rowBodyRatio;
+        out["columnBodyRatio"] = item.columnBodyRatio;
+        if (item.animate) {
+            out["enableAnimations"] = true;
         }
     } else if (item.kind == "musicxx.Shader") {
         out["bundle"] = item.bundle;

@@ -292,6 +292,12 @@ String? _itemText(ItemData item, _Ctx ctx) {
     case 'ListViewBase':
     case 'ListView':
       return _listText(item, ctx);
+    case 'musicxx.DirListView':
+      return _dirListText(item, ctx);
+    case 'musicxx.AdaptLayout':
+      // 不能按宽高比切换的客户端用横屏那一套（与适配规则一致）
+      final String body = _childrenText(item.rowBody, ctx);
+      return body.isEmpty ? null : body;
     case 'Diagram':
       return item.mermaid.isEmpty ? null : _linesOf(item.mermaid, ctx);
     case 'musicxx.Shader':
@@ -331,7 +337,27 @@ String _controlValueText(ItemData item, _Ctx ctx) {
   return stringifyValue(raw);
 }
 
-/// 列表块 → 纯文本：每项一行（`title` + `" - "` + 副标题 + 两个空格 + 右侧文字）
+/// 列表项 → 一行（`title` + `" - "` + 副标题 + 两个空格 + 右侧文字）
+///
+/// 写了 `custom` 又没给 `title` 时用自定义内容的文本（与渲染层“custom 盖住整项内容”一致）。
+String _listItemLine(ListItem listItem, _Ctx ctx) {
+  String title = ctx.text(listItem.title);
+  if (title.isEmpty && listItem.custom.isNotEmpty) {
+    title = _childrenText(listItem.custom, ctx);
+  }
+  final String subtitle = ctx.text(listItem.subtitle);
+  final String trailing = ctx.text(listItem.trailing);
+  String line = title;
+  if (subtitle.isNotEmpty) {
+    line = '$line - $subtitle';
+  }
+  if (trailing.isNotEmpty) {
+    line = '$line  $trailing';
+  }
+  return line;
+}
+
+/// 列表块 → 纯文本：每项一行（[listItemLine]）
 ///
 /// 空列表输出 `emptyText`（没给就没有内容）；与 C++ 侧逐字节一致。
 String? _listText(ItemData item, _Ctx ctx) {
@@ -341,19 +367,31 @@ String? _listText(ItemData item, _Ctx ctx) {
   }
   final List<String> lines = <String>[];
   for (final ListItem listItem in item.items) {
-    final String title = ctx.text(listItem.title);
-    final String subtitle = ctx.text(listItem.subtitle);
-    final String trailing = ctx.text(listItem.trailing);
-    String line = title;
-    if (subtitle.isNotEmpty) {
-      line = '$line - $subtitle';
-    }
-    if (trailing.isNotEmpty) {
-      line = '$line  $trailing';
-    }
-    lines.add(line);
+    lines.add(_listItemLine(listItem, ctx));
   }
   return lines.join('\n');
+}
+
+/// 目录列表块 → 纯文本：顶部路径行（`showPath` 为真且给了 path 时）+ 每个条目一行
+String? _dirListText(ItemData item, _Ctx ctx) {
+  final List<String> lines = <String>[];
+  if (item.showPath) {
+    final String path = ctx.text(item.dirPath);
+    if (path.isNotEmpty) {
+      lines.add(path);
+    }
+  }
+  if (item.items.isEmpty) {
+    final String empty = ctx.text(item.emptyText);
+    if (empty.isNotEmpty) {
+      lines.add(empty);
+    }
+  } else {
+    for (final ListItem listItem in item.items) {
+      lines.add(_listItemLine(listItem, ctx));
+    }
+  }
+  return lines.isEmpty ? null : lines.join('\n');
 }
 
 String? _tableText(ItemData item, _Ctx ctx) {

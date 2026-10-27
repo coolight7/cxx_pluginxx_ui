@@ -81,7 +81,6 @@
 | `Padding` | core | — | `padding`* `children` | 内边距 |
 | `Align` | core | — | `align` `vertical` `children` | 对齐（终端垂直分量尽力而为） |
 | `Collapse` | core | — | `id`* `title`* `expanded` `children` | 折叠分组（展开状态由客户端按 id 维护） |
-| `Scroll` | core | — | `height` `padding` `children` | 可滚动容器（给 height 就固定高度；不给就填满父给的可用高度 —— 父必须是有界区域，例如 Column + Expanded） |
 | `KV` | core | — | `pairs`* `keyWidth` `sep` | 键值两列 |
 | `Table` | core | — | `header` `columns`* `rows` | 表格（未指定宽度的列按内容比例分剩余空间） |
 | `Tree` | core | — | `connector` `nodes`* | 层级列表 |
@@ -95,8 +94,10 @@
 | `Diff` | optional | — | `path` `oldStr` `newStr` | 差异对比（未实现时适配为等宽文本） |
 | `Sparkline` | optional | — | `data`* `height` `glyphStyle` `min` `max` `tone` `colors` `showLast` | 迷你趋势图（未实现时适配为末值文本） |
 | `Diagram` | optional | — | `mermaid`* | 状态图（未实现时适配为等宽文本） |
-| `ListViewBase` | optional | — | `id` `items`* `layout` `variant` `height` `padding` `header` `footer` `emptyText` `itemAction` | 按应用的列表组件显示多条数据（只显示，没有工具条与编辑） |
-| `ListView` | optional | — | `id` `items`* `layout` `variant` `height` `padding` `header` `footer` `emptyText` `itemAction` `toolbar` `menu` `itemMenu` `editAction` `saveAction` `addAction` `removeAction` `removeCheckedAction` `removeTipTitle` `positionAction` `refreshAction` `loadMoreAction` `enableCheck` `enableDrop` `showCount` | 带工具条的列表（编辑 / 多选 / 加删 / 定位 / 菜单 / 下拉刷新 / 加载更多） |
+| `ListViewBase` | optional | — | `id` `items`* `layout` `variant` `height` `padding` `header` `footer` `emptyText` `itemAction` | 按应用的列表组件显示多条数据（只显示，没有工具条与编辑）。列表项除了 title/subtitle/trailing/image/icon/tone/selected/action，还可写 custom（任意块，写了就整项内容由它画，行内自动插入的编辑/多选/拖拽按钮不受影响）、path（路径/身份）与 isDir（目录项） |
+| `ListView` | optional | — | `id` `items`* `layout` `variant` `height` `padding` `header` `footer` `emptyText` `itemAction` `toolbar` `menu` `itemMenu` `editAction` `saveAction` `addAction` `removeAction` `removeCheckedAction` `removeTipTitle` `positionAction` `refreshAction` `loadMoreAction` `enableCheck` `enableDrop` `showCount` | 带工具条的列表（编辑 / 多选 / 加删 / 定位 / 菜单 / 下拉刷新 / 加载更多）。列表项除 title/subtitle/trailing/image/icon/tone/selected/action 外还可写 custom（任意块，整项内容由它画；行内自动插入的编辑/多选/拖拽按钮保留）、path、isDir |
+| `musicxx.DirListView` | client | musicxx | `id` `path` `items`* `multi` `showPath` `pathAction` `itemAction` `selectAction` `height` `padding` `variant` `emptyText` | 目录/文件列表（对应客户端内置的 DirList）：一层目录的条目，顶部路径行（可带“上一级”动作）；写了 multi 才在行尾出勾选框（勾选态取条目的 selected，变化派发 selectAction）；进入目录与选中态都由插件维护（其他客户端按普通列表降级） |
+| `musicxx.AdaptLayout` | client | musicxx | `columnBody`* `rowBody`* `columnSecondBody` `rowSecondBody` `rowBodyRatio` `columnBodyRatio` `enableAnimations` | 按窗口宽高比切换两套内容（对应客户端内置的 XXAdaptiveLayout）：宽高比 < 1 用 columnBody，否则用 rowBody；给了第二套就按比例分两栏（其他客户端用 rowBody） |
 | `musicxx.Shader` | client | musicxx | `bundle`* `args` `speed` `maxFps` `animate` `resolutionScale` | 插件着色器（字段集照搬 shader bundle 文档；其他客户端跳过） |
 | `musicxx.AnimatedBuilder` | client | musicxx | `values` `maxFps` `children` | 动画作用域：声明若干通道（each 是一条值表达式），子树每帧重建（其他客户端展开子节点） |
 | `musicxx.SizeTransition` | client | musicxx | `axis` `axisAlignment` `value` `curve` `children` | 尺寸过渡：按 value（0~1）把子节点从 0 撑开 / 收拢（其他客户端展开子节点） |
@@ -125,7 +126,6 @@
 | `Padding` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
 | `Align` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
 | `Collapse` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
-| `Scroll` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
 | `KV` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
 | `Table` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
 | `Tree` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
@@ -141,6 +141,8 @@
 | `Diagram` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
 | `ListViewBase` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
 | `ListView` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
+| `musicxx.DirListView` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
+| `musicxx.AdaptLayout` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
 | `musicxx.Shader` | `skip` | 跳过（无降级形态） |
 | `musicxx.AnimatedBuilder` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
 | `musicxx.SizeTransition` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |

@@ -366,6 +366,9 @@ class ListItem {
     this.icon = '',
     this.tone = 'normal',
     this.selected = false,
+    this.path = '',
+    this.isDir = false,
+    this.custom = const <ItemData>[],
     this.action,
   });
 
@@ -386,6 +389,16 @@ class ListItem {
 
   /// 是否高亮（只由插件给的数据决定，客户端不做点击自动高亮）
   final bool selected;
+
+  /// 这一项对应的路径 / 身份（目录列表用它，动作参数里原样回带）
+  final String path;
+
+  /// 是不是目录项（目录列表用它决定图标与展开行为）
+  final bool isDir;
+
+  /// 自定义内容：非空时**整项内容**由这些块画（行内自动插入的编辑 / 多选 / 拖拽按钮不受影响）
+  final List<ItemData> custom;
+
   final UiAction? action;
 }
 
@@ -628,6 +641,37 @@ class ItemData {
   double axisAlignment = -1;
   String curve = '';
 
+  // ---- 客户端专属块：musicxx.DirListView ----
+  /// 当前目录（顶部路径行显示的内容）
+  TextValue dirPath = TextValue.empty;
+
+  /// 是否多选（true 时每行尾一个勾选框，变化派发 [selectAction]）
+  bool multi = false;
+
+  /// 是否显示顶部路径行
+  bool showPath = true;
+
+  /// 路径行 / “上一级”派发的动作
+  UiAction? pathAction;
+
+  /// 勾选框变化派发的动作（参数带 `path` 与 `value`）
+  UiAction? selectAction;
+
+  // ---- 客户端专属块：musicxx.AdaptLayout ----
+  /// 竖屏（宽高比 < 1）用的内容
+  List<ItemData> columnBody = <ItemData>[];
+
+  /// 横屏用的内容
+  List<ItemData> rowBody = <ItemData>[];
+
+  /// 第二栏（可选）
+  List<ItemData> columnSecondBody = <ItemData>[];
+  List<ItemData> rowSecondBody = <ItemData>[];
+
+  /// 主内容与第二栏的比例（0~1，默认 0.5）
+  double rowBodyRatio = 0.5;
+  double columnBodyRatio = 0.5;
+
   // ---- 公共字段 ----
   /// `visible`：布尔字面量或值表达式；求值为假时客户端不画这一块
   ValueField visible = ValueField.none;
@@ -754,6 +798,19 @@ class ItemData {
     ..axis = axis
     ..axisAlignment = axisAlignment
     ..curve = curve
+    // 客户端专属块（musicxx.DirListView / musicxx.AdaptLayout）的字段同样要带上：适配对每个块
+    // 都做一次 clone，漏掉就等于这条描述在适配后丢了内容
+    ..dirPath = dirPath
+    ..multi = multi
+    ..showPath = showPath
+    ..pathAction = pathAction
+    ..selectAction = selectAction
+    ..columnBody = columnBody
+    ..rowBody = rowBody
+    ..columnSecondBody = columnSecondBody
+    ..rowSecondBody = rowSecondBody
+    ..rowBodyRatio = rowBodyRatio
+    ..columnBodyRatio = columnBodyRatio
     ..visible = visible
     ..action = action
     ..fallback = fallback;

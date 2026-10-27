@@ -372,6 +372,9 @@ class UiDef {
         'icon',
         'tone',
         'selected',
+        'path',
+        'isDir',
+        'custom',
         'action',
       };
       for (final MapEntry<String, Object?> entry in item.entries) {
@@ -379,8 +382,16 @@ class UiDef {
           _fail('$itemWhat 使用了未声明的列表项字段 `${entry.key}`');
         }
       }
-      if (!item.containsKey('title')) {
-        _fail('$itemWhat 缺少必填字段 title');
+      // 写了 custom 就不要求 title（自定义行自己画），custom 里的节点按普通块校验
+      final Object? custom = item['custom'];
+      final bool hasCustom = custom is List && custom.isNotEmpty;
+      if (!item.containsKey('title') && !hasCustom) {
+        _fail('$itemWhat 缺少必填字段 title（写了 custom 的话可以不给）');
+      }
+      if (hasCustom) {
+        for (final Object? child in custom) {
+          _checkNode(child, '$itemWhat.custom[]', 1);
+        }
       }
       final Object? tone = item['tone'];
       if (tone is String && !enums['tone']!.contains(tone)) {

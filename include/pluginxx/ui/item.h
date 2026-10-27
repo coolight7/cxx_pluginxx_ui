@@ -222,10 +222,13 @@ struct TreeNode {
     }
 };
 
-/// 列表项（`ListViewBase.items` / `ListView.items` 的元素）
+struct Item; ///< 前向声明：列表项的 `custom` 要用 `std::vector<Item>`
+
+/// 列表项（`ListViewBase.items` / `ListView.items` / `musicxx.DirListView.items` 的元素）
 ///
-/// 它是**数据**而不是块：没有 kind、不能带子块。外观由客户端统一决定
+/// 它默认是**数据**而不是块：外观由客户端统一决定
 /// （列表：图片/图标 + 主标题 + 副标题 + 右侧文字；网格：封面 + 标题）。
+/// 写了 `custom` 则**整项内容**由那些块画（行内自动插入的编辑 / 多选 / 拖拽按钮不受影响）。
 struct ListItem {
     std::string id;       ///< 稳定标识（动作参数里作为 `itemId`）
     TextValue   title;    ///< 主标题
@@ -235,7 +238,13 @@ struct ListItem {
     std::string icon;     ///< 前置图标（插件目录相对路径；image 优先）
     std::string tone = "normal"; ///< 主标题语义色
     bool        selected = false; ///< 是否高亮（只由插件给的数据决定）
-    Action      action;   ///< 点这一项派发的动作
+
+    std::string path;  ///< 这一项的路径 / 身份（目录列表用它，动作参数里原样回带）
+    bool        isDir = false; ///< 是不是目录项
+
+    std::vector<Item> custom; ///< 自定义内容（非空 = 整项内容由它画）
+
+    Action action; ///< 点这一项派发的动作
 };
 
 /// 菜单项（`ListView.menu` / `ListView.itemMenu` 的元素）
@@ -426,6 +435,21 @@ struct Item {
     int         maxFps          = 0;
     bool        animate         = true;
     double      resolutionScale = 1.0;
+
+    // ---- 客户端专属块：musicxx.DirListView ----
+    TextValue dirPath;            ///< 当前目录（顶部路径行）
+    bool      multi    = false;   ///< 多选（true 时每行尾一个勾选框）
+    bool      showPath = true;    ///< 是否显示顶部路径行
+    Action    pathAction;         ///< 路径行 / “上一级”动作
+    Action    selectAction;       ///< 勾选框变化动作（参数带 path 与 value）
+
+    // ---- 客户端专属块：musicxx.AdaptLayout ----
+    std::vector<Item> columnBody;       ///< 竖屏（宽高比 < 1）
+    std::vector<Item> rowBody;          ///< 横屏
+    std::vector<Item> columnSecondBody; ///< 第二栏（可选）
+    std::vector<Item> rowSecondBody;
+    double rowBodyRatio    = 0.5;       ///< 主内容与第二栏的比例（0~1）
+    double columnBodyRatio = 0.5;
 
     // ---- 动作与回退 ----
     Action      action;   ///< 点击动作（可点组件）

@@ -72,6 +72,14 @@ Item degradeToText(const Item& item, const std::string& text, const bool mono,
     return makeText(std::move(source), text, mono, textType, tone);
 }
 
+/// `flatten` 要展开的子块
+///
+/// 容器的子块一般在 `children`；`musicxx.AdaptLayout` 把两套内容放在 `columnBody` / `rowBody`，
+/// 描述约定“不支持它的客户端用横屏那一套”，所以展开 `rowBody`。
+const std::vector<Item>& flattenChildrenOf(const Item& item) {
+    return item.kind == "musicxx.AdaptLayout" ? item.rowBody : item.children;
+}
+
 std::vector<Item> adaptItemImpl(const Item& item, const Capabilities& caps, AdaptReport* report,
                                 const int depth) {
     std::vector<Item> out;
@@ -161,7 +169,7 @@ std::vector<Item> adaptItemImpl(const Item& item, const Capabilities& caps, Adap
                     out.push_back(degradeToText(item, text, item.mono));
                 }
             }
-            for (const Item& child : item.children) {
+            for (const Item& child : flattenChildrenOf(item)) {
                 std::vector<Item> adapted = adaptItemImpl(child, caps, report, depth + 1);
                 out.insert(out.end(), std::make_move_iterator(adapted.begin()),
                            std::make_move_iterator(adapted.end()));

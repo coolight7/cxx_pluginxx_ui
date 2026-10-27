@@ -71,6 +71,13 @@ ItemData _degradeToText(ItemData source, String text,
         {bool mono = false, String textType = 'body', String tone = 'normal'}) =>
     _makeText(text, mono: mono, textType: textType, tone: tone, action: source.action);
 
+/// `flatten` 要展开的子块
+///
+/// 容器的子块一般放在 [ItemData.children]；`musicxx.AdaptLayout` 是例外，它把两套内容放在
+/// `columnBody` / `rowBody` 里，描述约定“不支持它的客户端用横屏那一套”，所以展开 `rowBody`。
+List<ItemData> _flattenChildrenOf(ItemData item) =>
+    'musicxx.AdaptLayout' == item.kind ? item.rowBody : item.children;
+
 List<ItemData> _adaptList(
   List<ItemData> items,
   PluginCapabilities caps,
@@ -164,7 +171,7 @@ List<ItemData> _adaptItem(
           out.add(_degradeToText(item, text, mono: item.mono));
         }
       }
-      for (final ItemData child in item.children) {
+      for (final ItemData child in _flattenChildrenOf(item)) {
         out.addAll(_adaptItem(child, caps, report, depth + 1));
       }
       return out;

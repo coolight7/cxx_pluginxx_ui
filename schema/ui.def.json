@@ -53,7 +53,6 @@
       "Padding": "flatten",
       "Align": "flatten",
       "Collapse": "flatten",
-      "Scroll": "flatten",
       "KV": "plainTextMono",
       "Table": "plainTextMono",
       "Tree": "plainTextMono",
@@ -69,6 +68,8 @@
       "Diagram": "plainTextMono",
       "ListViewBase": "plainTextMono",
       "ListView": "plainTextMono",
+      "musicxx.DirListView": "plainTextMono",
+      "musicxx.AdaptLayout": "flatten",
     "musicxx.Shader": "skip",
     "musicxx.AnimatedBuilder": "flatten",
     "musicxx.SizeTransition": "flatten",
@@ -249,21 +250,6 @@
         "title": "详细信息",
         "expanded": false,
         "children": [{ "kind": "Text", "text": "折叠内容" }]
-      }
-    },
-    {
-      "kind": "Scroll",
-      "level": "core",
-      "doc": "可滚动容器（给 height 就固定高度；不给就填满父给的可用高度 —— 父必须是有界区域，例如 Column + Expanded）",
-      "fields": [
-        { "name": "height", "type": "size" },
-        { "name": "padding", "type": "edges" },
-        { "name": "children", "type": "items" }
-      ],
-      "sample": {
-        "kind": "Scroll",
-        "height": 200,
-        "children": [{ "kind": "Text", "text": "可滚动的内容" }]
       }
     },
     {
@@ -485,7 +471,7 @@
     {
       "kind": "ListViewBase",
       "level": "optional",
-      "doc": "按应用的列表组件显示多条数据（只显示，没有工具条与编辑）",
+      "doc": "按应用的列表组件显示多条数据（只显示，没有工具条与编辑）。列表项除了 title/subtitle/trailing/image/icon/tone/selected/action，还可写 custom（任意块，写了就整项内容由它画，行内自动插入的编辑/多选/拖拽按钮不受影响）、path（路径/身份）与 isDir（目录项）",
       "fields": [
         { "name": "id", "type": "string" },
         { "name": "items", "type": "listItems", "required": true },
@@ -519,6 +505,15 @@
             "trailing": "38 首",
             "icon": "resource/svg/star.svg",
             "action": "openPlaylist"
+          },
+          {
+            "id": "custom",
+            "custom": [
+              { "kind": "Row", "gap": 12, "children": [
+                { "kind": "Text", "text": "自定义行" },
+                { "kind": "Badge", "text": "custom" }
+              ] }
+            ]
           }
         ]
       }
@@ -526,7 +521,7 @@
     {
       "kind": "ListView",
       "level": "optional",
-      "doc": "带工具条的列表（编辑 / 多选 / 加删 / 定位 / 菜单 / 下拉刷新 / 加载更多）",
+      "doc": "带工具条的列表（编辑 / 多选 / 加删 / 定位 / 菜单 / 下拉刷新 / 加载更多）。列表项除 title/subtitle/trailing/image/icon/tone/selected/action 外还可写 custom（任意块，整项内容由它画；行内自动插入的编辑/多选/拖拽按钮保留）、path、isDir",
       "fields": [
         { "name": "id", "type": "string" },
         { "name": "items", "type": "listItems", "required": true },
@@ -580,6 +575,55 @@
         "positionAction": "locateCurrent",
         "refreshAction": "reload",
         "loadMoreAction": "loadMore"
+      }
+    },
+    {
+      "kind": "musicxx.DirListView",
+      "level": "client",
+      "client": "musicxx",
+      "doc": "目录/文件列表（对应客户端内置的 DirList）：一层目录的条目，顶部路径行（可带“上一级”动作）；写了 multi 才在行尾出勾选框（勾选态取条目的 selected，变化派发 selectAction）；进入目录与选中态都由插件维护（其他客户端按普通列表降级）",
+      "fields": [
+        { "name": "id", "type": "string" },
+        { "name": "path", "type": "text" },
+        { "name": "items", "type": "listItems", "required": true },
+        { "name": "multi", "type": "bool", "default": false },
+        { "name": "showPath", "type": "bool", "default": true },
+        { "name": "pathAction", "type": "action" },
+        { "name": "itemAction", "type": "action" },
+        { "name": "selectAction", "type": "action" },
+        { "name": "height", "type": "size" },
+        { "name": "padding", "type": "edges" },
+        { "name": "variant", "type": "enum:listVariant", "default": "card" },
+        { "name": "emptyText", "type": "text" }
+      ],
+      "sample": {
+        "kind": "musicxx.DirListView",
+        "path": "/Music",
+        "items": [
+          { "title": "sub", "path": "/Music/sub", "isDir": true, "subtitle": "3 首" },
+          { "title": "a.mp3", "path": "/Music/a.mp3", "subtitle": "1.2 MB" }
+        ],
+        "itemAction": "browse"
+      }
+    },
+    {
+      "kind": "musicxx.AdaptLayout",
+      "level": "client",
+      "client": "musicxx",
+      "doc": "按窗口宽高比切换两套内容（对应客户端内置的 XXAdaptiveLayout）：宽高比 < 1 用 columnBody，否则用 rowBody；给了第二套就按比例分两栏（其他客户端用 rowBody）",
+      "fields": [
+        { "name": "columnBody", "type": "items", "required": true },
+        { "name": "rowBody", "type": "items", "required": true },
+        { "name": "columnSecondBody", "type": "items" },
+        { "name": "rowSecondBody", "type": "items" },
+        { "name": "rowBodyRatio", "type": "float", "default": 0.5 },
+        { "name": "columnBodyRatio", "type": "float", "default": 0.5 },
+        { "name": "enableAnimations", "type": "bool" }
+      ],
+      "sample": {
+        "kind": "musicxx.AdaptLayout",
+        "columnBody": [{ "kind": "Text", "text": "竖屏那一套" }],
+        "rowBody": [{ "kind": "Text", "text": "横屏那一套" }]
       }
     },
     {

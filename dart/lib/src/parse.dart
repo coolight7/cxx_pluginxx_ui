@@ -357,16 +357,6 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
       item.expanded = _bool(json, 'expanded', true);
       item.children = children('children', 'Collapse.children');
       return item;
-    case 'Scroll':
-      if (_has(json, 'height')) {
-        item.height = _sizeValue(json['height'], ctx.report, 'Scroll.height');
-      }
-      if (_has(json, 'padding')) {
-        item.padding = _edges(json['padding'], ctx.report, 'Scroll.padding');
-        item.hasPadding = true;
-      }
-      item.children = children('children', 'Scroll.children');
-      return item;
     case 'KV':
       item.pairs = _pairs(json['pairs'], ctx, 'KV.pairs');
       item.sep = _has(json, 'sep') ? _str(json, 'sep') : ' : ';
@@ -515,6 +505,36 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
         item.enableDrop = _bool(json, 'enableDrop', true);
         item.showCount = _bool(json, 'showCount', false);
       }
+      return item;
+    case 'musicxx.DirListView':
+      item.items = _listItems(json['items'], ctx, 'musicxx.DirListView.items');
+      item.dirPath = _textValue(json['path']);
+      item.multi = _bool(json, 'multi', false);
+      item.showPath = _bool(json, 'showPath', true);
+      item.variant = _enum(json, 'variant', kEnumListVariant, 'card');
+      if (_has(json, 'height')) {
+        item.height = _sizeValue(json['height'], ctx.report, 'musicxx.DirListView.height');
+      }
+      if (_has(json, 'padding')) {
+        item.padding =
+            _edges(json['padding'], ctx.report, 'musicxx.DirListView.padding');
+        item.hasPadding = true;
+      }
+      item.emptyText = _textValue(json['emptyText']);
+      item.itemAction = _action(json['itemAction']);
+      item.pathAction = _action(json['pathAction']);
+      item.selectAction = _action(json['selectAction']);
+      return item;
+    case 'musicxx.AdaptLayout':
+      item.columnBody = children('columnBody', 'musicxx.AdaptLayout.columnBody');
+      item.rowBody = children('rowBody', 'musicxx.AdaptLayout.rowBody');
+      item.columnSecondBody =
+          children('columnSecondBody', 'musicxx.AdaptLayout.columnSecondBody');
+      item.rowSecondBody =
+          children('rowSecondBody', 'musicxx.AdaptLayout.rowSecondBody');
+      item.rowBodyRatio = _num(json, 'rowBodyRatio', 0.5);
+      item.columnBodyRatio = _num(json, 'columnBodyRatio', 0.5);
+      item.animate = _bool(json, 'enableAnimations', false);
       return item;
     case 'musicxx.Shader':
       item.bundle = _str(json, 'bundle');
@@ -767,11 +787,32 @@ List<ListItem> _listItems(Object? value, _Ctx ctx, String what) {
         icon: _str(map, 'icon'),
         tone: _tone(map, 'tone'),
         selected: _bool(map, 'selected', false),
+        path: _str(map, 'path'),
+        isDir: _bool(map, 'isDir', false),
+        custom: _childBlocks(map['custom'], ctx, '$what[$i].custom'),
         action: _action(map['action']),
       ),
     );
   }
   return out;
+}
+
+/// 列表项里的自定义块（`ListItem.custom`）：算第 1 层（列表块自身是第 0 层）
+List<ItemData> _childBlocks(Object? value, _Ctx ctx, String what) {
+  if (value is! List) {
+    return <ItemData>[];
+  }
+  if (ctx.limits.maxDepth > 0 && 1 >= ctx.limits.maxDepth) {
+    ctx.truncate('$what 超过层级上限 ${ctx.limits.maxDepth}，子块被丢弃');
+    return <ItemData>[];
+  }
+  final int count = _limitCount(value.length, ctx.limits.maxItems);
+  if (count < value.length) {
+    ctx.truncate('$what 的子块超过上限 ${ctx.limits.maxItems}，已截断');
+  }
+  return <ItemData>[
+    for (int i = 0; i < count; i++) _parseBlockImpl(value[i], ctx, 1),
+  ];
 }
 
 /// 菜单项数组（`menuItems`）：非对象元素直接忽略
@@ -1301,6 +1342,51 @@ Map<String, Object?> dumpItem(ItemData item) {
         out['showCount'] = item.showCount;
       }
       break;
+    case 'musicxx.DirListView':
+      out['items'] = <Object?>[
+        for (final ListItem listItem in item.items) _listItemToJson(listItem),
+      ];
+      if (item.dirPath.isNotEmpty) {
+        out['path'] = _textValueToJson(item.dirPath);
+      }
+      out['multi'] = item.multi;
+      out['showPath'] = item.showPath;
+      out['variant'] = item.variant;
+      if (!item.height.isAuto) {
+        out['height'] = _sizeValueToJson(item.height);
+      }
+      if (item.hasPadding) {
+        out['padding'] = _edgesToJson(item.padding);
+      }
+      if (item.emptyText.isNotEmpty) {
+        out['emptyText'] = _textValueToJson(item.emptyText);
+      }
+      for (final MapEntry<String, UiAction?> entry in <MapEntry<String, UiAction?>>[
+        MapEntry<String, UiAction?>('itemAction', item.itemAction),
+        MapEntry<String, UiAction?>('pathAction', item.pathAction),
+        MapEntry<String, UiAction?>('selectAction', item.selectAction),
+      ]) {
+        final Object? value = _actionToJson(entry.value);
+        if (null != value) {
+          out[entry.key] = value;
+        }
+      }
+      break;
+    case 'musicxx.AdaptLayout':
+      out['columnBody'] = dumpBlocks(item.columnBody);
+      out['rowBody'] = dumpBlocks(item.rowBody);
+      if (item.columnSecondBody.isNotEmpty) {
+        out['columnSecondBody'] = dumpBlocks(item.columnSecondBody);
+      }
+      if (item.rowSecondBody.isNotEmpty) {
+        out['rowSecondBody'] = dumpBlocks(item.rowSecondBody);
+      }
+      out['rowBodyRatio'] = item.rowBodyRatio;
+      out['columnBodyRatio'] = item.columnBodyRatio;
+      if (item.animate) {
+        out['enableAnimations'] = true;
+      }
+      break;
     case 'musicxx.Shader':
       out['bundle'] = item.bundle;
       if (null != item.shaderArgs) {
@@ -1371,6 +1457,9 @@ Map<String, Object?> _listItemToJson(ListItem item) => <String, Object?>{
       if (item.icon.isNotEmpty) 'icon': item.icon,
       if (item.tone != 'normal') 'tone': item.tone,
       if (item.selected) 'selected': true,
+      if (item.path.isNotEmpty) 'path': item.path,
+      if (item.isDir) 'isDir': true,
+      if (item.custom.isNotEmpty) 'custom': dumpBlocks(item.custom),
       if (null != _actionToJson(item.action)) 'action': _actionToJson(item.action),
     };
 

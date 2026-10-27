@@ -222,6 +222,25 @@ std::string childrenText(const std::vector<Item>& children, const Ctx& ctx,
     return out;
 }
 
+/// 列表项 → 一行（`title` + `" - "` + 副标题 + 两个空格 + 右侧文字）
+///
+/// 写了 `custom` 又没给 `title` 时用自定义内容的文本（与渲染层“custom 盖住整项内容”一致）。
+std::string listItemLine(const ListItem& listItem, const Ctx& ctx) {
+    std::string line = ctx.text(listItem.title);
+    if (line.empty() && !listItem.custom.empty()) {
+        line = childrenText(listItem.custom, ctx);
+    }
+    const std::string subtitle = ctx.text(listItem.subtitle);
+    const std::string trailing = ctx.text(listItem.trailing);
+    if (!subtitle.empty()) {
+        line += " - " + subtitle;
+    }
+    if (!trailing.empty()) {
+        line += "  " + trailing;
+    }
+    return line;
+}
+
 /// 控件当前值的文本形态
 std::string controlValueText(const Item& item, const Ctx& ctx) {
     const std::string raw = item.valueJson;
@@ -255,25 +274,47 @@ bool itemText(const Item& item, const Ctx& ctx, std::string& out) {
             out = text(item.emptyText);
             return !out.empty();
         }
-        std::string body;
+        out.clear();
         for (std::size_t i = 0; i < item.items.size(); ++i) {
-            const ListItem& listItem = item.items[i];
-            std::string     line     = text(listItem.title);
-            const std::string subtitle = text(listItem.subtitle);
-            const std::string trailing = text(listItem.trailing);
-            if (!subtitle.empty()) {
-                line += " - " + subtitle;
-            }
-            if (!trailing.empty()) {
-                line += "  " + trailing;
-            }
             if (i > 0) {
+                out.push_back('\n');
+            }
+            out.append(listItemLine(item.items[i], ctx));
+        }
+        return true;
+    }
+    if (item.kind == "musicxx.DirListView") {
+        // 目录列表：顶部路径行（`showPath` 为真且给了 path 时）+ 每个条目一行
+        std::string body;
+        if (item.showPath) {
+            const std::string path = text(item.dirPath);
+            if (!path.empty()) {
+                body = path;
+            }
+        }
+        const std::string empty = text(item.emptyText);
+        const auto append = [&body](const std::string& line) {
+            if (!body.empty()) {
                 body.push_back('\n');
             }
             body.append(line);
+        };
+        if (item.items.empty()) {
+            if (!empty.empty()) {
+                append(empty);
+            }
+        } else {
+            for (const ListItem& listItem : item.items) {
+                append(listItemLine(listItem, ctx));
+            }
         }
-        out = body;
-        return true;
+        out = std::move(body);
+        return !out.empty();
+    }
+    if (item.kind == "musicxx.AdaptLayout") {
+        // 不能按宽高比切换的客户端用横屏那一套（与适配规则一致）
+        out = childrenText(item.rowBody, ctx);
+        return !out.empty();
     }
     if (item.kind == "Text") {
         const std::string value = text(item.text);
