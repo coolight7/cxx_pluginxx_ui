@@ -53,6 +53,44 @@ void main() {
     }
   });
 
+  test('自定义内容与 AdaptLayout 的 body 里的块也会降级', () {
+    final List<ItemData> items = parseBlocks(<Object?>[
+      <String, Object?>{
+        'kind': 'ListViewBase',
+        'items': <Object?>[
+          <String, Object?>{
+            'custom': <Object?>[
+              <String, Object?>
+                  {'kind': 'Sparkline', 'data': <Object?>[1, 2, 3], 'fallback': '小图'},
+            ],
+          },
+        ],
+      },
+      <String, Object?>{
+        'kind': 'musicxx.AdaptLayout',
+        'columnBody': <Object?>[
+          <String, Object?>
+              {'kind': 'Sparkline', 'data': <Object?>[1], 'fallback': '条形'},
+        ],
+        'rowBody': <Object?>[
+          <String, Object?>{'kind': 'Text', 'text': '横屏'},
+        ],
+      },
+    ]);
+    final List<ItemData> out = adaptBlocks(
+      items,
+      capsWithout(<String>['Sparkline']),
+    );
+
+    // 列表项 custom 里的 Sparkline 变成文本（不支持的组件不能在那里静默消失）
+    expect(out.first.items.single.custom.single.kind, 'Text');
+    expect(out.first.items.single.custom.single.text.resolve(), '小图');
+
+    // AdaptLayout 两套 body 都过适配
+    expect(out.last.columnBody.single.kind, 'Text');
+    expect(out.last.rowBody.single.kind, 'Text');
+  });
+
   test('最小能力全部收敛到文本', () {
     final List<ItemData> items = parseFixture('core.json');
     final AdaptReport report = AdaptReport();

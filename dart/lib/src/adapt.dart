@@ -78,6 +78,48 @@ ItemData _degradeToText(ItemData source, String text,
 List<ItemData> _flattenChildrenOf(ItemData item) =>
     'musicxx.AdaptLayout' == item.kind ? item.rowBody : item.children;
 
+/// 除了 `children` 之外还装着块的地方：`musicxx.AdaptLayout` 的四套 body 与列表项的 `custom`
+///
+/// 它们是**块**（不是列表数据），所以同样要过适配：不支持的组件在那里也要按规则降级
+/// （否则只会在客户端里静默消失，也不会出现在 `AdaptReport` 里）。
+void _adaptNestedBlocks(
+  ItemData node,
+  PluginCapabilities caps,
+  AdaptReport? report,
+  int depth,
+) {
+  List<ItemData> adaptAll(List<ItemData> blocks) =>
+      blocks.isEmpty ? blocks : _adaptList(blocks, caps, report, depth);
+
+  if ('musicxx.AdaptLayout' == node.kind) {
+    node.columnBody = adaptAll(node.columnBody);
+    node.rowBody = adaptAll(node.rowBody);
+    node.columnSecondBody = adaptAll(node.columnSecondBody);
+    node.rowSecondBody = adaptAll(node.rowSecondBody);
+  }
+  if (node.items.isNotEmpty) {
+    node.items = <ListItem>[
+      for (final ListItem item in node.items)
+        item.custom.isEmpty
+            ? item
+            : ListItem(
+                id: item.id,
+                title: item.title,
+                subtitle: item.subtitle,
+                trailing: item.trailing,
+                image: item.image,
+                icon: item.icon,
+                tone: item.tone,
+                selected: item.selected,
+                path: item.path,
+                isDir: item.isDir,
+                custom: adaptAll(item.custom),
+                action: item.action,
+              ),
+    ];
+  }
+}
+
 List<ItemData> _adaptList(
   List<ItemData> items,
   PluginCapabilities caps,
@@ -140,6 +182,10 @@ List<ItemData> _adaptItem(
         node.children = _adaptList(node.children, caps, report, depth + 1);
       }
     }
+
+    // 除了 `children` 之外还装着块的地方（`musicxx.AdaptLayout` 的四套 body、列表项的 `custom`）：
+    // 不支持的组件在那里同样要按规则降级，否则会在客户端里静默消失
+    _adaptNestedBlocks(node, caps, report, depth + 1);
 
     if (node.text.fallback.isNotEmpty) {
       node.text = TextValue(

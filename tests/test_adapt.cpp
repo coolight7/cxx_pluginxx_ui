@@ -66,6 +66,31 @@ PLUGINXX_UI_TEST(完整能力下适配不改结构) {
     }
 }
 
+PLUGINXX_UI_TEST(自定义内容与AdaptLayout的body也会降级) {
+    const std::vector<Item> items = pluginxx::ui::parseBlocks(Json::parse(R"([
+        {"kind":"ListViewBase","items":[
+            {"custom":[{"kind":"Sparkline","data":[1,2,3],"fallback":"小图"}]}]},
+        {"kind":"musicxx.AdaptLayout",
+         "columnBody":[{"kind":"Sparkline","data":[1],"fallback":"条形"}],
+         "rowBody":[{"kind":"Text","text":"横屏"}]}
+    ])"));
+    const auto out = pluginxx::ui::adaptBlocks(items, capsWithout({"Sparkline"}));
+    PLUGINXX_UI_CHECK_EQ(out.size(), static_cast<std::size_t>(2), "两个顶层块都在");
+
+    // 列表项 custom 里的 Sparkline 变成文本（不支持的组件不能在那里静默消失）
+    PLUGINXX_UI_CHECK_EQ(out[0].items.size(), static_cast<std::size_t>(1), "列表项还在");
+    const std::vector<Item>& custom = out[0].items[0].custom;
+    PLUGINXX_UI_CHECK_EQ(custom.size(), static_cast<std::size_t>(1), "自定义内容还在");
+    PLUGINXX_UI_CHECK_EQ(custom[0].kind, std::string("Text"), "降成文本");
+    PLUGINXX_UI_CHECK_EQ(custom[0].text.resolve(), std::string("小图"), "用了 fallback");
+
+    // AdaptLayout 两套 body 都过适配
+    PLUGINXX_UI_CHECK_EQ(out[1].columnBody.size(), static_cast<std::size_t>(1), "竖屏 body 还在");
+    PLUGINXX_UI_CHECK_EQ(out[1].columnBody[0].kind, std::string("Text"), "竖屏 body 降成文本");
+    PLUGINXX_UI_CHECK_EQ(out[1].rowBody.size(), static_cast<std::size_t>(1), "横屏 body 还在");
+    PLUGINXX_UI_CHECK_EQ(out[1].rowBody[0].kind, std::string("Text"), "横屏 body 是文本");
+}
+
 PLUGINXX_UI_TEST(最小能力全部收敛到文本) {
     const std::vector<Item> items = parseFixture("core.json");
     AdaptReport             report;

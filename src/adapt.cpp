@@ -80,6 +80,27 @@ const std::vector<Item>& flattenChildrenOf(const Item& item) {
     return item.kind == "musicxx.AdaptLayout" ? item.rowBody : item.children;
 }
 
+/// 除了 `children` 之外还装着块的地方：`musicxx.AdaptLayout` 的四套 body 与列表项的 `custom`
+///
+/// 它们是**块**（不是列表数据），所以同样要过适配：不支持的组件在那里也要按规则降级
+/// （否则只会在客户端里静默消失，也不会出现在 `AdaptReport` 里）。
+void adaptNestedBlocks(Item& node, const Capabilities& caps, AdaptReport* report, const int depth) {
+    auto adaptAll = [&](std::vector<Item>& blocks) {
+        if (!blocks.empty()) {
+            blocks = adaptList(blocks, caps, report, depth);
+        }
+    };
+    if (node.kind == "musicxx.AdaptLayout") {
+        adaptAll(node.columnBody);
+        adaptAll(node.rowBody);
+        adaptAll(node.columnSecondBody);
+        adaptAll(node.rowSecondBody);
+    }
+    for (ListItem& listItem : node.items) {
+        adaptAll(listItem.custom);
+    }
+}
+
 std::vector<Item> adaptItemImpl(const Item& item, const Capabilities& caps, AdaptReport* report,
                                 const int depth) {
     std::vector<Item> out;
@@ -136,6 +157,10 @@ std::vector<Item> adaptItemImpl(const Item& item, const Capabilities& caps, Adap
                 node.children = adaptList(node.children, caps, report, depth + 1);
             }
         }
+
+        // 除了 `children` 之外还装着块的地方（`musicxx.AdaptLayout` 的四套 body、列表项的 `custom`）：
+        // 不支持的组件在那里同样要按规则降级，否则会在客户端里静默消失
+        adaptNestedBlocks(node, caps, report, depth + 1);
 
         // 文本长度上限（0 = 不限制）
         if (!node.text.fallback.empty()) {
