@@ -882,10 +882,12 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
             item.padding    = edgesOf(json["padding"], ctx.report, "musicxx.DirListView.padding");
             item.hasPadding = true;
         }
-        item.emptyText    = textValueOf(json["emptyText"]);
-        item.itemAction   = actionOf(json["itemAction"]);
-        item.pathAction   = actionOf(json["pathAction"]);
-        item.selectAction = actionOf(json["selectAction"]);
+        item.emptyText      = textValueOf(json["emptyText"]);
+        item.itemAction     = actionOf(json["itemAction"]);
+        item.pathAction     = actionOf(json["pathAction"]);
+        item.selectAction   = actionOf(json["selectAction"]);
+        item.refreshAction  = actionOf(json["refreshAction"]);
+        item.loadMoreAction = actionOf(json["loadMoreAction"]);
         return item;
     }
     if (canonical == "musicxx.AdaptLayout") {
@@ -1554,6 +1556,12 @@ Json dumpBlockImpl(const Item& item) {
         }
         if (!item.selectAction.empty()) {
             out["selectAction"] = actionToJson(item.selectAction);
+        }
+        if (!item.refreshAction.empty()) {
+            out["refreshAction"] = actionToJson(item.refreshAction);
+        }
+        if (!item.loadMoreAction.empty()) {
+            out["loadMoreAction"] = actionToJson(item.loadMoreAction);
         }
     } else if (item.kind == "musicxx.AdaptLayout") {
         out["columnBody"] = dumpBlocks(item.columnBody);

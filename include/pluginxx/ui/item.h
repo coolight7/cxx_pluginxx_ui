@@ -419,8 +419,8 @@ struct Item {
     Action removeAction;
     Action removeCheckedAction;
     Action positionAction;
-    Action refreshAction;
-    Action loadMoreAction;
+    Action refreshAction;  ///< 下拉刷新（`ListView` 与 `musicxx.DirListView` 共用）
+    Action loadMoreAction; ///< 加载更多（同上；给了才套刷新头）
 
     TextValue removeTipTitle; ///< 编辑态删除选中项时的确认弹窗标题
 

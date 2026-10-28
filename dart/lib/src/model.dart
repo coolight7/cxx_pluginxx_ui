@@ -598,6 +598,7 @@ class ItemData {
   String layout = 'auto';
 
   // 列表工具条 / 编辑相关的动作（没写的就不出现对应按钮）
+  // refreshAction / loadMoreAction 也给 musicxx.DirListView 用：给了就套下拉刷新 / 上拉加载更多。
   UiAction? editAction;
   UiAction? saveAction;
   UiAction? addAction;

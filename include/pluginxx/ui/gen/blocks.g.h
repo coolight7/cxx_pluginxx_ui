@@ -113,7 +113,7 @@ inline constexpr BlockMeta kBlockTable[] = {
      "带工具条的列表（编辑 / 多选 / 加删 / 定位 / 菜单 / 下拉刷新 / 加载更多）。列表项除 title/subtitle/trailing/image/icon/tone/selected/action 外还可写 custom（任意块，整项内容由它画；行内自动插入的编辑/多选/拖拽按钮保留）、path、isDir"},
     {"musicxx.DirListView", BlockLevel::Client,
      "Musicxx", AdaptRule::PlainTextMono,
-     "目录/文件列表（对应客户端内置的 DirList）：一层目录的条目，顶部路径行（可带“上一级”动作）；写了 multi 才在行尾出勾选框（勾选态取条目的 selected，变化派发 selectAction）；进入目录与选中态都由插件维护（其他客户端按普通列表降级）"},
+     "目录/文件列表（对应客户端内置的 DirList）：一层目录的条目，顶部路径栏（可带“上一级”动作）；写了 multi 才在行尾出勾选框（勾选态取条目的 selected，变化派发 selectAction）；给了 refreshAction / loadMoreAction 就能在列表内下拉刷新、滑到底加载更多；进入目录与选中态都由插件维护（其他客户端按普通列表降级）"},
     {"musicxx.AdaptLayout", BlockLevel::Client,
      "Musicxx", AdaptRule::Flatten,
      "按窗口宽高比切换两套内容（对应客户端内置的 XXAdaptiveLayout）：宽高比 < 1 用 columnBody，否则用 rowBody；给了第二套就按比例分两栏（其他客户端用 rowBody）"},

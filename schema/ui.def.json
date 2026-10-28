@@ -581,7 +581,7 @@
       "kind": "musicxx.DirListView",
       "level": "client",
       "client": "musicxx",
-      "doc": "目录/文件列表（对应客户端内置的 DirList）：一层目录的条目，顶部路径行（可带“上一级”动作）；写了 multi 才在行尾出勾选框（勾选态取条目的 selected，变化派发 selectAction）；进入目录与选中态都由插件维护（其他客户端按普通列表降级）",
+      "doc": "目录/文件列表（对应客户端内置的 DirList）：一层目录的条目，顶部路径栏（可带“上一级”动作）；写了 multi 才在行尾出勾选框（勾选态取条目的 selected，变化派发 selectAction）；给了 refreshAction / loadMoreAction 就能在列表内下拉刷新、滑到底加载更多；进入目录与选中态都由插件维护（其他客户端按普通列表降级）",
       "fields": [
         { "name": "id", "type": "string" },
         { "name": "path", "type": "text" },
@@ -591,6 +591,8 @@
         { "name": "pathAction", "type": "action" },
         { "name": "itemAction", "type": "action" },
         { "name": "selectAction", "type": "action" },
+        { "name": "refreshAction", "type": "action" },
+        { "name": "loadMoreAction", "type": "action" },
         { "name": "height", "type": "size" },
         { "name": "padding", "type": "edges" },
         { "name": "variant", "type": "enum:listVariant", "default": "card" },

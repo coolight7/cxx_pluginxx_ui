@@ -524,6 +524,8 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
       item.itemAction = _action(json['itemAction']);
       item.pathAction = _action(json['pathAction']);
       item.selectAction = _action(json['selectAction']);
+      item.refreshAction = _action(json['refreshAction']);
+      item.loadMoreAction = _action(json['loadMoreAction']);
       return item;
     case 'musicxx.AdaptLayout':
       item.columnBody = children('columnBody', 'musicxx.AdaptLayout.columnBody');
@@ -1365,6 +1367,8 @@ Map<String, Object?> dumpItem(ItemData item) {
         MapEntry<String, UiAction?>('itemAction', item.itemAction),
         MapEntry<String, UiAction?>('pathAction', item.pathAction),
         MapEntry<String, UiAction?>('selectAction', item.selectAction),
+        MapEntry<String, UiAction?>('refreshAction', item.refreshAction),
+        MapEntry<String, UiAction?>('loadMoreAction', item.loadMoreAction),
       ]) {
         final Object? value = _actionToJson(entry.value);
         if (null != value) {
