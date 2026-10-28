@@ -791,12 +791,32 @@ List<ListItem> _listItems(Object? value, _Ctx ctx, String what) {
         selected: _bool(map, 'selected', false),
         path: _str(map, 'path'),
         isDir: _bool(map, 'isDir', false),
+        song: _listItemSong(map['song']),
         custom: _childBlocks(map['custom'], ctx, '$what[$i].custom'),
         action: _action(map['action']),
       ),
     );
   }
   return out;
+}
+
+/// 列表项里的“这一项是一首歌”（`musicxx.DirListView` 用它画歌曲样式）：没有 `src` 就把这一项当普通项
+ListItemSong? _listItemSong(Object? value) {
+  final Map<String, Object?>? map = _asMap(value);
+  if (null == map) {
+    return null;
+  }
+  final ListItemSong song = ListItemSong(
+    type: _str(map, 'type'),
+    src: _str(map, 'src'),
+    name: _textValue(map['name']),
+    artist: _textValue(map['artist']),
+    fileName: _str(map, 'fileName'),
+    size: _num(map, 'size', 0).toInt(),
+    durationMs: _num(map, 'durationMs', 0).toInt(),
+    cover: _str(map, 'cover'),
+  );
+  return song.isSong ? song : null;
 }
 
 /// 列表项里的自定义块（`ListItem.custom`）：算第 1 层（列表块自身是第 0 层）
@@ -1463,6 +1483,19 @@ Map<String, Object?> _listItemToJson(ListItem item) => <String, Object?>{
       if (item.selected) 'selected': true,
       if (item.path.isNotEmpty) 'path': item.path,
       if (item.isDir) 'isDir': true,
+      if (null != item.song)
+        'song': <String, Object?>{
+          if (item.song!.type.isNotEmpty) 'type': item.song!.type,
+          'src': item.song!.src,
+          if (item.song!.name.isNotEmpty)
+            'name': _textValueToJson(item.song!.name),
+          if (item.song!.artist.isNotEmpty)
+            'artist': _textValueToJson(item.song!.artist),
+          if (item.song!.fileName.isNotEmpty) 'fileName': item.song!.fileName,
+          if (item.song!.size > 0) 'size': item.song!.size,
+          if (item.song!.durationMs > 0) 'durationMs': item.song!.durationMs,
+          if (item.song!.cover.isNotEmpty) 'cover': item.song!.cover,
+        },
       if (item.custom.isNotEmpty) 'custom': dumpBlocks(item.custom),
       if (null != _actionToJson(item.action)) 'action': _actionToJson(item.action),
     };

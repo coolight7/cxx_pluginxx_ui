@@ -340,6 +340,17 @@ std::vector<ListItem> listItemsOf(const Json& value, const Ctx& ctx, const std::
         listItem.selected = fieldBool(node, "selected", false);
         listItem.path     = fieldString(node, "path");
         listItem.isDir    = fieldBool(node, "isDir", false);
+        if (node["song"].is_object()) {
+            const Json& songJson     = node["song"];
+            listItem.song.type       = fieldString(songJson, "type");
+            listItem.song.src        = fieldString(songJson, "src");
+            listItem.song.name       = textValueOf(songJson["name"]);
+            listItem.song.artist     = textValueOf(songJson["artist"]);
+            listItem.song.fileName   = fieldString(songJson, "fileName");
+            listItem.song.size       = static_cast<std::int64_t>(fieldNumber(songJson, "size", 0.0));
+            listItem.song.durationMs = static_cast<std::int64_t>(fieldNumber(songJson, "durationMs", 0.0));
+            listItem.song.cover      = fieldString(songJson, "cover");
+        }
         // 自定义内容算第 1 层（列表块自身是第 0 层）
         listItem.custom = parseChildren(node["custom"], ctx, 0,
                                         what + "[" + std::to_string(i) + "].custom");
@@ -1097,6 +1108,32 @@ Json dumpListItemImpl(const ListItem& listItem) {
     }
     if (listItem.isDir) {
         out["isDir"] = true;
+    }
+    if (listItem.song.isSong()) {
+        Json song = Json::object();
+        if (!listItem.song.type.empty()) {
+            song["type"] = listItem.song.type;
+        }
+        song["src"] = listItem.song.src;
+        if (!listItem.song.name.empty()) {
+            song["name"] = textValueToJson(listItem.song.name);
+        }
+        if (!listItem.song.artist.empty()) {
+            song["artist"] = textValueToJson(listItem.song.artist);
+        }
+        if (!listItem.song.fileName.empty()) {
+            song["fileName"] = listItem.song.fileName;
+        }
+        if (listItem.song.size > 0) {
+            song["size"] = listItem.song.size;
+        }
+        if (listItem.song.durationMs > 0) {
+            song["durationMs"] = listItem.song.durationMs;
+        }
+        if (!listItem.song.cover.empty()) {
+            song["cover"] = listItem.song.cover;
+        }
+        out["song"] = std::move(song);
     }
     if (!listItem.custom.empty()) {
         Json custom = Json::array();

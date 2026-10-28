@@ -224,6 +224,23 @@ struct TreeNode {
 
 struct Item; ///< 前向声明：列表项的 `custom` 要用 `std::vector<Item>`
 
+/// 列表项里的“这一项是一首歌”（`musicxx.DirListView` 按它把这一项画成歌曲样式）
+///
+/// 只描述“这一项是什么歌”，不含播放方式：点它派发哪个动作仍由 [ListItem::action] /
+/// 块上的 `itemAction` 决定。`src` 空 = 这一项不是歌曲（按普通文件画）。
+struct ListItemSong {
+    std::string  type;       ///< 音源类型 id（`plugin.<插件id>.<名字>`；空 = 用插件声明的唯一类型）
+    std::string  src;        ///< 资源 id（插件自己的标识）
+    TextValue    name;       ///< 歌名（不给就用列表项的 title）
+    TextValue    artist;     ///< 歌手（画在第二行）
+    std::string  fileName;   ///< 文件名（主程序按它识别歌名 / 歌手）
+    std::int64_t size       = 0; ///< 字节数（0 = 不知道）
+    std::int64_t durationMs = 0; ///< 时长毫秒（0 = 不知道）
+    std::string  cover;      ///< 封面（插件目录相对路径或 http 链接）
+
+    bool isSong() const { return !src.empty(); }
+};
+
 /// 列表项（`ListViewBase.items` / `ListView.items` / `musicxx.DirListView.items` 的元素）
 ///
 /// 它默认是**数据**而不是块：外观由客户端统一决定
@@ -241,6 +258,8 @@ struct ListItem {
 
     std::string path;  ///< 这一项的路径 / 身份（目录列表用它，动作参数里原样回带）
     bool        isDir = false; ///< 是不是目录项
+
+    ListItemSong song; ///< 这一项是一首歌时填上（只有目录列表用它画歌曲样式）
 
     std::vector<Item> custom; ///< 自定义内容（非空 = 整项内容由它画）
 

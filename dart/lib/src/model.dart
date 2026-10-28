@@ -318,6 +318,49 @@ class TableCell {
   final UiAction? action;
 }
 
+/// 列表项里的“这一项是一首歌”（`musicxx.DirListView` 按它把这一项画成歌曲样式）
+///
+/// 只描述“这一项是什么歌”，不含播放方式：点它派发哪个动作仍由 [ListItem.action] /
+/// 块上的 `itemAction` 决定。`src` 空 = 这一项不是歌曲（按普通文件画）。
+class ListItemSong {
+  const ListItemSong({
+    this.type = '',
+    this.src = '',
+    this.name = TextValue.empty,
+    this.artist = TextValue.empty,
+    this.fileName = '',
+    this.size = 0,
+    this.durationMs = 0,
+    this.cover = '',
+  });
+
+  /// 音源类型 id（`plugin.<插件id>.<名字>`；空 = 用插件声明的唯一类型）
+  final String type;
+
+  /// 资源 id（插件自己的标识；空 = 这一项不是歌曲）
+  final String src;
+
+  /// 歌名（不给就用列表项的 title）
+  final TextValue name;
+
+  /// 歌手（画在第二行）
+  final TextValue artist;
+
+  /// 文件名（主程序按它识别歌名 / 歌手）
+  final String fileName;
+
+  /// 字节数（0 = 不知道）
+  final int size;
+
+  /// 时长毫秒（0 = 不知道）
+  final int durationMs;
+
+  /// 封面（插件目录相对路径或 http 链接）
+  final String cover;
+
+  bool get isSong => src.isNotEmpty;
+}
+
 /// 键值对
 class KeyValuePair {
   const KeyValuePair({
@@ -368,6 +411,7 @@ class ListItem {
     this.selected = false,
     this.path = '',
     this.isDir = false,
+    this.song,
     this.custom = const <ItemData>[],
     this.action,
   });
@@ -395,6 +439,9 @@ class ListItem {
 
   /// 是不是目录项（目录列表用它决定图标与展开行为）
   final bool isDir;
+
+  /// 这一项是一首歌时填上（只有目录列表用它画歌曲样式）
+  final ListItemSong? song;
 
   /// 自定义内容：非空时**整项内容**由这些块画（行内自动插入的编辑 / 多选 / 拖拽按钮不受影响）
   final List<ItemData> custom;

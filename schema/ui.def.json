@@ -471,7 +471,7 @@
     {
       "kind": "ListViewBase",
       "level": "optional",
-      "doc": "按应用的列表组件显示多条数据（只显示，没有工具条与编辑）。列表项除了 title/subtitle/trailing/image/icon/tone/selected/action，还可写 custom（任意块，写了就整项内容由它画，行内自动插入的编辑/多选/拖拽按钮不受影响）、path（路径/身份）与 isDir（目录项）",
+      "doc": "按应用的列表组件显示多条数据（只显示，没有工具条与编辑）。列表项除了 title/subtitle/trailing/image/icon/tone/selected/action，还可写 custom（任意块，写了就整项内容由它画，行内自动插入的编辑/多选/拖拽按钮不受影响）、path（路径/身份）、isDir（目录项）与 song（这一项是一首歌，只有目录列表用它画歌曲样式）",
       "fields": [
         { "name": "id", "type": "string" },
         { "name": "items", "type": "listItems", "required": true },
@@ -521,7 +521,7 @@
     {
       "kind": "ListView",
       "level": "optional",
-      "doc": "带工具条的列表（编辑 / 多选 / 加删 / 定位 / 菜单 / 下拉刷新 / 加载更多）。列表项除 title/subtitle/trailing/image/icon/tone/selected/action 外还可写 custom（任意块，整项内容由它画；行内自动插入的编辑/多选/拖拽按钮保留）、path、isDir",
+      "doc": "带工具条的列表（编辑 / 多选 / 加删 / 定位 / 菜单 / 下拉刷新 / 加载更多）。列表项除 title/subtitle/trailing/image/icon/tone/selected/action 外还可写 custom（任意块，整项内容由它画；行内自动插入的编辑/多选/拖拽按钮保留）、path、isDir、song",
       "fields": [
         { "name": "id", "type": "string" },
         { "name": "items", "type": "listItems", "required": true },
@@ -581,7 +581,7 @@
       "kind": "musicxx.DirListView",
       "level": "client",
       "client": "musicxx",
-      "doc": "目录/文件列表（对应客户端内置的 DirList）：一层目录的条目，顶部路径栏（可带“上一级”动作）；写了 multi 才在行尾出勾选框（勾选态取条目的 selected，变化派发 selectAction）；给了 refreshAction / loadMoreAction 就能在列表内下拉刷新、滑到底加载更多；进入目录与选中态都由插件维护（其他客户端按普通列表降级）",
+      "doc": "目录/文件列表（对应客户端内置的 DirList）：一层目录的条目，顶部路径栏（可带“上一级”动作）；写了 multi 才在行尾出勾选框（勾选态取条目的 selected，变化派发 selectAction）；给了 refreshAction / loadMoreAction 就能在列表内下拉刷新、滑到底加载更多；条目带 song（{type, src, name?, artist?, fileName?, size?, durationMs?, cover?}）时这一行画成歌曲样式（封面 + 歌手 + 音源标签）；进入目录与选中态都由插件维护（其他客户端按普通列表降级）",
       "fields": [
         { "name": "id", "type": "string" },
         { "name": "path", "type": "text" },
