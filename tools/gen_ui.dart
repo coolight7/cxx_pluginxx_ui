@@ -374,6 +374,8 @@ class UiDef {
         'selected',
         'path',
         'isDir',
+        // 附加数据：通用载体，内容由客户端自己解释（库不校验里面有什么）
+        'data',
         'custom',
         'action',
       };

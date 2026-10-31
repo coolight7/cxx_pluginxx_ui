@@ -366,40 +366,30 @@ void main() {
     expect(report.warnings, isNotEmpty);
   });
 
-  test('列表项的 song：带 src 才算歌曲，往返稳定', () {
+  test('列表项的 data：附加数据原样携带（库不解释内容），往返稳定', () {
     final ItemData view = parseBlock(<String, Object?>{
       'kind': 'musicxx.DirListView',
       'items': <Object?>[
         <String, Object?>{
           'title': '稻香.flac',
           'path': '/Music/稻香.flac',
-          'song': <String, Object?>{
-            'type': 'plugin.demo.audio',
-            'src': 'a/稻香.flac',
-            'artist': '周杰伦',
-            'fileName': '稻香.flac',
-            'size': 12345678,
-            'durationMs': 223000,
-            'cover': 'resource/cover/a.jpg',
+          'data': <String, Object?>{
+            'song': <String, Object?>{
+              'type': 'plugin.demo.audio',
+              'src': 'a/稻香.flac',
+              'artist': '周杰伦',
+            },
           },
         },
-        // 只给了 artist 没有 src：不当歌曲（按普通文件画）
-        <String, Object?>{
-          'title': '说明.txt',
-          'path': '/Music/说明.txt',
-          'song': <String, Object?>{'artist': '无关'},
-        },
+        // 没有 data 的条目：附加数据是 null，按普通项处理
+        <String, Object?>{'title': '说明.txt', 'path': '/Music/说明.txt'},
       ],
     });
-    expect(view.items.first.song, isNotNull);
-    expect(view.items.first.song!.type, 'plugin.demo.audio');
-    expect(view.items.first.song!.src, 'a/稻香.flac');
-    expect(view.items.first.song!.artist.fallback, '周杰伦');
-    expect(view.items.first.song!.fileName, '稻香.flac');
-    expect(view.items.first.song!.size, 12345678);
-    expect(view.items.first.song!.durationMs, 223000);
-    expect(view.items.first.song!.cover, 'resource/cover/a.jpg');
-    expect(view.items[1].song, isNull);
+    // 库不解析里面的键，客户端自己取（musicxx 取 data.song 画歌曲行）
+    final Map<String, Object?> data =
+        view.items.first.data! as Map<String, Object?>;
+    expect((data['song']! as Map<String, Object?>)['src'], 'a/稻香.flac');
+    expect(view.items[1].data, isNull);
 
     final Map<String, Object?> dumped = dumpItem(view);
     expect(jsonEncode(dumpItem(parseBlock(dumped))), jsonEncode(dumped));

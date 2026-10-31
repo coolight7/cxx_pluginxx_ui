@@ -113,6 +113,7 @@ void _adaptNestedBlocks(
                 selected: item.selected,
                 path: item.path,
                 isDir: item.isDir,
+                data: item.data,
                 custom: adaptAll(item.custom),
                 action: item.action,
               ),

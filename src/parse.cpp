@@ -340,16 +340,9 @@ std::vector<ListItem> listItemsOf(const Json& value, const Ctx& ctx, const std::
         listItem.selected = fieldBool(node, "selected", false);
         listItem.path     = fieldString(node, "path");
         listItem.isDir    = fieldBool(node, "isDir", false);
-        if (node["song"].is_object()) {
-            const Json& songJson     = node["song"];
-            listItem.song.type       = fieldString(songJson, "type");
-            listItem.song.src        = fieldString(songJson, "src");
-            listItem.song.name       = textValueOf(songJson["name"]);
-            listItem.song.artist     = textValueOf(songJson["artist"]);
-            listItem.song.fileName   = fieldString(songJson, "fileName");
-            listItem.song.size       = static_cast<std::int64_t>(fieldNumber(songJson, "size", 0.0));
-            listItem.song.durationMs = static_cast<std::int64_t>(fieldNumber(songJson, "durationMs", 0.0));
-            listItem.song.cover      = fieldString(songJson, "cover");
+        // 附加数据按原文携带（客户端自己解释），与 shader 的 argsJson 同一套写法
+        if (fieldHas(node, "data")) {
+            listItem.dataJson = jsonText(node["data"]);
         }
         // 自定义内容算第 1 层（列表块自身是第 0 层）
         listItem.custom = parseChildren(node["custom"], ctx, 0,
@@ -1109,31 +1102,12 @@ Json dumpListItemImpl(const ListItem& listItem) {
     if (listItem.isDir) {
         out["isDir"] = true;
     }
-    if (listItem.song.isSong()) {
-        Json song = Json::object();
-        if (!listItem.song.type.empty()) {
-            song["type"] = listItem.song.type;
+    if (!listItem.dataJson.empty()) {
+        // 附加数据：原文解析回 JSON 后原样写回（解析不了就不写，不影响其余字段）
+        try {
+            out["data"] = Json::parse(listItem.dataJson);
+        } catch (...) {
         }
-        song["src"] = listItem.song.src;
-        if (!listItem.song.name.empty()) {
-            song["name"] = textValueToJson(listItem.song.name);
-        }
-        if (!listItem.song.artist.empty()) {
-            song["artist"] = textValueToJson(listItem.song.artist);
-        }
-        if (!listItem.song.fileName.empty()) {
-            song["fileName"] = listItem.song.fileName;
-        }
-        if (listItem.song.size > 0) {
-            song["size"] = listItem.song.size;
-        }
-        if (listItem.song.durationMs > 0) {
-            song["durationMs"] = listItem.song.durationMs;
-        }
-        if (!listItem.song.cover.empty()) {
-            song["cover"] = listItem.song.cover;
-        }
-        out["song"] = std::move(song);
     }
     if (!listItem.custom.empty()) {
         Json custom = Json::array();
