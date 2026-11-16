@@ -168,6 +168,7 @@ const List<String> kEnumButtonVariant = <String>[
   'secondary',
   'ghost',
   'link',
+  'full',
 ];
 
 /// 枚举 controlKind 的取值

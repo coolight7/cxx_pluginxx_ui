@@ -29,7 +29,7 @@
     "alignHV": ["start", "center", "end", "stretch"],
     "mainAxis": ["start", "center", "end", "spaceBetween"],
     "blockVariant": ["card", "inset", "plain"],
-    "buttonVariant": ["primary", "secondary", "ghost", "link"],
+    "buttonVariant": ["primary", "secondary", "ghost", "link", "full"],
     "controlKind": ["buttons", "select", "checkbox", "switch", "text", "number", "password"],
     "listLayout": ["auto", "list", "grid", "multiList"],
     "listVariant": ["card", "plain"],

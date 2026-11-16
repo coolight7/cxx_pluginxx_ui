@@ -199,6 +199,7 @@ inline constexpr std::string_view kEnumButtonVariant[] = {
     "secondary",
     "ghost",
     "link",
+    "full",
 };
 inline constexpr std::string_view kEnumControlKind[] = {
     "buttons",
