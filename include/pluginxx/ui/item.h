@@ -319,7 +319,7 @@ struct Item {
     std::string cross    = "start"; ///< Row/Column.cross
 
     // ---- 尺寸与留白 ----
-    SizeValue   size;             ///< Gap.size / Icon.size
+    SizeValue   size;             ///< Gap.size / Icon.size / Button.size（按钮高度）
     SizeValue   width;            ///< SizedBox.width / Image.width / Progress.width
     SizeValue   height;           ///< SizedBox.height / Image.height
     SizeValue   keyWidth;         ///< KV.keyWidth（Auto = 按最长键自适应）

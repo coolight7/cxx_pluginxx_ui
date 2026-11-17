@@ -38,7 +38,7 @@ inline constexpr BlockMeta kBlockTable[] = {
      "竖直留白（缺省取 defaults.gap）"},
     {"Button", BlockLevel::Core,
      "", AdaptRule::PlainTextMono,
-     "按钮（自己处理点击）：variant 定样式与宽度，highlight 定选中态"},
+     "按钮（自己处理点击）：variant 定样式与宽度，highlight 定选中态，size 定高度"},
     {"Block", BlockLevel::Core,
      "", AdaptRule::Flatten,
      "卡片/内容块"},

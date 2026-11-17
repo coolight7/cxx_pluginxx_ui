@@ -424,6 +424,38 @@ void main() {
     );
   });
 
+  test('按钮的高度 size：数值 / 比例都认，缺省是 auto', () {
+    // 不写 size = auto（客户端用默认按钮大小）
+    final ItemData plain = parseBlock(<String, Object?>{
+      'kind': 'Button',
+      'label': '默认',
+    });
+    expect(plain.size.isAuto, isTrue);
+    expect(
+      dumpItem(plain).containsKey('size'),
+      isFalse,
+      reason: 'auto 不写回 JSON',
+    );
+
+    final ItemData sized = parseBlock(<String, Object?>{
+      'kind': 'Button',
+      'label': '播放暂停',
+      'size': 256,
+    });
+    expect(sized.size.isValue, isTrue);
+    expect(sized.size.value, 256);
+    expect(dumpItem(sized)['size'], 256, reason: '数值往返保持原样');
+
+    final ItemData percent = parseBlock(<String, Object?>{
+      'kind': 'Button',
+      'label': '一半',
+      'size': <String, Object?>{'percent': 50},
+    });
+    expect(percent.size.isPercent, isTrue);
+    expect(percent.size.value, 50);
+    expect(dumpItem(percent)['size'], <String, Object?>{'percent': 50});
+  });
+
   test('控件形态包含 password', () {
     expect(kControlKinds.contains('password'), isTrue);
     final ItemData item = parseBlock(<String, Object?>{

@@ -200,6 +200,10 @@
           "type": "string"
         },
         {
+          "name": "size",
+          "type": "size"
+        },
+        {
           "name": "disabled",
           "type": "bool",
           "default": false
@@ -217,6 +221,7 @@
             "variant": "$variant",
             "highlight": "$highlight",
             "icon": "$icon",
+            "size": "$size",
             "disabled": "$disabled",
             "action": "$action"
           }

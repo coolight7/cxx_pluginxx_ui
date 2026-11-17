@@ -301,6 +301,9 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
       item.variant = _enum(json, 'variant', kEnumButtonVariant, 'normal');
       item.highlight = _bool(json, 'highlight', false);
       item.icon = _str(json, 'icon');
+      item.size = _has(json, 'size')
+          ? _sizeValue(json['size'], ctx.report, 'Button.size')
+          : SizeValue.autoValue;
       item.disabled = _bool(json, 'disabled', false);
       return item;
     case 'Block':
@@ -1049,6 +1052,9 @@ Map<String, Object?> dumpItem(ItemData item) {
       out['variant'] = item.variant;
       if (item.icon.isNotEmpty) {
         out['icon'] = item.icon;
+      }
+      if (!item.size.isAuto) {
+        out['size'] = _sizeValueToJson(item.size);
       }
       if (item.highlight) {
         out['highlight'] = true;

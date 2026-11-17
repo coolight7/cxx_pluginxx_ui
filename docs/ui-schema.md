@@ -71,7 +71,7 @@
 | `Text` | core | — | `text`* `type` `tone` `bold` `dim` `mono` `wrap` `maxLines` `align` | 一段文字 |
 | `Divider` | core | — | — | 分隔线（样式由客户端主题决定） |
 | `Gap` | core | — | `size` | 竖直留白（缺省取 defaults.gap） |
-| `Button` | core | — | `label`* `variant` `highlight` `icon` `disabled` | 按钮（自己处理点击）：variant 定样式与宽度，highlight 定选中态 |
+| `Button` | core | — | `label`* `variant` `highlight` `icon` `size` `disabled` | 按钮（自己处理点击）：variant 定样式与宽度，highlight 定选中态，size 定高度 |
 | `Block` | core | — | `title` `variant` `padding` `margin` `children` | 卡片/内容块 |
 | `Row` | core | — | `gap` `main` `cross` `children` | 横向排列 |
 | `Column` | core | — | `gap` `main` `cross` `children` | 纵向排列 |

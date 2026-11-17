@@ -641,6 +641,9 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
                                    "normal");
         item.highlight = fieldBool(json, "highlight", false);
         item.icon      = fieldString(json, "icon");
+        item.size      = fieldHas(json, "size")
+                             ? sizeValueOf(json["size"], ctx.report, "Button.size")
+                             : SizeValue::autoValue();
         item.disabled  = fieldBool(json, "disabled", false);
         return item;
     }
@@ -1216,6 +1219,9 @@ Json dumpBlockImpl(const Item& item) {
         out["variant"] = item.variant;
         if (!item.icon.empty()) {
             out["icon"] = item.icon;
+        }
+        if (!item.size.isAuto()) {
+            out["size"] = sizeValueToJson(item.size);
         }
         if (item.highlight) {
             out["highlight"] = true;

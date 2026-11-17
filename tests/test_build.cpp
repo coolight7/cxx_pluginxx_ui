@@ -63,6 +63,14 @@ PLUGINXX_UI_TEST(构建器的文本与动作字段) {
     PLUGINXX_UI_CHECK_EQ(simpleAgain.variant, std::string("simple"), "按钮样式往返");
     PLUGINXX_UI_CHECK(simpleAgain.highlight, "选中态往返保留");
 
+    // 按钮高度（u）：不写就是 auto（客户端用默认大小），写了要与数值一起往返
+    PLUGINXX_UI_CHECK(button.size.isAuto(), "按钮默认不指定高度");
+    const Item sized = pluginxx::ui::build::button("播放暂停", {}, "simple", false,
+                                                   pluginxx::ui::SizeValue::of(256));
+    const Item sizedAgain = pluginxx::ui::parseBlock(pluginxx::ui::dumpItem(sized));
+    PLUGINXX_UI_CHECK(sizedAgain.size.isValue(), "按钮高度往返后仍是数值");
+    PLUGINXX_UI_CHECK_EQ(sizedAgain.size.value, 256.0, "按钮高度值往返");
+
     const Item control = pluginxx::ui::build::control("checkbox", "skipAds",
                                                       pluginxx::ui::TextValue::of("跳过广告"),
                                                       pluginxx::ui::build::dispatch("setSkipAds"));

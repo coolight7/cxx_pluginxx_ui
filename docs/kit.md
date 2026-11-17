@@ -14,7 +14,7 @@
 | `icon` | `name` `glyph` `size` `tone`=normal | 图标（目标不支持 Icon 时退化成 glyph 文本） |
 | `gap` | `size`=gap | 竖直留白（缺省用客户端默认行距） |
 | `divider` | — | 分隔线 |
-| `button` | `label`* `variant`=normal `highlight`=false `icon` `disabled`=false `action` | 按钮 |
+| `button` | `label`* `variant`=normal `highlight`=false `icon` `size` `disabled`=false `action` | 按钮 |
 | `actionsRow` | `buttons`* | 一排等宽按钮（按钮列表里的每一项占一等份） |
 | `card` | `title` `variant`=card `padding` `margin` `children` | 内容块（卡片） |
 | `listRow` | `title`* `subtitle` `trailing` `action` | 卡片里的一行（标题 + 可选副标题 + 可选右侧文字） |

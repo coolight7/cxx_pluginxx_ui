@@ -8,7 +8,7 @@
     { "kind": "Divider" },
     { "kind": "Gap", "size": 12 },
     { "kind": "Gap", "size": { "percent": 10 } },
-    { "kind": "Button", "label": "保存", "highlight": true, "action": "apply" },
+    { "kind": "Button", "label": "保存", "highlight": true, "size": 140, "action": "apply" },
     {
       "kind": "Block",
       "title": "卡片",
