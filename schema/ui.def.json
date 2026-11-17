@@ -29,7 +29,7 @@
     "alignHV": ["start", "center", "end", "stretch"],
     "mainAxis": ["start", "center", "end", "spaceBetween"],
     "blockVariant": ["card", "inset", "plain"],
-    "buttonVariant": ["primary", "secondary", "ghost", "link", "full"],
+    "buttonVariant": ["normal", "full", "simple"],
     "controlKind": ["buttons", "select", "checkbox", "switch", "text", "number", "password"],
     "listLayout": ["auto", "list", "grid", "multiList"],
     "listVariant": ["card", "plain"],
@@ -113,14 +113,15 @@
     {
       "kind": "Button",
       "level": "core",
-      "doc": "按钮（自己处理点击）",
+      "doc": "按钮（自己处理点击）：variant 定样式与宽度，highlight 定选中态",
       "fields": [
         { "name": "label", "type": "text", "required": true },
-        { "name": "variant", "type": "enum:buttonVariant", "default": "secondary" },
+        { "name": "variant", "type": "enum:buttonVariant", "default": "normal" },
+        { "name": "highlight", "type": "bool", "default": false },
         { "name": "icon", "type": "string" },
         { "name": "disabled", "type": "bool", "default": false }
       ],
-      "sample": { "kind": "Button", "label": "保存", "variant": "primary", "action": "apply" }
+      "sample": { "kind": "Button", "label": "保存", "variant": "normal", "highlight": true, "action": "apply" }
     },
     {
       "kind": "Block",

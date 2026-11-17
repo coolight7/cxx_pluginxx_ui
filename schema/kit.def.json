@@ -188,7 +188,12 @@
         {
           "name": "variant",
           "type": "enum:buttonVariant",
-          "default": "secondary"
+          "default": "normal"
+        },
+        {
+          "name": "highlight",
+          "type": "bool",
+          "default": false
         },
         {
           "name": "icon",
@@ -210,6 +215,7 @@
             "kind": "Button",
             "label": "$label",
             "variant": "$variant",
+            "highlight": "$highlight",
             "icon": "$icon",
             "disabled": "$disabled",
             "action": "$action"

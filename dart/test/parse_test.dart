@@ -395,6 +395,35 @@ void main() {
     expect(jsonEncode(dumpItem(parseBlock(dumped))), jsonEncode(dumped));
   });
 
+  test('按钮的样式类型与选中态是两个字段', () {
+    // 不写 variant 就是 normal，highlight 默认否
+    final ItemData plain = parseBlock(<String, Object?>{
+      'kind': 'Button',
+      'label': '保存',
+    });
+    expect(plain.variant, 'normal');
+    expect(plain.highlight, isFalse);
+
+    final ItemData simple = parseBlock(<String, Object?>{
+      'kind': 'Button',
+      'label': '收藏',
+      'variant': 'simple',
+      'highlight': true,
+    });
+    expect(simple.variant, 'simple');
+    expect(simple.highlight, isTrue);
+
+    // 旧配色名不再认识，回落默认样式（不做兼容、不留别名）
+    expect(
+      parseBlock(<String, Object?>{
+        'kind': 'Button',
+        'label': '旧写法',
+        'variant': 'ghost',
+      }).variant,
+      'normal',
+    );
+  });
+
   test('控件形态包含 password', () {
     expect(kControlKinds.contains('password'), isTrue);
     final ItemData item = parseBlock(<String, Object?>{

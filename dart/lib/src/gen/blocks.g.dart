@@ -164,11 +164,9 @@ const List<String> kEnumBlockVariant = <String>[
 
 /// 枚举 buttonVariant 的取值
 const List<String> kEnumButtonVariant = <String>[
-  'primary',
-  'secondary',
-  'ghost',
-  'link',
+  'normal',
   'full',
+  'simple',
 ];
 
 /// 枚举 controlKind 的取值

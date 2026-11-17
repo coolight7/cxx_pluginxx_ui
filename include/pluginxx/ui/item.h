@@ -344,7 +344,8 @@ struct Item {
     std::string variant; ///< Button.variant / Block.variant
     std::string icon;    ///< Button.icon / Icon.name（客户端图标名）
     std::string glyph;   ///< Icon.glyph（文本替代字符）
-    bool        disabled = false;
+    bool        disabled  = false;
+    bool        highlight = false; ///< Button.highlight（选中态）
 
     // ---- 内容块 / 折叠 ----
     TextValue title;           ///< Block.title / Collapse.title

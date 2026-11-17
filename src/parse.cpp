@@ -636,11 +636,12 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
         return item;
     }
     if (canonical == "Button") {
-        item.label    = textValueOf(json["label"]);
-        item.variant  = fieldEnum(json, "variant", PLUGINXX_UI_ENUM(gen::kEnumButtonVariant),
-                                  "secondary");
-        item.icon     = fieldString(json, "icon");
-        item.disabled = fieldBool(json, "disabled", false);
+        item.label     = textValueOf(json["label"]);
+        item.variant   = fieldEnum(json, "variant", PLUGINXX_UI_ENUM(gen::kEnumButtonVariant),
+                                   "normal");
+        item.highlight = fieldBool(json, "highlight", false);
+        item.icon      = fieldString(json, "icon");
+        item.disabled  = fieldBool(json, "disabled", false);
         return item;
     }
     if (canonical == "Block") {
@@ -1215,6 +1216,9 @@ Json dumpBlockImpl(const Item& item) {
         out["variant"] = item.variant;
         if (!item.icon.empty()) {
             out["icon"] = item.icon;
+        }
+        if (item.highlight) {
+            out["highlight"] = true;
         }
         if (item.disabled) {
             out["disabled"] = true;

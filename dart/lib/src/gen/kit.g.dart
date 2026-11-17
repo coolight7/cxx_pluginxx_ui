@@ -42,8 +42,8 @@ const Map<String, Map<String, Object?>> kKitTemplates = <String, Map<String, Obj
     'variants': <Object?>[<String, Object?>{'template': <String, Object?>{'kind': 'Divider'}}],
   },
   'button': <String, Object?>{
-    'params': <String, Object?>{'label': null, 'variant': 'secondary', 'icon': null, 'disabled': false, 'action': null},
-    'variants': <Object?>[<String, Object?>{'template': <String, Object?>{'kind': 'Button', 'label': '\$label', 'variant': '\$variant', 'icon': '\$icon', 'disabled': '\$disabled', 'action': '\$action'}}],
+    'params': <String, Object?>{'label': null, 'variant': 'normal', 'highlight': false, 'icon': null, 'disabled': false, 'action': null},
+    'variants': <Object?>[<String, Object?>{'template': <String, Object?>{'kind': 'Button', 'label': '\$label', 'variant': '\$variant', 'highlight': '\$highlight', 'icon': '\$icon', 'disabled': '\$disabled', 'action': '\$action'}}],
   },
   'actionsRow': <String, Object?>{
     'params': <String, Object?>{'buttons': null},
@@ -143,9 +143,9 @@ Map<String, Object?> divider({PluginCapabilities? env}) =>
         <String, Object?>{};
 
 /// 按钮
-/// 参数：label(text, 必填)、variant(enum:buttonVariant, 默认 secondary)、icon(string)、disabled(bool, 默认 false)、action(action)
-Map<String, Object?> button({required Object label, Object? variant, String? icon, bool? disabled, Object? action, PluginCapabilities? env}) =>
-    KitRuntime.expand('button', <String, Object?>{'label': label, 'variant': variant, 'icon': icon, 'disabled': disabled, 'action': action}, env, kKitTemplates) ??
+/// 参数：label(text, 必填)、variant(enum:buttonVariant, 默认 normal)、highlight(bool, 默认 false)、icon(string)、disabled(bool, 默认 false)、action(action)
+Map<String, Object?> button({required Object label, Object? variant, bool? highlight, String? icon, bool? disabled, Object? action, PluginCapabilities? env}) =>
+    KitRuntime.expand('button', <String, Object?>{'label': label, 'variant': variant, 'highlight': highlight, 'icon': icon, 'disabled': disabled, 'action': action}, env, kKitTemplates) ??
         <String, Object?>{};
 
 /// 一排等宽按钮（按钮列表里的每一项占一等份）

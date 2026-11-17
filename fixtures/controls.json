@@ -64,7 +64,7 @@
       ],
       "action": "setTheme"
     },
-    { "kind": "Button", "label": "应用", "variant": "primary", "action": "applySettings" },
-    { "kind": "Button", "label": "重置", "variant": "ghost", "disabled": true }
+    { "kind": "Button", "label": "应用", "highlight": true, "action": "applySettings" },
+    { "kind": "Button", "label": "重置", "variant": "simple", "disabled": true }
   ]
 }

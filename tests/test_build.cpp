@@ -28,7 +28,7 @@ PLUGINXX_UI_TEST(构建器的节点都能被解析) {
         pluginxx::ui::build::sizedBox(40, 40, pluginxx::ui::build::text("方")),
         pluginxx::ui::build::align(pluginxx::ui::build::text("居中"), "center", "center"),
         pluginxx::ui::build::stack({pluginxx::ui::build::text("底"), pluginxx::ui::build::text("顶")}),
-        pluginxx::ui::build::button("按钮", pluginxx::ui::build::dispatch("doIt"), "primary"),
+        pluginxx::ui::build::button("按钮", pluginxx::ui::build::dispatch("doIt"), "simple", true),
         pluginxx::ui::build::badge("3"),
         pluginxx::ui::build::progress(30, 100, "%"),
         pluginxx::ui::build::icon("play", "▶"),
@@ -52,8 +52,16 @@ PLUGINXX_UI_TEST(构建器的文本与动作字段) {
                                                                  "musicxx.render.select",
                                                                  R"({"slot":"player.background"})"));
     PLUGINXX_UI_CHECK_EQ(button.label.fallback, std::string("刷新"), "按钮文案");
+    PLUGINXX_UI_CHECK_EQ(button.variant, std::string("normal"), "按钮默认样式");
+    PLUGINXX_UI_CHECK(!button.highlight, "按钮默认非选中态");
     PLUGINXX_UI_CHECK(button.action.kind == Action::Kind::Command, "按钮动作是 command");
     PLUGINXX_UI_CHECK_EQ(button.action.name, std::string("musicxx.render.select"), "动作名");
+
+    // 样式与选中态是两个独立的字段：highlight 写进 JSON 后要能往返
+    const Item simple = pluginxx::ui::build::button("收藏", {}, "simple", true);
+    const Item simpleAgain = pluginxx::ui::parseBlock(pluginxx::ui::dumpItem(simple));
+    PLUGINXX_UI_CHECK_EQ(simpleAgain.variant, std::string("simple"), "按钮样式往返");
+    PLUGINXX_UI_CHECK(simpleAgain.highlight, "选中态往返保留");
 
     const Item control = pluginxx::ui::build::control("checkbox", "skipAds",
                                                       pluginxx::ui::TextValue::of("跳过广告"),

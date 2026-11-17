@@ -162,10 +162,11 @@ inline Item card(Item child, std::string_view blockTitle = {}, std::string_view 
 }
 
 inline Item button(std::string_view label, Action action = {},
-                   std::string_view variant = "secondary") {
+                   std::string_view variant = "normal", bool highlight = false) {
     Item item = node("Button");
     item.label = TextValue::of(label);
     item.variant.assign(variant);
+    item.highlight = highlight;
     item.action = std::move(action);
     return item;
 }

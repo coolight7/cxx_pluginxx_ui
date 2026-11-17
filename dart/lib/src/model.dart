@@ -530,6 +530,9 @@ class ItemData {
   String glyph = '';
   bool disabled = false;
 
+  /// `Button.highlight`：选中态（默认否）
+  bool highlight = false;
+
   // ---- 内容块 / 折叠 ----
   TextValue title = TextValue.empty;
   bool expanded = true;
@@ -734,6 +737,7 @@ class ItemData {
     ..icon = icon
     ..glyph = glyph
     ..disabled = disabled
+    ..highlight = highlight
     ..title = title
     ..expanded = expanded
     ..pairs = pairs

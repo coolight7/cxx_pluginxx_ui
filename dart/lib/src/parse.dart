@@ -298,7 +298,8 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
       return item;
     case 'Button':
       item.label = _textValue(json['label']);
-      item.variant = _enum(json, 'variant', kEnumButtonVariant, 'secondary');
+      item.variant = _enum(json, 'variant', kEnumButtonVariant, 'normal');
+      item.highlight = _bool(json, 'highlight', false);
       item.icon = _str(json, 'icon');
       item.disabled = _bool(json, 'disabled', false);
       return item;
@@ -1048,6 +1049,9 @@ Map<String, Object?> dumpItem(ItemData item) {
       out['variant'] = item.variant;
       if (item.icon.isNotEmpty) {
         out['icon'] = item.icon;
+      }
+      if (item.highlight) {
+        out['highlight'] = true;
       }
       if (item.disabled) {
         out['disabled'] = true;
