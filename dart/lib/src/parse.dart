@@ -51,8 +51,8 @@ String _enum(Map<String, Object?> json, String key, List<String> values, String 
   return fallback;
 }
 
-String _tone(Map<String, Object?> json, String key, [String fallback = 'normal']) =>
-    _enum(json, key, kEnumTone, fallback);
+String _color(Map<String, Object?> json, String key, [String fallback = 'normal']) =>
+    _enum(json, key, kEnumColor, fallback);
 
 /// 数值钳制（解析时的范围保护：NaN 与越界值都退化成边界值）
 double _clampRange(double value, double min, double max) {
@@ -278,10 +278,32 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
     ];
   }
 
+  /// 单块容器的子块（字段 `child`，模型里也存进 [ItemData.children]，最多一项）
+  ///
+  /// 写成数组时按第一块处理（旧的 `children` 写法）并记一条提示；空数组与其它类型都当作没有子块。
+  List<ItemData> singleChild(String key, String what) {
+    Object? raw = json[key];
+    if (raw is List) {
+      if (raw.isEmpty) {
+        return <ItemData>[];
+      }
+      ctx.warn('$what 只收一块（$key），给了 ${raw.length} 块，只画第一块');
+      raw = raw.first;
+    }
+    if (raw is! Map) {
+      return <ItemData>[];
+    }
+    if (ctx.limits.maxDepth > 0 && depth >= ctx.limits.maxDepth) {
+      ctx.truncate('$what 超过层级上限 ${ctx.limits.maxDepth}，子块被丢弃');
+      return <ItemData>[];
+    }
+    return <ItemData>[_parseBlockImpl(raw, ctx, depth + 1)];
+  }
+
   switch (canonical) {
     case 'Text':
       item.textType = _enum(json, 'type', kEnumTextType, 'body');
-      item.tone = _tone(json, 'tone');
+      item.color = _color(json, 'color');
       item.bold = _bool(json, 'bold', false);
       item.dim = _bool(json, 'dim', false);
       item.mono = _bool(json, 'mono', false);
@@ -301,6 +323,9 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
       item.variant = _enum(json, 'variant', kEnumButtonVariant, 'normal');
       item.highlight = _bool(json, 'highlight', false);
       item.icon = _str(json, 'icon');
+      item.glyph = _str(json, 'glyph');
+      // 不写 color 就是空串（按主题取色）；写了就用它当内容色
+      item.color = _color(json, 'color', '');
       item.size = _has(json, 'size')
           ? _sizeValue(json['size'], ctx.report, 'Button.size')
           : SizeValue.autoValue;
@@ -317,7 +342,7 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
         item.margin = _edges(json['margin'], ctx.report, 'Block.margin');
         item.hasMargin = true;
       }
-      item.children = children('children', 'Block.children');
+      item.children = singleChild('child', 'Block.child');
       return item;
     case 'Row':
     case 'Column':
@@ -339,7 +364,7 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
         item.flex = flex;
       }
       if (canonical == 'Expanded') {
-        item.children = children('children', 'Expanded.children');
+        item.children = singleChild('child', 'Expanded.child');
       }
       return item;
     case 'SizedBox':
@@ -350,22 +375,27 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
         item.height = _sizeValue(json['height'], ctx.report, 'SizedBox.height');
       }
       item.aspect = _num(json, 'aspect', 0);
-      item.children = children('children', 'SizedBox.children');
+      item.children = singleChild('child', 'SizedBox.child');
       return item;
     case 'Padding':
       item.padding = _edges(json['padding'], ctx.report, 'Padding.padding');
       item.hasPadding = true;
-      item.children = children('children', 'Padding.children');
+      item.children = singleChild('child', 'Padding.child');
       return item;
     case 'Align':
       item.align = _enum(json, 'align', kEnumAlignHV, 'center');
       item.vertical = _enum(json, 'vertical', kEnumAlignHV, 'center');
-      item.children = children('children', 'Align.children');
+      item.children = singleChild('child', 'Align.child');
       return item;
     case 'Collapse':
       item.title = _textValue(json['title']);
       item.expanded = _bool(json, 'expanded', true);
-      item.children = children('children', 'Collapse.children');
+      item.children = singleChild('child', 'Collapse.child');
+      return item;
+    case 'ThemeScope':
+      // data 的意思由客户端定义（musicxx 用 lib/src/ui_theme.dart 里的配色规格）
+      item.themeData = json['data'];
+      item.children = singleChild('child', 'ThemeScope.child');
       return item;
     case 'KV':
       item.pairs = _pairs(json['pairs'], ctx, 'KV.pairs');
@@ -389,14 +419,14 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
       item.label = _textValue(json['label']);
       item.unit = _has(json, 'unit') ? _str(json, 'unit') : '%';
       item.showValue = _bool(json, 'showValue', true);
-      item.tone = _tone(json, 'tone', 'accent');
+      item.color = _color(json, 'color', 'accent');
       item.thresholds = _thresholds(json['thresholds'], ctx);
       if (_has(json, 'width')) {
         item.width = _sizeValue(json['width'], ctx.report, 'Progress.width');
       }
       return item;
     case 'Badge':
-      item.tone = _tone(json, 'tone', 'accent');
+      item.color = _color(json, 'color', 'accent');
       return item;
     case 'Control':
       item.control = _enum(json, 'control', kEnumControlKind, '');
@@ -430,7 +460,7 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
     case 'Icon':
       item.icon = _str(json, 'name');
       item.glyph = _str(json, 'glyph');
-      item.tone = _tone(json, 'tone');
+      item.color = _color(json, 'color');
       item.alt = _textValue(json['alt']);
       if (_has(json, 'size')) {
         item.size = _sizeValue(json['size'], ctx.report, 'Icon.size');
@@ -467,9 +497,9 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
       item.data = _numbers(json['data'], ctx, 'Sparkline.data');
       item.glyphHeight = _num(json, 'height', 1).toInt();
       item.glyphStyle = _enum(json, 'glyphStyle', kEnumSparkStyle, 'block');
-      item.tone = _tone(json, 'tone', 'accent');
+      item.color = _color(json, 'color', 'accent');
       item.showLast = _bool(json, 'showLast', true);
-      item.colors = _tones(json['colors'], ctx);
+      item.colors = _colors(json['colors'], ctx);
       if (_has(json, 'min')) {
         item.hasMin = true;
         item.minValue = _num(json, 'min', 0);
@@ -560,7 +590,7 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
       // 通道表与过渡控制值都保留原始 JSON：值表达式由客户端（GUI）求值
       item.animValues = json['values'];
       item.maxFps = _num(json, 'maxFps', 0).toInt();
-      item.children = children('children', 'musicxx.AnimatedBuilder.children');
+      item.children = singleChild('child', 'musicxx.AnimatedBuilder.child');
       return item;
     case 'musicxx.SizeTransition':
     case 'musicxx.FadeTransition':
@@ -578,7 +608,7 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
         item.axis = _enum(json, 'axis', kEnumAxis, 'vertical');
         item.axisAlignment = _num(json, 'axisAlignment', -1);
       }
-      item.children = children('children', '$canonical.children');
+      item.children = singleChild('child', '$canonical.child');
       return item;
     default:
       return item;
@@ -603,8 +633,8 @@ List<KeyValuePair> _pairs(Object? value, _Ctx ctx, String what) {
       KeyValuePair(
         key: _textValue(map['k']),
         value: _textValue(map['v']),
-        kTone: _tone(map, 'kTone', ''),
-        vTone: _tone(map, 'vTone', ''),
+        kColor: _color(map, 'kColor', ''),
+        vColor: _color(map, 'vColor', ''),
       ),
     );
   }
@@ -633,7 +663,7 @@ List<TableColumn> _columns(Object? value, _Ctx ctx, String what) {
         width: _has(map, 'width')
             ? _sizeValue(map['width'], ctx.report, '$what[$i].width')
             : SizeValue.autoValue,
-        tone: _tone(map, 'tone', ''),
+        color: _color(map, 'color', ''),
       ),
     );
   }
@@ -666,7 +696,7 @@ List<List<TableCell>> _rows(Object? value, _Ctx ctx, String what) {
         cells.add(
           TableCell(
             text: _textValue(map['text']),
-            tone: _tone(map, 'tone', ''),
+            color: _color(map, 'color', ''),
             action: _action(map['action']),
           ),
         );
@@ -697,7 +727,7 @@ TreeNode _treeNode(Object? value, _Ctx ctx, int depth, List<int> budget) {
   }
   return TreeNode(
     label: _textValue(map['label']),
-    tone: _tone(map, 'tone', ''),
+    color: _color(map, 'color', ''),
     action: _action(map['action']),
     children: children,
   );
@@ -735,7 +765,7 @@ List<Threshold> _thresholds(Object? value, _Ctx ctx) {
     if (null == map) {
       continue;
     }
-    out.add(Threshold(at: _num(map, 'at', 0), tone: _tone(map, 'tone', 'accent')));
+    out.add(Threshold(at: _num(map, 'at', 0), color: _color(map, 'color', 'accent')));
   }
   return out;
 }
@@ -754,7 +784,7 @@ List<double> _numbers(Object? value, _Ctx ctx, String what) {
   ];
 }
 
-List<String> _tones(Object? value, _Ctx ctx) {
+List<String> _colors(Object? value, _Ctx ctx) {
   if (value is! List) {
     return <String>[];
   }
@@ -763,9 +793,9 @@ List<String> _tones(Object? value, _Ctx ctx) {
     if (node is! String) {
       continue;
     }
-    for (final String tone in kEnumTone) {
-      if (tone.toLowerCase() == node.toLowerCase()) {
-        out.add(tone);
+    for (final String color in kEnumColor) {
+      if (color.toLowerCase() == node.toLowerCase()) {
+        out.add(color);
         break;
       }
     }
@@ -797,7 +827,7 @@ List<ListItem> _listItems(Object? value, _Ctx ctx, String what) {
         trailing: _textValue(map['trailing']),
         image: _str(map, 'image'),
         icon: _str(map, 'icon'),
-        tone: _tone(map, 'tone'),
+        color: _color(map, 'color'),
         selected: _bool(map, 'selected', false),
         path: _str(map, 'path'),
         isDir: _bool(map, 'isDir', false),
@@ -875,7 +905,7 @@ List<ControlOption> _options(Object? value, _Ctx ctx, String what) {
       ControlOption(
         value: map['value'],
         label: _textValue(map['label']),
-        tone: _tone(map, 'tone', ''),
+        color: _color(map, 'color', ''),
       ),
     );
   }
@@ -1020,13 +1050,20 @@ Map<String, Object?> dumpItem(ItemData item) {
     }
   }
 
+  /// 单块容器：子块写在 `child`（模型里的 [ItemData.children] 最多一项）
+  void putChild() {
+    if (item.children.isNotEmpty) {
+      out['child'] = dumpItem(item.children.first);
+    }
+  }
+
   switch (item.kind) {
     case 'Text':
       if (item.text.isNotEmpty) {
         out['text'] = _textValueToJson(item.text);
       }
       out['type'] = item.textType;
-      out['tone'] = item.tone;
+      out['color'] = item.color;
       if (item.bold) {
         out['bold'] = true;
       }
@@ -1053,6 +1090,12 @@ Map<String, Object?> dumpItem(ItemData item) {
       if (item.icon.isNotEmpty) {
         out['icon'] = item.icon;
       }
+      if (item.glyph.isNotEmpty) {
+        out['glyph'] = item.glyph;
+      }
+      if (item.color.isNotEmpty) {
+        out['color'] = item.color;
+      }
       if (!item.size.isAuto) {
         out['size'] = _sizeValueToJson(item.size);
       }
@@ -1074,7 +1117,7 @@ Map<String, Object?> dumpItem(ItemData item) {
       if (item.hasMargin) {
         out['margin'] = _edgesToJson(item.margin);
       }
-      putChildren();
+      putChild();
       break;
     case 'Row':
     case 'Column':
@@ -1088,7 +1131,9 @@ Map<String, Object?> dumpItem(ItemData item) {
     case 'Expanded':
     case 'Spacer':
       out['flex'] = item.flex;
-      putChildren();
+      if (item.kind == 'Expanded') {
+        putChild();
+      }
       break;
     case 'SizedBox':
       if (!item.width.isAuto) {
@@ -1100,23 +1145,29 @@ Map<String, Object?> dumpItem(ItemData item) {
       if (item.aspect > 0) {
         out['aspect'] = item.aspect;
       }
-      putChildren();
+      putChild();
       break;
     case 'Padding':
       out['padding'] = _edgesToJson(item.padding);
-      putChildren();
+      putChild();
       break;
     case 'Align':
       out['align'] = item.align;
       out['vertical'] = item.vertical;
-      putChildren();
+      putChild();
       break;
     case 'Collapse':
       if (item.title.isNotEmpty) {
         out['title'] = _textValueToJson(item.title);
       }
       out['expanded'] = item.expanded;
-      putChildren();
+      putChild();
+      break;
+    case 'ThemeScope':
+      if (null != item.themeData) {
+        out['data'] = item.themeData;
+      }
+      putChild();
       break;
     case 'KV':
       out['pairs'] = <Object?>[
@@ -1124,8 +1175,8 @@ Map<String, Object?> dumpItem(ItemData item) {
           <String, Object?>{
             'k': _textValueToJson(pair.key),
             'v': _textValueToJson(pair.value),
-            if (pair.kTone.isNotEmpty) 'kTone': pair.kTone,
-            if (pair.vTone.isNotEmpty) 'vTone': pair.vTone,
+            if (pair.kColor.isNotEmpty) 'kColor': pair.kColor,
+            if (pair.vColor.isNotEmpty) 'vColor': pair.vColor,
           },
       ];
       out['keyWidth'] = _sizeValueToJson(item.keyWidth);
@@ -1139,19 +1190,19 @@ Map<String, Object?> dumpItem(ItemData item) {
             if (column.title.isNotEmpty) 'title': _textValueToJson(column.title),
             'align': column.align,
             if (!column.width.isAuto) 'width': _sizeValueToJson(column.width),
-            if (column.tone.isNotEmpty) 'tone': column.tone,
+            if (column.color.isNotEmpty) 'color': column.color,
           },
       ];
       out['rows'] = <Object?>[
         for (final List<TableCell> row in item.rows)
           <Object?>[
             for (final TableCell cell in row)
-              if (cell.tone.isEmpty && null == cell.action)
+              if (cell.color.isEmpty && null == cell.action)
                 _textValueToJson(cell.text)
               else
                 <String, Object?>{
                   'text': _textValueToJson(cell.text),
-                  if (cell.tone.isNotEmpty) 'tone': cell.tone,
+                  if (cell.color.isNotEmpty) 'color': cell.color,
                   if (null != _actionToJson(cell.action)) 'action': _actionToJson(cell.action),
                 },
           ],
@@ -1171,11 +1222,11 @@ Map<String, Object?> dumpItem(ItemData item) {
       }
       out['unit'] = item.unit;
       out['showValue'] = item.showValue;
-      out['tone'] = item.tone;
+      out['color'] = item.color;
       if (item.thresholds.isNotEmpty) {
         out['thresholds'] = <Object?>[
           for (final Threshold threshold in item.thresholds)
-            <String, Object?>{'at': threshold.at, 'tone': threshold.tone},
+            <String, Object?>{'at': threshold.at, 'color': threshold.color},
         ];
       }
       if (!item.width.isAuto) {
@@ -1186,7 +1237,7 @@ Map<String, Object?> dumpItem(ItemData item) {
       if (item.text.isNotEmpty) {
         out['text'] = _textValueToJson(item.text);
       }
-      out['tone'] = item.tone;
+      out['color'] = item.color;
       break;
     case 'Control':
       out['control'] = item.control;
@@ -1202,7 +1253,7 @@ Map<String, Object?> dumpItem(ItemData item) {
             <String, Object?>{
               'value': option.value,
               'label': _textValueToJson(option.label),
-              if (option.tone.isNotEmpty) 'tone': option.tone,
+              if (option.color.isNotEmpty) 'color': option.color,
             },
         ];
       }
@@ -1241,7 +1292,7 @@ Map<String, Object?> dumpItem(ItemData item) {
       if (!item.size.isAuto) {
         out['size'] = _sizeValueToJson(item.size);
       }
-      out['tone'] = item.tone;
+      out['color'] = item.color;
       break;
     case 'Stack':
       out['align'] = item.align;
@@ -1291,7 +1342,7 @@ Map<String, Object?> dumpItem(ItemData item) {
       if (item.hasMax) {
         out['max'] = item.maxValue;
       }
-      out['tone'] = item.tone;
+      out['color'] = item.color;
       out['showLast'] = item.showLast;
       if (item.colors.isNotEmpty) {
         out['colors'] = item.colors;
@@ -1428,7 +1479,7 @@ Map<String, Object?> dumpItem(ItemData item) {
       if (item.maxFps > 0) {
         out['maxFps'] = item.maxFps;
       }
-      putChildren();
+      putChild();
       break;
     case 'musicxx.SizeTransition':
       out['axis'] = item.axis;
@@ -1437,14 +1488,14 @@ Map<String, Object?> dumpItem(ItemData item) {
       if (item.curve.isNotEmpty) {
         out['curve'] = item.curve;
       }
-      putChildren();
+      putChild();
       break;
     case 'musicxx.FadeTransition':
       out['value'] = item.animValue.raw ?? item.value.raw ?? 1;
       if (item.curve.isNotEmpty) {
         out['curve'] = item.curve;
       }
-      putChildren();
+      putChild();
       break;
     case 'musicxx.SlideTransition':
     case 'musicxx.ScaleTransition':
@@ -1459,7 +1510,7 @@ Map<String, Object?> dumpItem(ItemData item) {
       if (item.curve.isNotEmpty) {
         out['curve'] = item.curve;
       }
-      putChildren();
+      putChild();
       break;
   }
   final Object? action = _actionToJson(item.action);
@@ -1477,7 +1528,7 @@ Map<String, Object?> _listItemToJson(ListItem item) => <String, Object?>{
       if (item.trailing.isNotEmpty) 'trailing': _textValueToJson(item.trailing),
       if (item.image.isNotEmpty) 'image': item.image,
       if (item.icon.isNotEmpty) 'icon': item.icon,
-      if (item.tone != 'normal') 'tone': item.tone,
+      if (item.color != 'normal') 'color': item.color,
       if (item.selected) 'selected': true,
       if (item.path.isNotEmpty) 'path': item.path,
       if (item.isDir) 'isDir': true,
@@ -1495,7 +1546,7 @@ Map<String, Object?> _menuItemToJson(MenuItem item) => <String, Object?>{
 
 Map<String, Object?> _treeNodeToJson(TreeNode node) => <String, Object?>{
       'label': _textValueToJson(node.label),
-      if (node.tone.isNotEmpty) 'tone': node.tone,
+      if (node.color.isNotEmpty) 'color': node.color,
       if (node.action?.isNotEmpty ?? false) 'action': _actionToJson(node.action),
       if (node.children.isNotEmpty)
         'children': <Object?>[for (final TreeNode child in node.children) _treeNodeToJson(child)],

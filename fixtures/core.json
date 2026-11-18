@@ -4,7 +4,7 @@
   "blocks": [
     { "kind": "Text", "text": "正文", "type": "body" },
     { "kind": "Text", "text": "标题行", "type": "title" },
-    { "kind": "Text", "text": "说明文字", "type": "caption", "tone": "hint", "mono": true, "align": "end" },
+    { "kind": "Text", "text": "说明文字", "type": "caption", "color": "hint", "mono": true, "align": "end" },
     { "kind": "Divider" },
     { "kind": "Gap", "size": 12 },
     { "kind": "Gap", "size": { "percent": 10 } },
@@ -15,20 +15,18 @@
       "variant": "inset",
       "padding": { "horizontal": 12, "vertical": 8 },
       "margin": 4,
-      "children": [
-        {
-          "kind": "Row",
-          "gap": 12,
-          "main": "spaceBetween",
-          "cross": "center",
-          "children": [
-            { "kind": "Text", "text": "左" },
-            { "kind": "Expanded", "flex": 2, "children": [{ "kind": "Text", "text": "中间" }] },
-            { "kind": "Spacer", "flex": 1 },
-            { "kind": "Text", "text": "右" }
-          ]
-        }
-      ]
+      "child": {
+        "kind": "Row",
+        "gap": 12,
+        "main": "spaceBetween",
+        "cross": "center",
+        "children": [
+          { "kind": "Text", "text": "左" },
+          { "kind": "Expanded", "flex": 2, "child": { "kind": "Text", "text": "中间" } },
+          { "kind": "Spacer", "flex": 1 },
+          { "kind": "Text", "text": "右" }
+        ]
+      }
     },
     {
       "kind": "Column",
@@ -42,22 +40,22 @@
     {
       "kind": "Padding",
       "padding": { "left": 20, "top": 8 },
-      "children": [{ "kind": "Text", "text": "内边距" }]
+      "child": { "kind": "Text", "text": "内边距" }
     },
-    { "kind": "Align", "align": "end", "vertical": "center", "children": [{ "kind": "Text", "text": "靠右" }] },
+    { "kind": "Align", "align": "end", "vertical": "center", "child": { "kind": "Text", "text": "靠右" } },
     {
       "kind": "Collapse",
       "id": "detail",
       "title": "详细信息",
       "expanded": false,
-      "children": [{ "kind": "Text", "text": "折叠内容" }]
+      "child": { "kind": "Text", "text": "折叠内容" }
     },
     {
       "kind": "KV",
       "keyWidth": "auto",
       "pairs": [
         { "k": "模型", "v": "gpt-5" },
-        { "k": { "key": "demo.tokens", "fallback": "令牌数" }, "v": "1280", "vTone": "accent" }
+        { "k": { "key": "demo.tokens", "fallback": "令牌数" }, "v": "1280", "vColor": "accent" }
       ]
     },
     {
@@ -69,7 +67,7 @@
       ],
       "rows": [
         ["编译", "1.4s"],
-        [{ "text": "测试", "tone": "accent" }, "0.6s"]
+        [{ "text": "测试", "color": "accent" }, "0.6s"]
       ]
     },
     {
@@ -86,9 +84,9 @@
       "value": 72,
       "total": 100,
       "unit": "%",
-      "thresholds": [{ "at": 90, "tone": "error" }]
+      "thresholds": [{ "at": 90, "color": "error" }]
     },
-    { "kind": "Badge", "text": "已启用", "tone": "success" },
+    { "kind": "Badge", "text": "已启用", "color": "success" },
     { "kind": "Markdown", "text": "# 标题\n\n- 列表项" }
   ]
 }

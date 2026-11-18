@@ -146,7 +146,7 @@ PLUGINXX_UI_TEST(列表块解析与往返) {
   "items": [
     { "id": "weekly", "title": "每周新歌", "subtitle": "每周一更新", "trailing": "12 首",
       "image": "cover", "selected": true, "action": "openPlaylist" },
-    { "title": "我的收藏", "tone": "hint" }
+    { "title": "我的收藏", "color": "hint" }
   ],
   "toolbar": [ { "kind": "Text", "text": "共 2 项" } ],
   "menu": [ { "title": "全部刷新", "icon": "resource/svg/refresh.svg", "action": "refreshAll" } ],
@@ -169,7 +169,7 @@ PLUGINXX_UI_TEST(列表块解析与往返) {
     PLUGINXX_UI_CHECK_EQ(item.items[0].image, std::string("cover"), "项封面");
     PLUGINXX_UI_CHECK(item.items[0].selected, "项高亮");
     PLUGINXX_UI_CHECK(item.items[0].action.kind == pluginxx::ui::Action::Kind::Dispatch, "项动作");
-    PLUGINXX_UI_CHECK_EQ(item.items[1].tone, std::string("hint"), "项语义色");
+    PLUGINXX_UI_CHECK_EQ(item.items[1].color, std::string("hint"), "项语义色");
     PLUGINXX_UI_CHECK(item.toolbar.size() == 1, "工具条块");
     PLUGINXX_UI_CHECK(item.menu.size() == 1, "顶部菜单");
     PLUGINXX_UI_CHECK_EQ(item.menu[0].icon, std::string("resource/svg/refresh.svg"), "菜单图标");

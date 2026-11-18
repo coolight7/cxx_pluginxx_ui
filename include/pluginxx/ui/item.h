@@ -171,13 +171,13 @@ struct Action {
 struct ControlOption {
     std::string valueJson; ///< 候选项的原值（紧凑 JSON 文本）
     TextValue   label;     ///< 显示标签
-    std::string tone;      ///< 文本色（空 = 按控件样式）
+    std::string color;      ///< 文本色（空 = 按控件样式）
 };
 
 /// 计量条阈值（达到该值起用对应语义色；客户端按由高到低匹配首个满足项）
 struct Threshold {
     double      at = 0.0;
-    std::string tone;
+    std::string color;
 };
 
 // ===== 结构化数据 =====
@@ -187,13 +187,13 @@ struct TableColumn {
     TextValue   title;
     std::string align = "start"; ///< start / center / end
     SizeValue   width;           ///< 缺省 = 自动分配（按内容比例分剩余空间）
-    std::string tone;
+    std::string color;
 };
 
 /// 表格单元格
 struct TableCell {
     TextValue   text;
-    std::string tone;
+    std::string color;
     Action      action;
 };
 
@@ -201,14 +201,14 @@ struct TableCell {
 struct KeyValuePair {
     TextValue   key;
     TextValue   value;
-    std::string kTone;
-    std::string vTone;
+    std::string kColor;
+    std::string vColor;
 };
 
 /// 树节点
 struct TreeNode {
     TextValue             label;
-    std::string           tone;
+    std::string           color;
     Action                action;
     std::vector<TreeNode> children;
 
@@ -236,7 +236,7 @@ struct ListItem {
     TextValue   trailing; ///< 右侧状态文本
     std::string image;    ///< 前置图片（`cover` 或插件目录相对路径）
     std::string icon;     ///< 前置图标（插件目录相对路径；image 优先）
-    std::string tone = "normal"; ///< 主标题语义色
+    std::string color = "normal"; ///< 主标题语义色
     bool        selected = false; ///< 是否高亮（只由插件给的数据决定）
 
     std::string path;  ///< 这一项的路径 / 身份（目录列表用它，动作参数里原样回带）
@@ -307,7 +307,7 @@ struct Item {
     // ---- 文本与排版 ----
     TextValue   text;               ///< Text.text
     std::string textType = "body";  ///< body / caption / title
-    std::string tone     = "normal";
+    std::string color     = "normal";
     bool        bold     = false;
     bool        dim      = false;
     bool        mono     = false;
@@ -337,7 +337,7 @@ struct Item {
     bool      hasMargin  = false;
     Edges     margin;
 
-    std::vector<Item> children;
+    std::vector<Item> children; ///< 子块（单块容器的 `child` 也存在这里，最多一项）
 
     // ---- 按钮 / 图标 ----
     TextValue   label;   ///< Button.label
@@ -460,6 +460,12 @@ struct Item {
     double columnBodyRatio = 0.5;
 
     // ---- 动作与回退 ----
+    /// `ThemeScope.data`：子树样式的原始 JSON（紧凑文本，可为空）
+    ///
+    /// **通用载体**：含义由客户端定义（musicxx 的配色规格在包内 `lib/src/ui_theme.dart`），
+    /// 解析与序列化都原样往返，库不解释内容。
+    std::string themeDataJson;
+
     Action      action;   ///< 点击动作（可点组件）
     std::string fallback; ///< 客户端不认识这个块时显示的文本
 

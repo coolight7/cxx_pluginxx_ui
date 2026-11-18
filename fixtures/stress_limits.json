@@ -2,51 +2,41 @@
   "blocks": [
     {
       "kind": "Block",
-      "children": [
-        {
-          "kind": "Column",
-          "children": [
-            {
-              "kind": "Padding",
-              "padding": 4,
+      "child": {
+        "kind": "Column",
+        "children": [
+          {
+            "kind": "Padding",
+            "padding": 4,
+            "child": {
+              "kind": "Row",
               "children": [
                 {
-                  "kind": "Row",
-                  "children": [
-                    {
-                      "kind": "Expanded",
+                  "kind": "Expanded",
+                  "child": {
+                    "kind": "SizedBox",
+                    "width": 40,
+                    "child": {
+                      "kind": "Stack",
                       "children": [
                         {
-                          "kind": "SizedBox",
-                          "width": 40,
-                          "children": [
-                            {
-                              "kind": "Stack",
-                              "children": [
-                                {
-                                  "kind": "Align",
-                                  "children": [
-                                    {
-                                      "kind": "Collapse",
-                                      "id": "deep",
-                                      "title": "很深",
-                                      "children": [{ "kind": "Text", "text": "最深处" }]
-                                    }
-                                  ]
-                                }
-                              ]
-                            }
-                          ]
+                          "kind": "Align",
+                          "child": {
+                            "kind": "Collapse",
+                            "id": "deep",
+                            "title": "很深",
+                            "child": { "kind": "Text", "text": "最深处" }
+                          }
                         }
                       ]
                     }
-                  ]
+                  }
                 }
               ]
             }
-          ]
-        }
-      ]
+          }
+        ]
+      }
     },
     { "kind": "Text", "text": "未知组件在下面", "fallback": "降级文本" },
     { "kind": "Custom", "whatever": 1 },

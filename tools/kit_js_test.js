@@ -29,18 +29,17 @@ function checkEqual(actual, expected, message) {
 const row = kit.listRow({ title: '切歌次数', trailing: '3' });
 check(row.kind === 'Block', 'listRow 外层是内容块');
 check(row.variant === 'inset', 'listRow 用内嵌样式');
-check(row.children.length === 1, 'listRow 只有一个子块');
-const line = row.children[0];
-check(line.kind === 'Row', 'listRow 的行');
-check(line.cross === 'center', 'listRow 垂直居中');
-check(line.children.length === 2, 'listRow 左侧 + 右侧');
-check(line.children[0].kind === 'Expanded', 'listRow 左侧占满剩余');
-check(line.children[1].text === '3', 'listRow 右侧文本');
+check(row.children === undefined, 'Block 是单块容器：用 child');
+check(row.child.kind === 'Row', 'listRow 的行');
+check(row.child.cross === 'center', 'listRow 垂直居中');
+check(row.child.children.length === 2, 'listRow 左侧 + 右侧');
+check(row.child.children[0].kind === 'Expanded', 'listRow 左侧占满剩余');
+check(row.child.children[1].text === '3', 'listRow 右侧文本');
 
 // 缺省参数让节点退掉
 const bare = kit.listRow({ title: '只有标题' });
-check(bare.children[0].children.length === 1, '没有右侧文本');
-check(bare.children[0].children[0].children[0].children.length === 1, '没有副标题');
+check(bare.child.children.length === 1, '没有右侧文本');
+check(bare.child.children[0].child.children.length === 1, '没有副标题');
 
 // ---- 列表映射：一排等宽按钮 ----
 const actions = kit.actionsRow({
@@ -52,7 +51,7 @@ const actions = kit.actionsRow({
 check(actions.kind === 'Row', 'actionsRow 是一排');
 check(actions.children.length === 2, 'actionsRow 两个等份');
 check(actions.children[0].kind === 'Expanded', '每项占一等份');
-check(actions.children[0].children[0].kind === 'Button', '里面是按钮');
+check(actions.children[0].child.kind === 'Button', '里面是按钮');
 
 // ---- 变体选择 ----
 const caps = { blocks: ['Text', 'Gap', 'Badge', 'Block', 'Row', 'Expanded', 'Column', 'Divider'] };
@@ -76,6 +75,20 @@ for (const name of ['title', 'hint', 'text', 'badge', 'icon', 'gap', 'divider', 
   'actionsRow', 'card', 'listRow', 'section', 'kv', 'table', 'tree', 'sparkline', 'progressRow']) {
   check(typeof kit[name] === 'function', 'kit 组件存在：' + name);
 }
+
+// ---- 单块容器里的主题作用域 ----
+const themed = kit.themeScope({
+  data: { text: { main: '#ff112233' } },
+  child: { kind: 'Text', text: '自定义配色' },
+});
+check(themed.kind === 'ThemeScope', 'themeScope 是 ThemeScope');
+check(themed.child.kind === 'Text', 'themeScope 的子块放在 child');
+check(themed.data.text.main === '#ff112233', '颜色进 data');
+
+// ---- 块：单块容器 ----
+const card = kit.card({ title: 'T', child: { kind: 'Text', text: 'x' } });
+check(card.kind === 'Block', 'card 是内容块');
+check(card.child.kind === 'Text', 'card 的子块放在 child');
 
 if (failures > 0) {
   console.error('kit JS 自检失败：' + failures + ' 条');

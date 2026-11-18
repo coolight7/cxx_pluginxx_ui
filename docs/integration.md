@@ -174,7 +174,7 @@ auto renderable = pluginxx::ui::adaptDocument(doc, myCaps(), &adaptReport);
 `fallback` → 再取不到用 `key` 原文；`args` 做 `{n}` 命名占位替换。`type`（`body`/`caption`/`title`）
 + `bold` / `dim` / `mono` 映射到客户端自己的排版（终端没有字号，映射到主题色与加粗）。
 
-**色调**：`tone` 是语义色（`normal`/`hint`/`accent`/`success`/`warning`/`error` 等），由客户端
+**色调**：`color` 是语义色（`normal`/`hint`/`accent`/`success`/`warning`/`error` 等），由客户端
 主题解释，不要当成具体颜色值。
 
 **列表项的 `data`**：列表项是数据，项目自己的附加信息（例如“这一项对应的业务对象”）放
@@ -385,7 +385,7 @@ kit 复制进示例插件目录）。
 - `Collapse`：按 `id` 维护展开状态（客户端状态，不是描述的一部分）；
 - `KV`：`keyWidth` 省略 / `auto` = 按最长键自适应，数值 = 固定，`{percent:n}` = 父宽比例；
 - `Table`：列宽三态（省略/`auto` 自动分配、数值固定、`percent` 比例），超出可用宽度按比例压缩；
-- `Progress`：`value`/`total`/`unit`/`showValue`/`thresholds`（按 `at` 抢 `tone`）；
+- `Progress`：`value`/`total`/`unit`/`showValue`/`thresholds`（按 `at` 抢 `color`）；
 - `Control`：见 §2.6 的派发与状态规则。
 
 ### 8.2 可选组件（不实现就靠 `adapt` 降级，**不要声明进能力段**）

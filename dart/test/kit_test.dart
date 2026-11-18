@@ -24,9 +24,7 @@ void main() {
     final Map<String, Object?> row = listRow(title: '切歌次数', trailing: '3');
     expect(row['kind'], 'Block');
     expect(row['variant'], 'inset');
-    final List<Object?> children = (row['children']! as List);
-    expect(children.length, 1);
-    final Map<String, Object?> line = (children[0] as Map).cast<String, Object?>();
+    final Map<String, Object?> line = (row['child']! as Map).cast<String, Object?>();
     expect(line['kind'], 'Row');
     expect(line['cross'], 'center');
     final List<Object?> lineChildren = line['children']! as List;
@@ -39,14 +37,12 @@ void main() {
 
   test('kit 缺省参数让节点退掉', () {
     final Map<String, Object?> row = listRow(title: '只有标题');
-    final List<Object?> lineChildren =
-        (((row['children']! as List)[0]) as Map)['children']! as List;
+    final Map<String, Object?> line = (row['child']! as Map).cast<String, Object?>();
+    final List<Object?> lineChildren = line['children']! as List;
     expect(lineChildren.length, 1, reason: '没有右侧文本');
     final Map<String, Object?> column = (lineChildren[0] as Map).cast<String, Object?>();
     expect(column['kind'], 'Expanded');
-    final List<Object?> columnChildren = column['children']! as List;
-    final Map<String, Object?> inner =
-        (columnChildren[0] as Map).cast<String, Object?>();
+    final Map<String, Object?> inner = (column['child']! as Map).cast<String, Object?>();
     expect(inner['kind'], 'Column');
     expect((inner['children']! as List).length, 1, reason: '没有副标题');
   });
@@ -64,7 +60,7 @@ void main() {
     for (final Object? child in children) {
       final Map<String, Object?> expanded = (child! as Map).cast<String, Object?>();
       expect(expanded['kind'], 'Expanded');
-      expect(((expanded['children']! as List)[0] as Map)['kind'], 'Button');
+      expect(((expanded['child']! as Map))['kind'], 'Button');
     }
   });
 

@@ -30,13 +30,13 @@ std::string clampBytes(const std::string& text, const std::size_t maxBytes) {
 
 /// 造一个文本块（降级结果的最小形态）
 Item makeText(Item source, std::string text, const bool mono,
-              const std::string_view textType = "body", const std::string_view tone = "normal") {
+              const std::string_view textType = "body", const std::string_view color = "normal") {
     Item out;
     out.kind     = "Text";
     out.text     = TextValue::of(text);
     out.mono     = mono;
     out.textType = std::string(textType);
-    out.tone     = std::string(tone);
+    out.color     = std::string(color);
     out.action   = std::move(source.action);
     return out;
 }
@@ -67,9 +67,9 @@ std::vector<Item> adaptList(const std::vector<Item>& items, const Capabilities& 
 /// 把不支持组的件降级成"文本形态"（纯文本 / fallback / 指定字段）
 Item degradeToText(const Item& item, const std::string& text, const bool mono,
                    const std::string_view textType = "body",
-                   const std::string_view tone = "normal") {
+                   const std::string_view color = "normal") {
     Item source = item;
-    return makeText(std::move(source), text, mono, textType, tone);
+    return makeText(std::move(source), text, mono, textType, color);
 }
 
 /// `flatten` 要展开的子块
@@ -215,7 +215,7 @@ std::vector<Item> adaptItemImpl(const Item& item, const Capabilities& caps, Adap
         case AdaptRule::GlyphText: {
             const std::string text = !item.glyph.empty() ? item.glyph : item.icon;
             if (!text.empty()) {
-                out.push_back(degradeToText(item, text, true, "body", item.tone));
+                out.push_back(degradeToText(item, text, true, "body", item.color));
             } else if (!item.fallback.empty()) {
                 out.push_back(degradeToText(item, item.fallback, false, "caption", "hint"));
             } else if (report) {
@@ -227,7 +227,7 @@ std::vector<Item> adaptItemImpl(const Item& item, const Capabilities& caps, Adap
         case AdaptRule::AltText: {
             const std::string text = item.alt.resolve();
             if (!text.empty()) {
-                out.push_back(degradeToText(item, text, false, "body", item.tone));
+                out.push_back(degradeToText(item, text, false, "body", item.color));
             } else if (!item.fallback.empty()) {
                 out.push_back(degradeToText(item, item.fallback, false, "caption", "hint"));
             } else if (report) {
@@ -247,7 +247,7 @@ std::vector<Item> adaptItemImpl(const Item& item, const Capabilities& caps, Adap
                 if (report) {
                     report->note(item.kind + " 不支持，退成文本");
                 }
-                out.push_back(degradeToText(item, text, true, "body", item.tone));
+                out.push_back(degradeToText(item, text, true, "body", item.color));
             } else if (report) {
                 report->note(item.kind + " 不支持且没有可显示的文本，跳过");
             }

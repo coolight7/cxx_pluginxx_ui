@@ -279,19 +279,19 @@ class UiAction {
 
 /// 控件候选项（`buttons` / `select`）
 class ControlOption {
-  const ControlOption({required this.value, required this.label, this.tone = ''});
+  const ControlOption({required this.value, required this.label, this.color = ''});
 
   final Object? value;
   final TextValue label;
-  final String tone;
+  final String color;
 }
 
 /// 阈值（达到该值起用对应语义色）
 class Threshold {
-  const Threshold({required this.at, required this.tone});
+  const Threshold({required this.at, required this.color});
 
   final double at;
-  final String tone;
+  final String color;
 }
 
 /// 表格列
@@ -300,21 +300,21 @@ class TableColumn {
     this.title = TextValue.empty,
     this.align = 'start',
     this.width = SizeValue.autoValue,
-    this.tone = '',
+    this.color = '',
   });
 
   final TextValue title;
   final String align;
   final SizeValue width;
-  final String tone;
+  final String color;
 }
 
 /// 表格单元格
 class TableCell {
-  const TableCell({this.text = TextValue.empty, this.tone = '', this.action});
+  const TableCell({this.text = TextValue.empty, this.color = '', this.action});
 
   final TextValue text;
-  final String tone;
+  final String color;
   final UiAction? action;
 }
 
@@ -323,27 +323,27 @@ class KeyValuePair {
   const KeyValuePair({
     this.key = TextValue.empty,
     this.value = TextValue.empty,
-    this.kTone = '',
-    this.vTone = '',
+    this.kColor = '',
+    this.vColor = '',
   });
 
   final TextValue key;
   final TextValue value;
-  final String kTone;
-  final String vTone;
+  final String kColor;
+  final String vColor;
 }
 
 /// 树节点
 class TreeNode {
   const TreeNode({
     this.label = TextValue.empty,
-    this.tone = '',
+    this.color = '',
     this.action,
     this.children = const <TreeNode>[],
   });
 
   final TextValue label;
-  final String tone;
+  final String color;
   final UiAction? action;
   final List<TreeNode> children;
 
@@ -364,7 +364,7 @@ class ListItem {
     this.trailing = TextValue.empty,
     this.image = '',
     this.icon = '',
-    this.tone = 'normal',
+    this.color = 'normal',
     this.selected = false,
     this.path = '',
     this.isDir = false,
@@ -386,7 +386,7 @@ class ListItem {
   final String icon;
 
   /// 主标题的语义色
-  final String tone;
+  final String color;
 
   /// 是否高亮（只由插件给的数据决定，客户端不做点击自动高亮）
   final bool selected;
@@ -487,7 +487,7 @@ class ItemData {
   // ---- 文本与排版 ----
   TextValue text = TextValue.empty;
   String textType = 'body';
-  String tone = 'normal';
+  String color = 'normal';
   bool bold = false;
   bool dim = false;
   bool mono = false;
@@ -522,6 +522,13 @@ class ItemData {
   Edges margin = Edges.zero;
 
   List<ItemData> children = <ItemData>[];
+
+  /// `ThemeScope.data`：子树样式的原始 JSON
+  ///
+  /// 单块容器的 `child` 也存在 [children] 里（最多一项）；这里是容器自己的附加数据。
+  /// **通用载体**：含义由客户端定义（musicxx 的配色规格在 `lib/src/ui_theme.dart`），
+  /// 解析与序列化都原样往返，库不解释内容。
+  Object? themeData;
 
   // ---- 按钮 / 图标 ----
   TextValue label = TextValue.empty;
@@ -705,7 +712,7 @@ class ItemData {
     ..known = known
     ..text = text
     ..textType = textType
-    ..tone = tone
+    ..color = color
     ..bold = bold
     ..dim = dim
     ..mono = mono
@@ -732,6 +739,7 @@ class ItemData {
     ..hasMargin = hasMargin
     ..margin = margin
     ..children = children
+    ..themeData = themeData
     ..label = label
     ..variant = variant
     ..icon = icon

@@ -344,11 +344,13 @@ bool itemText(const Item& item, const Ctx& ctx, std::string& out) {
         return true;
     }
     if (item.kind == "Button") {
-        std::string label = text(item.label);
-        if (label.empty()) {
+        // 没写 label 的纯图标按钮：纯文本里用 glyph 兜底
+        const std::string label = text(item.label);
+        const std::string value = !label.empty() ? label : item.glyph;
+        if (value.empty()) {
             return false;
         }
-        out = "[" + label + "]";
+        out = "[" + value + "]";
         return true;
     }
     if (item.kind == "Block") {
@@ -398,6 +400,11 @@ bool itemText(const Item& item, const Ctx& ctx, std::string& out) {
         const std::string body = childrenText(item.children, ctx);
         out = body.empty() ? head : head + "\n" + indentLines(body, "  ");
         return true;
+    }
+    if (item.kind == "ThemeScope") {
+        // 纯样式容器：纯文本只看子块（样式在文本里没有对应形态）
+        out = childrenText(item.children, ctx);
+        return !out.empty();
     }
     if (item.kind == "KV") {
         int keyWidth = 0;

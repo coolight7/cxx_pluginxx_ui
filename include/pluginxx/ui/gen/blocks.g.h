@@ -14,9 +14,9 @@ namespace ui {
 namespace gen {
 
 /// 定义文件结构版本（字段/组件结构变化时递增）
-inline constexpr int kSchemaVersion = 1;
+inline constexpr int kSchemaVersion = 2;
 /// 组件词汇版本（新增 kind / 字段 / 枚举值时递增，只增不改）
-inline constexpr int kUiApiVersion = 2;
+inline constexpr int kUiApiVersion = 3;
 
 /// 默认留白（u）：Gap.size 的缺省值与基础 kit 的默认行距
 inline constexpr double kDefaultGap = 12;
@@ -38,7 +38,7 @@ inline constexpr BlockMeta kBlockTable[] = {
      "竖直留白（缺省取 defaults.gap）"},
     {"Button", BlockLevel::Core,
      "", AdaptRule::PlainTextMono,
-     "按钮（自己处理点击）：variant 定样式与宽度，highlight 定选中态，size 定高度"},
+     "按钮（自己处理点击）：variant 定样式与宽度，highlight 定选中态，size 定高度；不写 label 就是纯图标按钮（图标与文字都没有时用 glyph 当文字），color 定内容色（会盖住选中 / 禁用态）"},
     {"Block", BlockLevel::Core,
      "", AdaptRule::Flatten,
      "卡片/内容块"},
@@ -66,6 +66,9 @@ inline constexpr BlockMeta kBlockTable[] = {
     {"Collapse", BlockLevel::Core,
      "", AdaptRule::Flatten,
      "折叠分组（展开状态由客户端按 id 维护）"},
+    {"ThemeScope", BlockLevel::Optional,
+     "", AdaptRule::Flatten,
+     "子树样式作用域：包住一块内容，子树按 data 里声明的配色取色；data 的含义由客户端定义（客户端不支持时展开 child，样式不生效，内容照常显示）"},
     {"KV", BlockLevel::Core,
      "", AdaptRule::PlainTextMono,
      "键值两列"},
@@ -107,10 +110,10 @@ inline constexpr BlockMeta kBlockTable[] = {
      "状态图（未实现时适配为等宽文本）"},
     {"ListViewBase", BlockLevel::Optional,
      "", AdaptRule::PlainTextMono,
-     "按应用的列表组件显示多条数据（只显示，没有工具条与编辑）。列表项除了 title/subtitle/trailing/image/icon/tone/selected/action，还可写 custom（任意块，写了就整项内容由它画，行内自动插入的编辑/多选/拖拽按钮不受影响）、path（路径/身份）、isDir（目录项）与 data（附加数据，任意 JSON：本库只当原文携带，由客户端自己解释）"},
+     "按应用的列表组件显示多条数据（只显示，没有工具条与编辑）。列表项除了 title/subtitle/trailing/image/icon/color/selected/action，还可写 custom（任意块，写了就整项内容由它画，行内自动插入的编辑/多选/拖拽按钮不受影响）、path（路径/身份）、isDir（目录项）与 data（附加数据，任意 JSON：本库只当原文携带，由客户端自己解释）"},
     {"ListView", BlockLevel::Optional,
      "", AdaptRule::PlainTextMono,
-     "带工具条的列表（编辑 / 多选 / 加删 / 定位 / 菜单 / 下拉刷新 / 加载更多）。列表项除 title/subtitle/trailing/image/icon/tone/selected/action 外还可写 custom（任意块，整项内容由它画；行内自动插入的编辑/多选/拖拽按钮保留）、path、isDir、data"},
+     "带工具条的列表（编辑 / 多选 / 加删 / 定位 / 菜单 / 下拉刷新 / 加载更多）。列表项除 title/subtitle/trailing/image/icon/color/selected/action 外还可写 custom（任意块，整项内容由它画；行内自动插入的编辑/多选/拖拽按钮保留）、path、isDir、data"},
     {"musicxx.DirListView", BlockLevel::Client,
      "Musicxx", AdaptRule::PlainTextMono,
      "目录/文件列表（对应客户端内置的 DirList）：一层目录的条目，顶部路径栏（可带“上一级”动作）；写了 multi 才在行尾出勾选框（勾选态取条目的 selected，变化派发 selectAction）；给了 refreshAction / loadMoreAction 就能在列表内下拉刷新、滑到底加载更多；条目带 data（附加数据）时由本客户端自己解释（musicxx：data.song = 这一项是一首歌，画成歌曲样式；其他客户端按普通列表降级）；进入目录与选中态都由插件维护"},
@@ -158,7 +161,7 @@ inline constexpr std::string_view kEnumTextType[] = {
     "caption",
     "title",
 };
-inline constexpr std::string_view kEnumTone[] = {
+inline constexpr std::string_view kEnumColor[] = {
     "normal",
     "hint",
     "accent",

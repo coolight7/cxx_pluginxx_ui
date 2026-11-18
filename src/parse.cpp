@@ -60,9 +60,9 @@ std::string fieldEnum(const Json& json, const std::string_view key,
 }
 
 /// 语义色字段（未知取值退回 normal）
-std::string fieldTone(const Json& json, const std::string_view key,
+std::string fieldColor(const Json& json, const std::string_view key,
                       const std::string_view fallback = "normal") {
-    return fieldEnum(json, key, PLUGINXX_UI_ENUM(gen::kEnumTone), fallback);
+    return fieldEnum(json, key, PLUGINXX_UI_ENUM(gen::kEnumColor), fallback);
 }
 
 std::string clampTextBytes(const std::string_view text, const std::size_t maxBytes) {
@@ -270,8 +270,42 @@ std::vector<Item> parseChildren(const Json& json, const Ctx& ctx, const int dept
     return out;
 }
 
-std::vector<TextValue> textListOf(const Json& value, const Ctx& ctx, const std::string& what) {
-    std::vector<TextValue> out;
+/// 单块容器的子块（字段 `child`，模型里也存进 Item::children，最多一项）
+///
+/// 写成数组时按第一块处理（旧的 `children` 写法）并记一条提示；空数组与其它类型都当作没有子块。
+std::vector<Item> parseSingleChild(const Json& json, const Ctx& ctx, const int depth,
+                                  const std::string& what) {
+    std::vector<Item> out;
+    if (!json.is_object()) {
+        return out;
+    }
+    const Json& value = json["child"];
+    if (value.is_array()) {
+        if (value.size() == 0) {
+            return out;
+        }
+        if (ctx.limits->maxDepth > 0 && depth >= ctx.limits->maxDepth) {
+            ctx.truncate(what + " 超过层级上限 " + std::to_string(ctx.limits->maxDepth) +
+                         "，子块被丢弃");
+            return out;
+        }
+        ctx.warn(what + " 只收一块（child），给了 " + std::to_string(value.size()) +
+                 " 块，只画第一块");
+        out.push_back(parseBlockImpl(value[0], ctx, depth + 1));
+        return out;
+    }
+    if (!value.is_object()) {
+        return out;
+    }
+    if (ctx.limits->maxDepth > 0 && depth >= ctx.limits->maxDepth) {
+        ctx.truncate(what + " 超过层级上限 " + std::to_string(ctx.limits->maxDepth) + "，子块被丢弃");
+        return out;
+    }
+    out.push_back(parseBlockImpl(value, ctx, depth + 1));
+    return out;
+}
+
+std::vector<TextValue> textListOf(const Json& value, const Ctx& ctx, const std::string& what) {    std::vector<TextValue> out;
     if (!value.is_array()) {
         return out;
     }
@@ -302,7 +336,7 @@ std::vector<ControlOption> optionsOf(const Json& value, const Ctx& ctx, const st
                 option.valueJson = jsonText(node["value"]);
             }
             option.label = textValueOf(node["label"]);
-            option.tone  = fieldTone(node, "tone", "");
+            option.color  = fieldColor(node, "color", "");
         } else {
             option.valueJson = jsonText(node);
             option.label     = textValueOf(node);
@@ -336,7 +370,7 @@ std::vector<ListItem> listItemsOf(const Json& value, const Ctx& ctx, const std::
         listItem.trailing = textValueOf(node["trailing"]);
         listItem.image    = fieldString(node, "image");
         listItem.icon     = fieldString(node, "icon");
-        listItem.tone     = fieldTone(node, "tone");
+        listItem.color     = fieldColor(node, "color");
         listItem.selected = fieldBool(node, "selected", false);
         listItem.path     = fieldString(node, "path");
         listItem.isDir    = fieldBool(node, "isDir", false);
@@ -395,7 +429,7 @@ std::vector<Threshold> thresholdsOf(const Json& value, const Ctx& ctx, const std
         }
         Threshold threshold;
         threshold.at   = fieldNumber(node, "at", 0.0);
-        threshold.tone = fieldTone(node, "tone", "accent");
+        threshold.color = fieldColor(node, "color", "accent");
         out.push_back(std::move(threshold));
     }
     return out;
@@ -419,7 +453,7 @@ std::vector<double> numbersOf(const Json& value, const Ctx& ctx, const std::stri
     return out;
 }
 
-std::vector<std::string> tonesOf(const Json& value, const Ctx& ctx, const std::string& what) {
+std::vector<std::string> colorsOf(const Json& value, const Ctx& ctx, const std::string& what) {
     std::vector<std::string> out;
     if (!value.is_array()) {
         return out;
@@ -431,7 +465,7 @@ std::vector<std::string> tonesOf(const Json& value, const Ctx& ctx, const std::s
     for (std::size_t i = 0; i < count; ++i) {
         const std::string raw = value[i].is_string() ? std::string(value[i].get_string_view()) : "";
         const std::string_view normalized =
-            detail::enumNormalize(PLUGINXX_UI_ENUM(gen::kEnumTone), raw);
+            detail::enumNormalize(PLUGINXX_UI_ENUM(gen::kEnumColor), raw);
         if (!normalized.empty()) {
             out.emplace_back(normalized);
         }
@@ -456,8 +490,8 @@ std::vector<KeyValuePair> pairsOf(const Json& value, const Ctx& ctx, const std::
         KeyValuePair pair;
         pair.key   = textValueOf(node["k"]);
         pair.value = textValueOf(node["v"]);
-        pair.kTone = fieldTone(node, "kTone", "");
-        pair.vTone = fieldTone(node, "vTone", "");
+        pair.kColor = fieldColor(node, "kColor", "");
+        pair.vColor = fieldColor(node, "vColor", "");
         out.push_back(std::move(pair));
     }
     return out;
@@ -484,7 +518,7 @@ std::vector<TableColumn> columnsOf(const Json& value, const Ctx& ctx, const std:
                 column.width = sizeValueOf(node["width"], ctx.report, what + "[" +
                                                                     std::to_string(i) + "].width");
             }
-            column.tone = fieldTone(node, "tone", "");
+            column.color = fieldColor(node, "color", "");
         } else {
             column.title = textValueOf(node);
         }
@@ -518,7 +552,7 @@ std::vector<std::vector<TableCell>> rowsOf(const Json& value, const Ctx& ctx,
                 TableCell   cell;
                 if (node.is_object()) {
                     cell.text   = textValueOf(node["text"]);
-                    cell.tone   = fieldTone(node, "tone", "");
+                    cell.color   = fieldColor(node, "color", "");
                     cell.action = actionOf(node["action"]);
                 } else {
                     cell.text = textValueOf(node);
@@ -539,7 +573,7 @@ TreeNode parseTreeNode(const Json& node, const Ctx& ctx, const int depth,
     }
     --(*budget);
     out.label    = textValueOf(node["label"]);
-    out.tone     = fieldTone(node, "tone", "");
+    out.color     = fieldColor(node, "color", "");
     out.action   = actionOf(node["action"]);
     if (node.contains("children") && node["children"].is_array() &&
         (ctx.limits->maxDepth <= 0 || depth < ctx.limits->maxDepth)) {
@@ -617,7 +651,7 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
 
     if (canonical == "Text") {
         item.textType = fieldEnum(json, "type", PLUGINXX_UI_ENUM(gen::kEnumTextType), "body");
-        item.tone     = fieldTone(json, "tone");
+        item.color     = fieldColor(json, "color");
         item.bold     = fieldBool(json, "bold", false);
         item.dim      = fieldBool(json, "dim", false);
         item.mono     = fieldBool(json, "mono", false);
@@ -641,6 +675,9 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
                                    "normal");
         item.highlight = fieldBool(json, "highlight", false);
         item.icon      = fieldString(json, "icon");
+        item.glyph     = fieldString(json, "glyph");
+        // 不写 color 就是空串（按主题取色）；写了就用它当内容色
+        item.color     = fieldColor(json, "color", "");
         item.size      = fieldHas(json, "size")
                              ? sizeValueOf(json["size"], ctx.report, "Button.size")
                              : SizeValue::autoValue();
@@ -658,7 +695,7 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
             item.margin    = edgesOf(json["margin"], ctx.report, "Block.margin");
             item.hasMargin = true;
         }
-        item.children = parseChildren(json["children"], ctx, depth, "Block.children");
+        item.children = parseSingleChild(json, ctx, depth, "Block.child");
         return item;
     }
     if (canonical == "Row" || canonical == "Column") {
@@ -678,7 +715,7 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
             item.flex = 1;
         }
         if (canonical == "Expanded") {
-            item.children = parseChildren(json["children"], ctx, depth, "Expanded.children");
+            item.children = parseSingleChild(json, ctx, depth, "Expanded.child");
         }
         return item;
     }
@@ -690,25 +727,33 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
             item.height = sizeValueOf(json["height"], ctx.report, "SizedBox.height");
         }
         item.aspect   = fieldNumber(json, "aspect", 0.0);
-        item.children = parseChildren(json["children"], ctx, depth, "SizedBox.children");
+        item.children = parseSingleChild(json, ctx, depth, "SizedBox.child");
         return item;
     }
     if (canonical == "Padding") {
         item.padding    = edgesOf(json["padding"], ctx.report, "Padding.padding");
         item.hasPadding = true;
-        item.children   = parseChildren(json["children"], ctx, depth, "Padding.children");
+        item.children   = parseSingleChild(json, ctx, depth, "Padding.child");
         return item;
     }
     if (canonical == "Align") {
         item.align    = fieldEnum(json, "align", PLUGINXX_UI_ENUM(gen::kEnumAlignHV), "center");
         item.vertical = fieldEnum(json, "vertical", PLUGINXX_UI_ENUM(gen::kEnumAlignHV), "center");
-        item.children = parseChildren(json["children"], ctx, depth, "Align.children");
+        item.children = parseSingleChild(json, ctx, depth, "Align.child");
         return item;
     }
     if (canonical == "Collapse") {
         item.title    = textValueOf(json["title"]);
         item.expanded = fieldBool(json, "expanded", true);
-        item.children = parseChildren(json["children"], ctx, depth, "Collapse.children");
+        item.children = parseSingleChild(json, ctx, depth, "Collapse.child");
+        return item;
+    }
+    if (canonical == "ThemeScope") {
+        // data 的意思由客户端定义（musicxx 的配色规格在包内 lib/src/ui_theme.dart）
+        if (fieldHas(json, "data")) {
+            item.themeDataJson = jsonText(json["data"]);
+        }
+        item.children = parseSingleChild(json, ctx, depth, "ThemeScope.child");
         return item;
     }
     if (canonical == "KV") {
@@ -736,7 +781,7 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
         item.label     = textValueOf(json["label"]);
         item.unit      = fieldHas(json, "unit") ? fieldString(json, "unit") : std::string("%");
         item.showValue = fieldBool(json, "showValue", true);
-        item.tone      = fieldTone(json, "tone", "accent");
+        item.color      = fieldColor(json, "color", "accent");
         item.thresholds = thresholdsOf(json["thresholds"], ctx, "Progress.thresholds");
         if (fieldHas(json, "width")) {
             item.width = sizeValueOf(json["width"], ctx.report, "Progress.width");
@@ -744,7 +789,7 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
         return item;
     }
     if (canonical == "Badge") {
-        item.tone = fieldTone(json, "tone", "accent");
+        item.color = fieldColor(json, "color", "accent");
         return item;
     }
     if (canonical == "Control") {
@@ -782,7 +827,7 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
     if (canonical == "Icon") {
         item.icon  = fieldString(json, "name");
         item.glyph = fieldString(json, "glyph");
-        item.tone  = fieldTone(json, "tone");
+        item.color  = fieldColor(json, "color");
         item.alt   = textValueOf(json["alt"]);
         if (fieldHas(json, "size")) {
             item.size = sizeValueOf(json["size"], ctx.report, "Icon.size");
@@ -826,9 +871,9 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
         item.glyphHeight = static_cast<int>(fieldNumber(json, "height", 1.0));
         item.glyphStyle = fieldEnum(json, "glyphStyle", PLUGINXX_UI_ENUM(gen::kEnumSparkStyle),
                                     "block");
-        item.tone       = fieldTone(json, "tone", "accent");
+        item.color       = fieldColor(json, "color", "accent");
         item.showLast   = fieldBool(json, "showLast", true);
-        item.colors     = tonesOf(json["colors"], ctx, "Sparkline.colors");
+        item.colors     = colorsOf(json["colors"], ctx, "Sparkline.colors");
         if (fieldHas(json, "min")) {
             item.hasMin   = true;
             item.minValue = fieldNumber(json, "min", 0.0);
@@ -1094,8 +1139,8 @@ Json dumpListItemImpl(const ListItem& listItem) {
     if (!listItem.icon.empty()) {
         out["icon"] = listItem.icon;
     }
-    if (listItem.tone != "normal") {
-        out["tone"] = listItem.tone;
+    if (listItem.color != "normal") {
+        out["color"] = listItem.color;
     }
     if (listItem.selected) {
         out["selected"] = true;
@@ -1143,8 +1188,8 @@ Json dumpMenuItemImpl(const MenuItem& menuItem) {
 Json dumpTreeNodeImpl(const TreeNode& node) {
     Json out      = Json::object();
     out["label"]  = textValueToJson(node.label);
-    if (!node.tone.empty()) {
-        out["tone"] = node.tone;
+    if (!node.color.empty()) {
+        out["color"] = node.color;
     }
     if (!node.action.empty()) {
         out["action"] = actionToJson(node.action);
@@ -1169,6 +1214,14 @@ void putChildren(Json& out, const std::vector<Item>& children) {
         array.push_back(dumpBlockImpl(child));
     }
     out["children"] = array;
+}
+
+/// 单块容器：子块写在 `child`（模型里的 Item::children 最多一项）
+void putChild(Json& out, const std::vector<Item>& children) {
+    if (children.empty()) {
+        return;
+    }
+    out["child"] = dumpBlockImpl(children.front());
 }
 
 Json dumpBlockImpl(const Item& item) {
@@ -1197,7 +1250,7 @@ Json dumpBlockImpl(const Item& item) {
     if (item.kind == "Text") {
         putText(item.text);
         out["type"] = item.textType;
-        out["tone"] = item.tone;
+        out["color"] = item.color;
         if (item.bold) {
             out["bold"] = true;
         }
@@ -1220,6 +1273,12 @@ Json dumpBlockImpl(const Item& item) {
         if (!item.icon.empty()) {
             out["icon"] = item.icon;
         }
+        if (!item.glyph.empty()) {
+            out["glyph"] = item.glyph;
+        }
+        if (!item.color.empty()) {
+            out["color"] = item.color;
+        }
         if (!item.size.isAuto()) {
             out["size"] = sizeValueToJson(item.size);
         }
@@ -1240,7 +1299,7 @@ Json dumpBlockImpl(const Item& item) {
         if (item.hasMargin) {
             out["margin"] = edgesToJson(item.margin);
         }
-        putChildren(out, item.children);
+        putChild(out, item.children);
     } else if (item.kind == "Row" || item.kind == "Column") {
         if (item.hasGap) {
             out["gap"] = sizeValueToJson(item.gap);
@@ -1250,7 +1309,9 @@ Json dumpBlockImpl(const Item& item) {
         putChildren(out, item.children);
     } else if (item.kind == "Expanded" || item.kind == "Spacer") {
         out["flex"] = item.flex;
-        putChildren(out, item.children);
+        if (item.kind == "Expanded") {
+            putChild(out, item.children);
+        }
     } else if (item.kind == "SizedBox") {
         if (!item.width.isAuto()) {
             out["width"] = sizeValueToJson(item.width);
@@ -1261,31 +1322,39 @@ Json dumpBlockImpl(const Item& item) {
         if (item.aspect > 0.0) {
             out["aspect"] = item.aspect;
         }
-        putChildren(out, item.children);
+        putChild(out, item.children);
     } else if (item.kind == "Padding") {
         out["padding"] = edgesToJson(item.padding);
-        putChildren(out, item.children);
+        putChild(out, item.children);
     } else if (item.kind == "Align") {
         out["align"]    = item.align;
         out["vertical"] = item.vertical;
-        putChildren(out, item.children);
+        putChild(out, item.children);
     } else if (item.kind == "Collapse") {
         if (!item.title.empty()) {
             out["title"] = textValueToJson(item.title);
         }
         out["expanded"] = item.expanded;
-        putChildren(out, item.children);
+        putChild(out, item.children);
+    } else if (item.kind == "ThemeScope") {
+        if (!item.themeDataJson.empty()) {
+            try {
+                out["data"] = Json::parse(item.themeDataJson);
+            } catch (...) {
+            }
+        }
+        putChild(out, item.children);
     } else if (item.kind == "KV") {
         Json pairs = Json::array();
         for (const KeyValuePair& pair : item.pairs) {
             Json node = Json::object();
             node["k"] = textValueToJson(pair.key);
             node["v"] = textValueToJson(pair.value);
-            if (!pair.kTone.empty()) {
-                node["kTone"] = pair.kTone;
+            if (!pair.kColor.empty()) {
+                node["kColor"] = pair.kColor;
             }
-            if (!pair.vTone.empty()) {
-                node["vTone"] = pair.vTone;
+            if (!pair.vColor.empty()) {
+                node["vColor"] = pair.vColor;
             }
             pairs.push_back(node);
         }
@@ -1304,8 +1373,8 @@ Json dumpBlockImpl(const Item& item) {
             if (!column.width.isAuto()) {
                 node["width"] = sizeValueToJson(column.width);
             }
-            if (!column.tone.empty()) {
-                node["tone"] = column.tone;
+            if (!column.color.empty()) {
+                node["color"] = column.color;
             }
             columns.push_back(node);
         }
@@ -1314,13 +1383,13 @@ Json dumpBlockImpl(const Item& item) {
         for (const std::vector<TableCell>& row : item.rows) {
             Json cells = Json::array();
             for (const TableCell& cell : row) {
-                if (cell.tone.empty() && cell.action.empty()) {
+                if (cell.color.empty() && cell.action.empty()) {
                     cells.push_back(textValueToJson(cell.text));
                 } else {
                     Json node = Json::object();
                     node["text"] = textValueToJson(cell.text);
-                    if (!cell.tone.empty()) {
-                        node["tone"] = cell.tone;
+                    if (!cell.color.empty()) {
+                        node["color"] = cell.color;
                     }
                     if (!cell.action.empty()) {
                         node["action"] = actionToJson(cell.action);
@@ -1346,11 +1415,11 @@ Json dumpBlockImpl(const Item& item) {
         }
         out["unit"]      = item.unit;
         out["showValue"] = item.showValue;
-        out["tone"]      = item.tone;
+        out["color"]      = item.color;
         Json thresholds  = Json::array();
         for (const Threshold& threshold : item.thresholds) {
             thresholds.push_back(
-                Json::object({{"at", Json(threshold.at)}, {"tone", Json(threshold.tone)}})
+                Json::object({{"at", Json(threshold.at)}, {"color", Json(threshold.color)}})
             );
         }
         if (!item.thresholds.empty()) {
@@ -1361,7 +1430,7 @@ Json dumpBlockImpl(const Item& item) {
         }
     } else if (item.kind == "Badge") {
         putText(item.text);
-        out["tone"] = item.tone;
+        out["color"] = item.color;
     } else if (item.kind == "Control") {
         out["control"] = item.control;
         if (!item.label.empty()) {
@@ -1379,8 +1448,8 @@ Json dumpBlockImpl(const Item& item) {
                 node["value"] = option.valueJson;
             }
             node["label"] = textValueToJson(option.label);
-            if (!option.tone.empty()) {
-                node["tone"] = option.tone;
+            if (!option.color.empty()) {
+                node["color"] = option.color;
             }
             options.push_back(node);
         }
@@ -1423,7 +1492,7 @@ Json dumpBlockImpl(const Item& item) {
         if (!item.size.isAuto()) {
             out["size"] = sizeValueToJson(item.size);
         }
-        out["tone"] = item.tone;
+        out["color"] = item.color;
     } else if (item.kind == "Stack") {
         out["align"]    = item.align;
         out["vertical"] = item.vertical;
@@ -1473,12 +1542,12 @@ Json dumpBlockImpl(const Item& item) {
         if (item.hasMax) {
             out["max"] = item.maxValue;
         }
-        out["tone"]     = item.tone;
+        out["color"]     = item.color;
         out["showLast"] = item.showLast;
         if (!item.colors.empty()) {
             Json colors = Json::array();
-            for (const std::string& tone : item.colors) {
-                colors.push_back(Json(tone));
+            for (const std::string& color : item.colors) {
+                colors.push_back(Json(color));
             }
             out["colors"] = colors;
         }

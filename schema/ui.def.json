@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 1,
-  "uiApiVersion": 2,
+  "schemaVersion": 2,
+  "uiApiVersion": 3,
   "defaults": {
     "gap": 12,
     "cell": { "width": 8, "height": 20 }
@@ -11,7 +11,7 @@
   ],
   "enums": {
     "textType": ["body", "caption", "title"],
-    "tone": [
+    "color": [
       "normal",
       "hint",
       "accent",
@@ -53,6 +53,7 @@
       "Padding": "flatten",
       "Align": "flatten",
       "Collapse": "flatten",
+      "ThemeScope": "flatten",
       "KV": "plainTextMono",
       "Table": "plainTextMono",
       "Tree": "plainTextMono",
@@ -86,7 +87,7 @@
       "fields": [
         { "name": "text", "type": "text", "required": true },
         { "name": "type", "type": "enum:textType", "default": "body" },
-        { "name": "tone", "type": "tone", "default": "normal" },
+        { "name": "color", "type": "color", "default": "normal" },
         { "name": "bold", "type": "bool", "default": false },
         { "name": "dim", "type": "bool", "default": false },
         { "name": "mono", "type": "bool", "default": false },
@@ -94,7 +95,7 @@
         { "name": "maxLines", "type": "int", "default": 0 },
         { "name": "align", "type": "enum:alignH", "default": "start" }
       ],
-      "sample": { "kind": "Text", "text": "一段说明文字", "type": "body", "tone": "hint" }
+      "sample": { "kind": "Text", "text": "一段说明文字", "type": "body", "color": "hint" }
     },
     {
       "kind": "Divider",
@@ -113,12 +114,14 @@
     {
       "kind": "Button",
       "level": "core",
-      "doc": "按钮（自己处理点击）：variant 定样式与宽度，highlight 定选中态，size 定高度",
+      "doc": "按钮（自己处理点击）：variant 定样式与宽度，highlight 定选中态，size 定高度；不写 label 就是纯图标按钮（图标与文字都没有时用 glyph 当文字），color 定内容色（会盖住选中 / 禁用态）",
       "fields": [
-        { "name": "label", "type": "text", "required": true },
+        { "name": "label", "type": "text" },
         { "name": "variant", "type": "enum:buttonVariant", "default": "normal" },
         { "name": "highlight", "type": "bool", "default": false },
         { "name": "icon", "type": "string" },
+        { "name": "glyph", "type": "string" },
+        { "name": "color", "type": "color" },
         { "name": "size", "type": "size" },
         { "name": "disabled", "type": "bool", "default": false }
       ],
@@ -133,14 +136,14 @@
         { "name": "variant", "type": "enum:blockVariant", "default": "card" },
         { "name": "padding", "type": "edges" },
         { "name": "margin", "type": "edges" },
-        { "name": "children", "type": "items" }
+        { "name": "child", "type": "item" }
       ],
       "sample": {
         "kind": "Block",
         "title": "统计",
         "variant": "inset",
         "padding": { "horizontal": 12, "vertical": 8 },
-        "children": [{ "kind": "Text", "text": "内容" }]
+        "child": { "kind": "Text", "text": "内容" }
       }
     },
     {
@@ -188,9 +191,9 @@
       "doc": "按比例分剩余空间",
       "fields": [
         { "name": "flex", "type": "int", "default": 1, "min": 1 },
-        { "name": "children", "type": "items" }
+        { "name": "child", "type": "item" }
       ],
-      "sample": { "kind": "Expanded", "flex": 3, "children": [{ "kind": "Text", "text": "占满" }] }
+      "sample": { "kind": "Expanded", "flex": 3, "child": { "kind": "Text", "text": "占满" } }
     },
     {
       "kind": "Spacer",
@@ -207,7 +210,7 @@
         { "name": "width", "type": "size" },
         { "name": "height", "type": "size" },
         { "name": "aspect", "type": "float" },
-        { "name": "children", "type": "items" }
+        { "name": "child", "type": "item" }
       ],
       "sample": { "kind": "SizedBox", "width": 120, "height": { "percent": 40 } }
     },
@@ -217,12 +220,12 @@
       "doc": "内边距",
       "fields": [
         { "name": "padding", "type": "edges", "required": true },
-        { "name": "children", "type": "items" }
+        { "name": "child", "type": "item" }
       ],
       "sample": {
         "kind": "Padding",
         "padding": { "horizontal": 20, "vertical": 8 },
-        "children": [{ "kind": "Text", "text": "带内边距" }]
+        "child": { "kind": "Text", "text": "带内边距" }
       }
     },
     {
@@ -232,9 +235,9 @@
       "fields": [
         { "name": "align", "type": "enum:alignHV", "default": "center" },
         { "name": "vertical", "type": "enum:alignHV", "default": "center" },
-        { "name": "children", "type": "items" }
+        { "name": "child", "type": "item" }
       ],
-      "sample": { "kind": "Align", "align": "end", "children": [{ "kind": "Text", "text": "靠右" }] }
+      "sample": { "kind": "Align", "align": "end", "child": { "kind": "Text", "text": "靠右" } }
     },
     {
       "kind": "Collapse",
@@ -244,14 +247,28 @@
         { "name": "id", "type": "string", "required": true },
         { "name": "title", "type": "text", "required": true },
         { "name": "expanded", "type": "bool", "default": true },
-        { "name": "children", "type": "items" }
+        { "name": "child", "type": "item" }
       ],
       "sample": {
         "kind": "Collapse",
         "id": "detail",
         "title": "详细信息",
         "expanded": false,
-        "children": [{ "kind": "Text", "text": "折叠内容" }]
+        "child": { "kind": "Text", "text": "折叠内容" }
+      }
+    },
+    {
+      "kind": "ThemeScope",
+      "level": "optional",
+      "doc": "子树样式作用域：包住一块内容，子树按 data 里声明的配色取色；data 的含义由客户端定义（客户端不支持时展开 child，样式不生效，内容照常显示）",
+      "fields": [
+        { "name": "data", "type": "json" },
+        { "name": "child", "type": "item" }
+      ],
+      "sample": {
+        "kind": "ThemeScope",
+        "data": { "text": { "main": "#ff202124" } },
+        "child": { "kind": "Text", "text": "带样式的子块" }
       }
     },
     {
@@ -267,7 +284,7 @@
         "kind": "KV",
         "pairs": [
           { "k": "模型", "v": "gpt-5" },
-          { "k": { "key": "ui.tokens", "fallback": "令牌数" }, "v": "1280", "vTone": "accent" }
+          { "k": { "key": "ui.tokens", "fallback": "令牌数" }, "v": "1280", "vColor": "accent" }
         ]
       }
     },
@@ -287,7 +304,7 @@
           { "title": "名称" },
           { "title": "耗时", "align": "end", "width": 60 }
         ],
-        "rows": [["编译", "1.4s"], [{ "text": "测试", "tone": "accent" }, "0.6s"]]
+        "rows": [["编译", "1.4s"], [{ "text": "测试", "color": "accent" }, "0.6s"]]
       }
     },
     {
@@ -316,7 +333,7 @@
         { "name": "label", "type": "text" },
         { "name": "unit", "type": "string", "default": "%" },
         { "name": "showValue", "type": "bool", "default": true },
-        { "name": "tone", "type": "tone", "default": "accent" },
+        { "name": "color", "type": "color", "default": "accent" },
         { "name": "thresholds", "type": "thresholds" },
         { "name": "width", "type": "size" }
       ],
@@ -326,7 +343,7 @@
         "value": 72,
         "total": 100,
         "unit": "%",
-        "thresholds": [{ "at": 90, "tone": "error" }]
+        "thresholds": [{ "at": 90, "color": "error" }]
       }
     },
     {
@@ -335,9 +352,9 @@
       "doc": "状态小标签",
       "fields": [
         { "name": "text", "type": "text", "required": true },
-        { "name": "tone", "type": "tone", "default": "accent" }
+        { "name": "color", "type": "color", "default": "accent" }
       ],
-      "sample": { "kind": "Badge", "text": "已启用", "tone": "success" }
+      "sample": { "kind": "Badge", "text": "已启用", "color": "success" }
     },
     {
       "kind": "Control",
@@ -381,7 +398,7 @@
         { "name": "name", "type": "string" },
         { "name": "glyph", "type": "string" },
         { "name": "size", "type": "size" },
-        { "name": "tone", "type": "tone", "default": "normal" },
+        { "name": "color", "type": "color", "default": "normal" },
         { "name": "alt", "type": "text" }
       ],
       "sample": { "kind": "Icon", "name": "play", "glyph": "▶" }
@@ -451,8 +468,8 @@
         { "name": "glyphStyle", "type": "enum:sparkStyle", "default": "block" },
         { "name": "min", "type": "float" },
         { "name": "max", "type": "float" },
-        { "name": "tone", "type": "tone", "default": "accent" },
-        { "name": "colors", "type": "tones" },
+        { "name": "color", "type": "color", "default": "accent" },
+        { "name": "colors", "type": "colors" },
         { "name": "showLast", "type": "bool", "default": true }
       ],
       "sample": {
@@ -473,7 +490,7 @@
     {
       "kind": "ListViewBase",
       "level": "optional",
-      "doc": "按应用的列表组件显示多条数据（只显示，没有工具条与编辑）。列表项除了 title/subtitle/trailing/image/icon/tone/selected/action，还可写 custom（任意块，写了就整项内容由它画，行内自动插入的编辑/多选/拖拽按钮不受影响）、path（路径/身份）、isDir（目录项）与 data（附加数据，任意 JSON：本库只当原文携带，由客户端自己解释）",
+      "doc": "按应用的列表组件显示多条数据（只显示，没有工具条与编辑）。列表项除了 title/subtitle/trailing/image/icon/color/selected/action，还可写 custom（任意块，写了就整项内容由它画，行内自动插入的编辑/多选/拖拽按钮不受影响）、path（路径/身份）、isDir（目录项）与 data（附加数据，任意 JSON：本库只当原文携带，由客户端自己解释）",
       "fields": [
         { "name": "id", "type": "string" },
         { "name": "items", "type": "listItems", "required": true },
@@ -523,7 +540,7 @@
     {
       "kind": "ListView",
       "level": "optional",
-      "doc": "带工具条的列表（编辑 / 多选 / 加删 / 定位 / 菜单 / 下拉刷新 / 加载更多）。列表项除 title/subtitle/trailing/image/icon/tone/selected/action 外还可写 custom（任意块，整项内容由它画；行内自动插入的编辑/多选/拖拽按钮保留）、path、isDir、data",
+      "doc": "带工具条的列表（编辑 / 多选 / 加删 / 定位 / 菜单 / 下拉刷新 / 加载更多）。列表项除 title/subtitle/trailing/image/icon/color/selected/action 外还可写 custom（任意块，整项内容由它画；行内自动插入的编辑/多选/拖拽按钮保留）、path、isDir、data",
       "fields": [
         { "name": "id", "type": "string" },
         { "name": "items", "type": "listItems", "required": true },
@@ -559,7 +576,7 @@
           { "id": "weekly", "title": "每周新歌", "subtitle": "每周一更新", "trailing": "12 首" },
           { "id": "fav", "title": "我的收藏", "trailing": "38 首" }
         ],
-        "toolbar": [{ "kind": "Text", "text": "共 12 项", "type": "caption", "tone": "hint" }],
+        "toolbar": [{ "kind": "Text", "text": "共 12 项", "type": "caption", "color": "hint" }],
         "menu": [
           { "title": "全部刷新", "icon": "resource/svg/refresh.svg", "action": "refreshAll" },
           { "title": "打开设置", "action": { "kind": "route", "route": "ext://demo/settings" } }
@@ -658,13 +675,13 @@
       "fields": [
         { "name": "values", "type": "json" },
         { "name": "maxFps", "type": "int" },
-        { "name": "children", "type": "items" }
+        { "name": "child", "type": "item" }
       ],
       "sample": {
         "kind": "musicxx.AnimatedBuilder",
         "values": { "h": { "kind": "lfo", "periodMs": 1600, "from": 40, "to": 72 } },
         "maxFps": 30,
-        "children": [ { "kind": "Text", "text": "动画内容" } ]
+        "child": { "kind": "Text", "text": "动画内容" }
       }
     },
     {
@@ -677,13 +694,13 @@
         { "name": "axisAlignment", "type": "float", "default": -1 },
         { "name": "value", "type": "value" },
         { "name": "curve", "type": "enum:ease" },
-        { "name": "children", "type": "items" }
+        { "name": "child", "type": "item" }
       ],
       "sample": {
         "kind": "musicxx.SizeTransition",
         "axis": "vertical",
         "value": { "kind": "const", "value": 1 },
-        "children": [ { "kind": "Text", "text": "撑开的内容" } ]
+        "child": { "kind": "Text", "text": "撑开的内容" }
       }
     },
     {
@@ -694,12 +711,12 @@
       "fields": [
         { "name": "value", "type": "value" },
         { "name": "curve", "type": "enum:ease" },
-        { "name": "children", "type": "items" }
+        { "name": "child", "type": "item" }
       ],
       "sample": {
         "kind": "musicxx.FadeTransition",
         "value": { "kind": "const", "value": 1 },
-        "children": [ { "kind": "Text", "text": "淡入的内容" } ]
+        "child": { "kind": "Text", "text": "淡入的内容" }
       }
     },
     {
@@ -712,14 +729,14 @@
         { "name": "to", "type": "value" },
         { "name": "value", "type": "value" },
         { "name": "curve", "type": "enum:ease" },
-        { "name": "children", "type": "items" }
+        { "name": "child", "type": "item" }
       ],
       "sample": {
         "kind": "musicxx.SlideTransition",
         "from": [0, 0.1],
         "to": [0, 0],
         "value": { "kind": "const", "value": 1 },
-        "children": [ { "kind": "Text", "text": "滑入的内容" } ]
+        "child": { "kind": "Text", "text": "滑入的内容" }
       }
     },
     {
@@ -732,14 +749,14 @@
         { "name": "to", "type": "value", "default": 1 },
         { "name": "value", "type": "value" },
         { "name": "curve", "type": "enum:ease" },
-        { "name": "children", "type": "items" }
+        { "name": "child", "type": "item" }
       ],
       "sample": {
         "kind": "musicxx.ScaleTransition",
         "from": 0.8,
         "to": 1,
         "value": { "kind": "const", "value": 1 },
-        "children": [ { "kind": "Text", "text": "放大显示的内容" } ]
+        "child": { "kind": "Text", "text": "放大显示的内容" }
       }
     },
     {
@@ -752,14 +769,14 @@
         { "name": "to", "type": "value", "default": 1 },
         { "name": "value", "type": "value" },
         { "name": "curve", "type": "enum:ease" },
-        { "name": "children", "type": "items" }
+        { "name": "child", "type": "item" }
       ],
       "sample": {
         "kind": "musicxx.RotationTransition",
         "from": 0,
         "to": 1,
         "value": { "kind": "const", "value": 0.5 },
-        "children": [ { "kind": "Text", "text": "转起来的内容" } ]
+        "child": { "kind": "Text", "text": "转起来的内容" }
       }
     }
   ]

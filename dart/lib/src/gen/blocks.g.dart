@@ -5,9 +5,9 @@
 import '../model.dart';
 
 /// 定义文件结构版本
-const int kSchemaVersion = 1;
+const int kSchemaVersion = 2;
 /// 组件词汇版本（新增 kind / 字段 / 枚举值时递增，只增不改）
-const int kUiApiVersion = 2;
+const int kUiApiVersion = 3;
 
 /// 默认留白（u）：Gap.size 的缺省值与基础 kit 的默认行距
 const double kDefaultGap = 12;
@@ -31,6 +31,7 @@ const List<BlockMeta> kBlockTable = <BlockMeta>[
   BlockMeta('Padding', BlockLevel.core, '', AdaptRule.flatten),
   BlockMeta('Align', BlockLevel.core, '', AdaptRule.flatten),
   BlockMeta('Collapse', BlockLevel.core, '', AdaptRule.flatten),
+  BlockMeta('ThemeScope', BlockLevel.optional, '', AdaptRule.flatten),
   BlockMeta('KV', BlockLevel.core, '', AdaptRule.plainTextMono),
   BlockMeta('Table', BlockLevel.core, '', AdaptRule.plainTextMono),
   BlockMeta('Tree', BlockLevel.core, '', AdaptRule.plainTextMono),
@@ -72,6 +73,7 @@ const List<String> kBlockNames = <String>[
   'Padding',
   'Align',
   'Collapse',
+  'ThemeScope',
   'KV',
   'Table',
   'Tree',
@@ -116,8 +118,8 @@ const List<String> kEnumTextType = <String>[
   'title',
 ];
 
-/// 枚举 tone 的取值
-const List<String> kEnumTone = <String>[
+/// 枚举 color 的取值
+const List<String> kEnumColor = <String>[
   'normal',
   'hint',
   'accent',
@@ -243,7 +245,7 @@ const List<String> kEnumEase = <String>[
 /// 枚举名 → 取值列表
 const Map<String, List<String>> kEnums = <String, List<String>>{
   'textType': kEnumTextType,
-  'tone': kEnumTone,
+  'color': kEnumColor,
   'alignH': kEnumAlignH,
   'alignHV': kEnumAlignHV,
   'mainAxis': kEnumMainAxis,

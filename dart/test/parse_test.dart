@@ -211,9 +211,7 @@ void main() {
         'h': <String, Object?>{'kind': 'const', 'value': 40},
       },
       'maxFps': 24,
-      'children': <Object?>[
-        <String, Object?>{'kind': 'Text', 'text': '动画子树'},
-      ],
+      'child': <String, Object?>{'kind': 'Text', 'text': '动画子树'},
     });
     expect(builder.kind, 'musicxx.AnimatedBuilder');
     expect((builder.animValues! as Map)['h'], isNotNull);
@@ -226,9 +224,7 @@ void main() {
       'axisAlignment': 0,
       'value': <String, Object?>{'kind': 'source', 'name': 'h'},
       'curve': 'outCubic',
-      'children': <Object?>[
-        <String, Object?>{'kind': 'Text', 'text': '撑开'},
-      ],
+      'child': <String, Object?>{'kind': 'Text', 'text': '撑开'},
     });
     expect(size.axis, 'horizontal');
     expect(size.axisAlignment, 0);
@@ -241,9 +237,7 @@ void main() {
     final ItemData fade = parseBlock(<String, Object?>{
       'kind': 'musicxx.FadeTransition',
       'value': 0.5,
-      'children': <Object?>[
-        <String, Object?>{'kind': 'Text', 'text': '淡入'},
-      ],
+      'child': <String, Object?>{'kind': 'Text', 'text': '淡入'},
     });
     expect(fade.animValue.number, 0.5, reason: '数字字面量直接用');
     expect(dumpItem(fade)['value'], 0.5);
@@ -298,7 +292,7 @@ void main() {
           'selected': true,
           'action': 'openPlaylist',
         },
-        <String, Object?>{'title': '我的收藏', 'tone': 'hint'},
+        <String, Object?>{'title': '我的收藏', 'color': 'hint'},
       ],
     });
     expect(base.kind, 'ListViewBase');
@@ -313,7 +307,7 @@ void main() {
     expect(base.items.first.image, 'cover');
     expect(base.items.first.selected, isTrue);
     expect(base.items.first.action?.name, 'openPlaylist');
-    expect(base.items[1].tone, 'hint');
+    expect(base.items[1].color, 'hint');
     // 默认值：没写 layout / variant / 工具条字段
     final ItemData plain = parseBlock(<String, Object?>{
       'kind': 'ListView',
@@ -468,8 +462,7 @@ void main() {
     expect(item.controlValue, 'abc');
   });
 
-  test('Progress.value 接受值表达式', () {
-    final Map<String, Object?> node = <String, Object?>{
+  test('Progress.value 接受值表达式', () {    final Map<String, Object?> node = <String, Object?>{
       'kind': 'source',
       'name': 'plugin.demo.progress',
     };
@@ -490,5 +483,58 @@ void main() {
     });
     expect(plain.value.isExpr, isFalse);
     expect(plain.value.number, 72);
+  });
+
+  test('ThemeScope：data 原样往返，child 只有一块', () {
+    final Map<String, Object?> data = <String, Object?>{
+      'text': <String, Object?>{'main': '#ff202124'},
+    };
+    final ItemData item = parseBlock(<String, Object?>{
+      'kind': 'ThemeScope',
+      'data': data,
+      'child': <String, Object?>{'kind': 'Text', 'text': '带样式的子块'},
+    });
+    expect(item.kind, 'ThemeScope');
+    expect(item.themeData, data, reason: '库不解释 data，原样携带');
+    expect(item.children.length, 1);
+    expect(item.children.first.kind, 'Text');
+    final Map<String, Object?> dumped = dumpItem(item);
+    expect(dumped['data'], data);
+    expect((dumped['child']! as Map)['kind'], 'Text');
+    expect(dumped.containsKey('children'), isFalse, reason: '单块容器写 child');
+  });
+
+  test('Button：label 可选，glyph 与 color 都能往返', () {
+    // 纯图标按钮：不写 label
+    final ItemData icon = parseBlock(<String, Object?>{
+      'kind': 'Button',
+      'variant': 'simple',
+      'icon': 'play',
+      'size': 128,
+    });
+    expect(icon.label.isEmpty, isTrue);
+    expect(icon.color, isEmpty, reason: '不写 color 就是不指定，按主题取色');
+
+    final ItemData glyph = parseBlock(<String, Object?>{
+      'kind': 'Button',
+      'glyph': '▶',
+      'color': 'accent',
+    });
+    expect(glyph.glyph, '▶');
+    expect(glyph.color, 'accent');
+    final Map<String, Object?> dumped = dumpItem(glyph);
+    expect(dumped['glyph'], '▶');
+    expect(dumped['color'], 'accent');
+
+    // 语义色忽略大小写；未知取值退回“不指定”
+    expect(
+      parseBlock(<String, Object?>{'kind': 'Button', 'color': 'ACCENT'}).color,
+      'accent',
+    );
+    expect(
+      parseBlock(<String, Object?>{'kind': 'Button', 'color': '#ff0000'}).color,
+      isEmpty,
+      reason: 'color 只接受语义名，不是色值',
+    );
   });
 }

@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 1,
-  "kitVersion": 2,
+  "schemaVersion": 2,
+  "kitVersion": 3,
   "doc": "基础 kit：共享便捷组件（只加载、不含逻辑、不引用客户端专属块）",
   "components": [
     {
@@ -39,7 +39,7 @@
             "kind": "Text",
             "text": "$text",
             "type": "caption",
-            "tone": "hint"
+            "color": "hint"
           }
         }
       ]
@@ -54,8 +54,8 @@
           "required": true
         },
         {
-          "name": "tone",
-          "type": "tone",
+          "name": "color",
+          "type": "color",
           "default": "normal"
         },
         {
@@ -69,7 +69,7 @@
           "template": {
             "kind": "Text",
             "text": "$text",
-            "tone": "$tone",
+            "color": "$color",
             "mono": "$mono"
           }
         }
@@ -85,8 +85,8 @@
           "required": true
         },
         {
-          "name": "tone",
-          "type": "tone",
+          "name": "color",
+          "type": "color",
           "default": "accent"
         }
       ],
@@ -95,7 +95,7 @@
           "template": {
             "kind": "Badge",
             "text": "$text",
-            "tone": "$tone"
+            "color": "$color"
           }
         }
       ]
@@ -117,8 +117,8 @@
           "type": "size"
         },
         {
-          "name": "tone",
-          "type": "tone",
+          "name": "color",
+          "type": "color",
           "default": "normal"
         }
       ],
@@ -132,7 +132,7 @@
             "name": "$name",
             "glyph": "$glyph",
             "size": "$size",
-            "tone": "$tone"
+            "color": "$color"
           }
         },
         {
@@ -140,7 +140,7 @@
             "kind": "Text",
             "text": "$glyph",
             "mono": true,
-            "tone": "$tone"
+            "color": "$color"
           }
         }
       ]
@@ -178,12 +178,11 @@
     },
     {
       "name": "button",
-      "doc": "按钮",
+      "doc": "按钮（不写 label 就是纯图标按钮，图标与文字都没有时用 glyph 当文字；color 定内容色，会盖住选中 / 禁用态）",
       "params": [
         {
           "name": "label",
-          "type": "text",
-          "required": true
+          "type": "text"
         },
         {
           "name": "variant",
@@ -198,6 +197,14 @@
         {
           "name": "icon",
           "type": "string"
+        },
+        {
+          "name": "glyph",
+          "type": "string"
+        },
+        {
+          "name": "color",
+          "type": "color"
         },
         {
           "name": "size",
@@ -221,10 +228,43 @@
             "variant": "$variant",
             "highlight": "$highlight",
             "icon": "$icon",
+            "glyph": "$glyph",
+            "color": "$color",
             "size": "$size",
             "disabled": "$disabled",
             "action": "$action"
           }
+        }
+      ]
+    },
+    {
+      "name": "themeScope",
+      "doc": "子树样式作用域：包住一块内容，data 由客户端定义（musicxx 用 text / surface / button / mask / shimmer 五组颜色）；客户端不支持时只给内容，样式不生效",
+      "params": [
+        {
+          "name": "child",
+          "type": "item",
+          "required": true
+        },
+        {
+          "name": "data",
+          "type": "json",
+          "required": true
+        }
+      ],
+      "variants": [
+        {
+          "requires": [
+            "ThemeScope"
+          ],
+          "template": {
+            "kind": "ThemeScope",
+            "data": "$data",
+            "child": "$child"
+          }
+        },
+        {
+          "template": "$child"
         }
       ]
     },
@@ -247,9 +287,7 @@
               "$map": "buttons",
               "wrap": {
                 "kind": "Expanded",
-                "children": [
-                  "$item"
-                ]
+                "child": "$item"
               }
             }
           }
@@ -278,8 +316,8 @@
           "type": "edges"
         },
         {
-          "name": "children",
-          "type": "items"
+          "name": "child",
+          "type": "item"
         }
       ],
       "variants": [
@@ -290,7 +328,7 @@
             "variant": "$variant",
             "padding": "$padding",
             "margin": "$margin",
-            "children": "$children"
+            "child": "$child"
           }
         }
       ]
@@ -327,43 +365,39 @@
               "vertical": 8
             },
             "action": "$action",
-            "children": [
-              {
-                "kind": "Row",
-                "gap": 12,
-                "cross": "center",
-                "children": [
-                  {
-                    "kind": "Expanded",
+            "child": {
+              "kind": "Row",
+              "gap": 12,
+              "cross": "center",
+              "children": [
+                {
+                  "kind": "Expanded",
+                  "child": {
+                    "kind": "Column",
+                    "gap": 4,
                     "children": [
                       {
-                        "kind": "Column",
-                        "gap": 4,
-                        "children": [
-                          {
-                            "kind": "Text",
-                            "text": "$title"
-                          },
-                          {
-                            "$require": "subtitle",
-                            "kind": "Text",
-                            "text": "$subtitle",
-                            "type": "caption",
-                            "tone": "hint"
-                          }
-                        ]
+                        "kind": "Text",
+                        "text": "$title"
+                      },
+                      {
+                        "$require": "subtitle",
+                        "kind": "Text",
+                        "text": "$subtitle",
+                        "type": "caption",
+                        "color": "hint"
                       }
                     ]
-                  },
-                  {
-                    "$require": "trailing",
-                    "kind": "Text",
-                    "text": "$trailing",
-                    "tone": "hint"
                   }
-                ]
-              }
-            ]
+                },
+                {
+                  "$require": "trailing",
+                  "kind": "Text",
+                  "text": "$trailing",
+                  "color": "hint"
+                }
+              ]
+            }
           }
         }
       ]
@@ -514,8 +548,8 @@
           "type": "string"
         },
         {
-          "name": "tone",
-          "type": "tone",
+          "name": "color",
+          "type": "color",
           "default": "normal"
         },
         {
@@ -537,7 +571,7 @@
             "trailing": "$trailing",
             "image": "$image",
             "icon": "$icon",
-            "tone": "$tone",
+            "color": "$color",
             "selected": "$selected",
             "action": "$action"
           }
@@ -598,8 +632,8 @@
           "default": true
         },
         {
-          "name": "tone",
-          "type": "tone",
+          "name": "color",
+          "type": "color",
           "default": "accent"
         }
       ],
@@ -611,7 +645,7 @@
             "height": "$height",
             "glyphStyle": "$glyphStyle",
             "showLast": "$showLast",
-            "tone": "$tone"
+            "color": "$color"
           }
         }
       ]
@@ -653,14 +687,12 @@
               },
               {
                 "kind": "Expanded",
-                "children": [
-                  {
-                    "kind": "Progress",
-                    "value": "$value",
-                    "total": "$total",
-                    "unit": "$unit"
-                  }
-                ]
+                "child": {
+                  "kind": "Progress",
+                  "value": "$value",
+                  "total": "$total",
+                  "unit": "$unit"
+                }
               }
             ]
           }

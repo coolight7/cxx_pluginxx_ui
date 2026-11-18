@@ -44,9 +44,10 @@ const Set<String> _fieldTypes = <String>{
   'size',
   'value',
   'edges',
-  'tone',
+  'color',
   'action',
   'items',
+  'item',
   'pairs',
   'columns',
   'rows',
@@ -54,7 +55,7 @@ const Set<String> _fieldTypes = <String>{
   'options',
   'thresholds',
   'numbers',
-  'tones',
+  'colors',
   'json',
   'listItems',
   'menuItems',
@@ -370,7 +371,7 @@ class UiDef {
         'trailing',
         'image',
         'icon',
-        'tone',
+        'color',
         'selected',
         'path',
         'isDir',
@@ -395,9 +396,9 @@ class UiDef {
           _checkNode(child, '$itemWhat.custom[]', 1);
         }
       }
-      final Object? tone = item['tone'];
-      if (tone is String && !enums['tone']!.contains(tone)) {
-        _fail('$itemWhat.tone 的取值 `$tone` 不在枚举 tone 中');
+      final Object? color = item['color'];
+      if (color is String && !enums['color']!.contains(color)) {
+        _fail('$itemWhat.color 的取值 `$color` 不在枚举 color 中');
       }
       if (item.containsKey('action')) {
         _checkAction(item['action'], '$itemWhat.action');
@@ -481,6 +482,8 @@ class UiDef {
         for (final Object? child in _list(entry.value, '$what.$name')) {
           _checkNode(child, '$what.$name[]', depth + 1);
         }
+      } else if (type == 'item') {
+        _checkNode(entry.value, '$what.$name', depth + 1);
       }
     }
   }
@@ -1297,7 +1300,7 @@ class Generator {
     out
       ..writeln()
       ..writeln('`*` = 必填。字段类型：`size` = 上面三种尺寸形态；`edges` = 四边数值；`text` = TextValue；')
-      ..writeln('`action` = 上面四种动作；`items` = 子块数组；其余同名。')
+      ..writeln('`action` = 上面四种动作；`item` = 一个子块（对象）；`items` = 子块数组；其余同名。')
       ..writeln()
       ..writeln('## 适配规则（客户端不支持的块怎么降级）')
       ..writeln()
@@ -1413,7 +1416,8 @@ class Generator {
         'listItems' => 'List<Object?>',
         'menuItems' => 'List<Object?>',
         'numbers' => 'List<num>',
-        'tone' => 'String',
+        'item' => 'Map<String, Object?>',
+        'color' => 'String',
         'string' => 'String',
         _ => 'Object',
       };

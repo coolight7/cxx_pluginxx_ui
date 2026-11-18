@@ -30,12 +30,12 @@ String _clampBytes(String text, int maxBytes) {
   return text.substring(0, cut);
 }
 
-ItemData _makeText(String text, {bool mono = false, String textType = 'body', String tone = 'normal', UiAction? action}) {
+ItemData _makeText(String text, {bool mono = false, String textType = 'body', String color = 'normal', UiAction? action}) {
   final ItemData item = ItemData(kind: 'Text');
   item.text = TextValue.of(text);
   item.mono = mono;
   item.textType = textType;
-  item.tone = tone;
+  item.color = color;
   item.action = action;
   return item;
 }
@@ -68,8 +68,8 @@ ItemData _applyCapabilityAdjust(ItemData item, PluginCapabilities caps) {
 
 
 ItemData _degradeToText(ItemData source, String text,
-        {bool mono = false, String textType = 'body', String tone = 'normal'}) =>
-    _makeText(text, mono: mono, textType: textType, tone: tone, action: source.action);
+        {bool mono = false, String textType = 'body', String color = 'normal'}) =>
+    _makeText(text, mono: mono, textType: textType, color: color, action: source.action);
 
 /// `flatten` 要展开的子块
 ///
@@ -109,7 +109,7 @@ void _adaptNestedBlocks(
                 trailing: item.trailing,
                 image: item.image,
                 icon: item.icon,
-                tone: item.tone,
+                color: item.color,
                 selected: item.selected,
                 path: item.path,
                 isDir: item.isDir,
@@ -149,7 +149,7 @@ List<ItemData> _adaptItem(
   // 未识别的组件：有 fallback 就显示它，否则跳过
   if (!item.known) {
     if (item.fallback.isNotEmpty) {
-      out.add(_degradeToText(item, item.fallback, textType: 'caption', tone: 'hint'));
+      out.add(_degradeToText(item, item.fallback, textType: 'caption', color: 'hint'));
     } else {
       report?.note('跳过未识别的组件（没有 fallback）');
     }
@@ -231,9 +231,9 @@ List<ItemData> _adaptItem(
     case AdaptRule.glyphText:
       final String text = item.glyph.isNotEmpty ? item.glyph : item.icon;
       if (text.isNotEmpty) {
-        out.add(_degradeToText(item, text, mono: true, tone: item.tone));
+        out.add(_degradeToText(item, text, mono: true, color: item.color));
       } else if (item.fallback.isNotEmpty) {
-        out.add(_degradeToText(item, item.fallback, textType: 'caption', tone: 'hint'));
+        out.add(_degradeToText(item, item.fallback, textType: 'caption', color: 'hint'));
       } else {
         report?.note('${item.kind} 不支持且没有 glyph/name，跳过');
       }
@@ -241,9 +241,9 @@ List<ItemData> _adaptItem(
     case AdaptRule.altText:
       final String text = item.alt.resolve();
       if (text.isNotEmpty) {
-        out.add(_degradeToText(item, text, tone: item.tone));
+        out.add(_degradeToText(item, text, color: item.color));
       } else if (item.fallback.isNotEmpty) {
-        out.add(_degradeToText(item, item.fallback, textType: 'caption', tone: 'hint'));
+        out.add(_degradeToText(item, item.fallback, textType: 'caption', color: 'hint'));
       } else {
         report?.note('${item.kind} 不支持且没有 alt，跳过');
       }
@@ -254,7 +254,7 @@ List<ItemData> _adaptItem(
       text = text.isEmpty ? plainTextItem(item) : text;
       if (text.isNotEmpty) {
         report?.note('${item.kind} 不支持，退成文本');
-        out.add(_degradeToText(item, text, mono: true, tone: item.tone));
+        out.add(_degradeToText(item, text, mono: true, color: item.color));
       } else {
         report?.note('${item.kind} 不支持且没有可显示的文本，跳过');
       }

@@ -129,18 +129,28 @@ void main() {
       <String, Object?>{
         'kind': 'Block',
         'title': '卡片',
-        'children': <Object?>[
-          <String, Object?>{'kind': 'Text', 'text': '内容'},
-          <String, Object?>{'kind': 'Text', 'text': '第二行'},
-        ],
+        'child': <String, Object?>{'kind': 'Text', 'text': '内容'},
       },
     ]);
     final List<ItemData> out = adaptBlocks(items, caps);
-    expect(out.length, 3);
+    expect(out.length, 2);
     expect(out[0].kind, 'Text');
     expect(out[0].text.fallback, '卡片');
     expect(out[1].text.fallback, '内容');
-    expect(out[2].text.fallback, '第二行');
+  });
+
+  test('单块容器给两块时只画第一块', () {
+    final ParseReport report = ParseReport();
+    final ItemData item = parseBlock(<String, Object?>{
+      'kind': 'Block',
+      'child': <Object?>[
+        <String, Object?>{'kind': 'Text', 'text': '第一块'},
+        <String, Object?>{'kind': 'Text', 'text': '第二块'},
+      ],
+    }, report: report);
+    expect(item.children.length, 1);
+    expect(item.children.first.text.fallback, '第一块');
+    expect(report.warnings.any((String w) => w.contains('只画第一块')), isTrue);
   });
 
   test('不支持的可选块退成纯文本', () {
@@ -166,7 +176,7 @@ void main() {
     expect(out.length, 1);
     expect(out[0].kind, 'Text');
     expect(out[0].text.fallback, '兜底文本');
-    expect(out[0].tone, 'hint');
+    expect(out[0].color, 'hint');
   });
 
   test('控件形态不支持时退成只读文本', () {
@@ -214,7 +224,25 @@ void main() {
     expect(adaptRuleOf('Stack'), AdaptRule.lastChild);
     expect(adaptRuleOf('Image'), AdaptRule.altText);
     expect(adaptRuleOf('Block'), AdaptRule.flatten);
+    expect(adaptRuleOf('ThemeScope'), AdaptRule.flatten);
     expect(adaptRuleOf('Text'), AdaptRule.terminal);
     expect(kAdaptRules.length, kBlockTable.length);
+  });
+
+  test('不支持 ThemeScope 时只展开内容（样式不生效）', () {
+    final PluginCapabilities caps = capsWithout(<String>['ThemeScope']);
+    final List<ItemData> items = parseBlocks(<Object?>[
+      <String, Object?>{
+        'kind': 'ThemeScope',
+        'data': <String, Object?>{
+          'text': <String, Object?>{'main': '#ffffffff'},
+        },
+        'child': <String, Object?>{'kind': 'Text', 'text': '还在'},
+      },
+    ]);
+    final List<ItemData> out = adaptBlocks(items, caps);
+    expect(out.length, 1);
+    expect(out[0].kind, 'Text');
+    expect(out[0].text.fallback, '还在');
   });
 }

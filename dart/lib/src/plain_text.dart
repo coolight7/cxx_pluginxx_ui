@@ -170,8 +170,10 @@ String? _itemText(ItemData item, _Ctx ctx) {
     case 'Gap':
       return '';
     case 'Button':
+      // 没写 label 的纯图标按钮：纯文本里用 glyph 兜底
       final String label = text(item.label);
-      return label.isEmpty ? null : '[$label]';
+      final String value = label.isNotEmpty ? label : item.glyph;
+      return value.isEmpty ? null : '[$value]';
     case 'Block':
       final String head = text(item.title);
       final String body = _childrenText(item.children, ctx);
@@ -210,6 +212,10 @@ String? _itemText(ItemData item, _Ctx ctx) {
       }
       final String body = _childrenText(item.children, ctx);
       return body.isEmpty ? head : '$head\n${_indentLines(body, '  ')}';
+    case 'ThemeScope':
+      // 纯样式容器：纯文本只看子块（样式在文本里没有对应形态）
+      final String body = _childrenText(item.children, ctx);
+      return body.isEmpty ? null : body;
     case 'KV':
       int keyWidth = 0;
       for (final KeyValuePair pair in item.pairs) {

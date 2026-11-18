@@ -23,7 +23,7 @@ namespace ui {
 namespace kit {
 
 /// kit 版本
-inline constexpr int kKitVersion = 2;
+inline constexpr int kKitVersion = 3;
 
 /// 组件模板（键 = 组件名，值是 {variants, params} 的 JSON 文本）
 inline pluginxx::ui::Json kitTemplate(const std::string_view name) {
@@ -31,25 +31,27 @@ inline pluginxx::ui::Json kitTemplate(const std::string_view name) {
         {"title",
          R"KIT({"variants":[{"template":{"kind":"Text","text":"$text","type":"title"}}],"params":{"text":null}})KIT"},
         {"hint",
-         R"KIT({"variants":[{"template":{"kind":"Text","text":"$text","type":"caption","tone":"hint"}}],"params":{"text":null}})KIT"},
+         R"KIT({"variants":[{"template":{"kind":"Text","text":"$text","type":"caption","color":"hint"}}],"params":{"text":null}})KIT"},
         {"text",
-         R"KIT({"variants":[{"template":{"kind":"Text","text":"$text","tone":"$tone","mono":"$mono"}}],"params":{"text":null,"tone":"normal","mono":false}})KIT"},
+         R"KIT({"variants":[{"template":{"kind":"Text","text":"$text","color":"$color","mono":"$mono"}}],"params":{"text":null,"color":"normal","mono":false}})KIT"},
         {"badge",
-         R"KIT({"variants":[{"template":{"kind":"Badge","text":"$text","tone":"$tone"}}],"params":{"text":null,"tone":"accent"}})KIT"},
+         R"KIT({"variants":[{"template":{"kind":"Badge","text":"$text","color":"$color"}}],"params":{"text":null,"color":"accent"}})KIT"},
         {"icon",
-         R"KIT({"variants":[{"requires":["Icon"],"template":{"kind":"Icon","name":"$name","glyph":"$glyph","size":"$size","tone":"$tone"}},{"template":{"kind":"Text","text":"$glyph","mono":true,"tone":"$tone"}}],"params":{"name":null,"glyph":null,"size":null,"tone":"normal"}})KIT"},
+         R"KIT({"variants":[{"requires":["Icon"],"template":{"kind":"Icon","name":"$name","glyph":"$glyph","size":"$size","color":"$color"}},{"template":{"kind":"Text","text":"$glyph","mono":true,"color":"$color"}}],"params":{"name":null,"glyph":null,"size":null,"color":"normal"}})KIT"},
         {"gap",
          R"KIT({"variants":[{"template":{"kind":"Gap","size":"$size"}}],"params":{"size":null}})KIT"},
         {"divider",
          R"KIT({"variants":[{"template":{"kind":"Divider"}}],"params":{}})KIT"},
         {"button",
-         R"KIT({"variants":[{"template":{"kind":"Button","label":"$label","variant":"$variant","highlight":"$highlight","icon":"$icon","size":"$size","disabled":"$disabled","action":"$action"}}],"params":{"label":null,"variant":"normal","highlight":false,"icon":null,"size":null,"disabled":false,"action":null}})KIT"},
+         R"KIT({"variants":[{"template":{"kind":"Button","label":"$label","variant":"$variant","highlight":"$highlight","icon":"$icon","glyph":"$glyph","color":"$color","size":"$size","disabled":"$disabled","action":"$action"}}],"params":{"label":null,"variant":"normal","highlight":false,"icon":null,"glyph":null,"color":null,"size":null,"disabled":false,"action":null}})KIT"},
+        {"themeScope",
+         R"KIT({"variants":[{"requires":["ThemeScope"],"template":{"kind":"ThemeScope","data":"$data","child":"$child"}},{"template":"$child"}],"params":{"child":null,"data":null}})KIT"},
         {"actionsRow",
-         R"KIT({"variants":[{"template":{"kind":"Row","gap":12,"children":{"$map":"buttons","wrap":{"kind":"Expanded","children":["$item"]}}}}],"params":{"buttons":null}})KIT"},
+         R"KIT({"variants":[{"template":{"kind":"Row","gap":12,"children":{"$map":"buttons","wrap":{"kind":"Expanded","child":"$item"}}}}],"params":{"buttons":null}})KIT"},
         {"card",
-         R"KIT({"variants":[{"template":{"kind":"Block","title":"$title","variant":"$variant","padding":"$padding","margin":"$margin","children":"$children"}}],"params":{"title":null,"variant":"card","padding":null,"margin":null,"children":null}})KIT"},
+         R"KIT({"variants":[{"template":{"kind":"Block","title":"$title","variant":"$variant","padding":"$padding","margin":"$margin","child":"$child"}}],"params":{"title":null,"variant":"card","padding":null,"margin":null,"child":null}})KIT"},
         {"listRow",
-         R"KIT({"variants":[{"template":{"kind":"Block","variant":"inset","padding":{"horizontal":12,"vertical":8},"action":"$action","children":[{"kind":"Row","gap":12,"cross":"center","children":[{"kind":"Expanded","children":[{"kind":"Column","gap":4,"children":[{"kind":"Text","text":"$title"},{"$require":"subtitle","kind":"Text","text":"$subtitle","type":"caption","tone":"hint"}]}]},{"$require":"trailing","kind":"Text","text":"$trailing","tone":"hint"}]}]}}],"params":{"title":null,"subtitle":null,"trailing":null,"action":null}})KIT"},
+         R"KIT({"variants":[{"template":{"kind":"Block","variant":"inset","padding":{"horizontal":12,"vertical":8},"action":"$action","child":{"kind":"Row","gap":12,"cross":"center","children":[{"kind":"Expanded","child":{"kind":"Column","gap":4,"children":[{"kind":"Text","text":"$title"},{"$require":"subtitle","kind":"Text","text":"$subtitle","type":"caption","color":"hint"}]}},{"$require":"trailing","kind":"Text","text":"$trailing","color":"hint"}]}}}],"params":{"title":null,"subtitle":null,"trailing":null,"action":null}})KIT"},
         {"section",
          R"KIT({"variants":[{"template":{"kind":"Column","gap":8,"children":[{"kind":"Text","text":"$title","type":"title"},{"kind":"Column","children":"$rows"}]}}],"params":{"title":null,"rows":null}})KIT"},
         {"kv",
@@ -59,13 +61,13 @@ inline pluginxx::ui::Json kitTemplate(const std::string_view name) {
         {"tree",
          R"KIT({"variants":[{"template":{"kind":"Tree","connector":"$connector","nodes":"$nodes"}}],"params":{"nodes":null,"connector":true}})KIT"},
         {"listItem",
-         R"KIT({"variants":[{"template":{"id":"$id","title":"$title","subtitle":"$subtitle","trailing":"$trailing","image":"$image","icon":"$icon","tone":"$tone","selected":"$selected","action":"$action"}}],"params":{"id":null,"title":null,"subtitle":null,"trailing":null,"image":null,"icon":null,"tone":"normal","selected":false,"action":null}})KIT"},
+         R"KIT({"variants":[{"template":{"id":"$id","title":"$title","subtitle":"$subtitle","trailing":"$trailing","image":"$image","icon":"$icon","color":"$color","selected":"$selected","action":"$action"}}],"params":{"id":null,"title":null,"subtitle":null,"trailing":null,"image":null,"icon":null,"color":"normal","selected":false,"action":null}})KIT"},
         {"menuItem",
          R"KIT({"variants":[{"template":{"title":"$title","icon":"$icon","action":"$action"}}],"params":{"title":null,"icon":null,"action":null}})KIT"},
         {"sparkline",
-         R"KIT({"variants":[{"template":{"kind":"Sparkline","data":"$data","height":"$height","glyphStyle":"$glyphStyle","showLast":"$showLast","tone":"$tone"}}],"params":{"data":null,"height":1,"glyphStyle":"block","showLast":true,"tone":"accent"}})KIT"},
+         R"KIT({"variants":[{"template":{"kind":"Sparkline","data":"$data","height":"$height","glyphStyle":"$glyphStyle","showLast":"$showLast","color":"$color"}}],"params":{"data":null,"height":1,"glyphStyle":"block","showLast":true,"color":"accent"}})KIT"},
         {"progressRow",
-         R"KIT({"variants":[{"template":{"kind":"Row","gap":12,"cross":"center","children":[{"$require":"label","kind":"Text","text":"$label"},{"kind":"Expanded","children":[{"kind":"Progress","value":"$value","total":"$total","unit":"$unit"}]}]}}],"params":{"label":null,"value":null,"total":100,"unit":null}})KIT"},
+         R"KIT({"variants":[{"template":{"kind":"Row","gap":12,"cross":"center","children":[{"$require":"label","kind":"Text","text":"$label"},{"kind":"Expanded","child":{"kind":"Progress","value":"$value","total":"$total","unit":"$unit"}}]}}],"params":{"label":null,"value":null,"total":100,"unit":null}})KIT"},
     };
     const auto it = kTable.find(name);
     if (it == kTable.end()) {
@@ -106,7 +108,7 @@ inline pluginxx::ui::Item hint(
 }
 
 /// 正文行
-/// 参数：text(text, 必填)、tone(tone, 默认 normal)、mono(bool, 默认 false)
+/// 参数：text(text, 必填)、color(color, 默认 normal)、mono(bool, 默认 false)
 inline pluginxx::ui::Item text(
     const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
     const pluginxx::ui::Capabilities* env = nullptr
@@ -115,7 +117,7 @@ inline pluginxx::ui::Item text(
 }
 
 /// 状态小标签
-/// 参数：text(text, 必填)、tone(tone, 默认 accent)
+/// 参数：text(text, 必填)、color(color, 默认 accent)
 inline pluginxx::ui::Item badge(
     const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
     const pluginxx::ui::Capabilities* env = nullptr
@@ -124,7 +126,7 @@ inline pluginxx::ui::Item badge(
 }
 
 /// 图标（目标不支持 Icon 时退化成 glyph 文本）
-/// 参数：name(string)、glyph(string)、size(size)、tone(tone, 默认 normal)
+/// 参数：name(string)、glyph(string)、size(size)、color(color, 默认 normal)
 inline pluginxx::ui::Item icon(
     const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
     const pluginxx::ui::Capabilities* env = nullptr
@@ -150,13 +152,22 @@ inline pluginxx::ui::Item divider(
     return pluginxx::ui::detail::expandKit("divider", params, env, &kitTemplate);
 }
 
-/// 按钮
-/// 参数：label(text, 必填)、variant(enum:buttonVariant, 默认 normal)、highlight(bool, 默认 false)、icon(string)、size(size)、disabled(bool, 默认 false)、action(action)
+/// 按钮（不写 label 就是纯图标按钮，图标与文字都没有时用 glyph 当文字；color 定内容色，会盖住选中 / 禁用态）
+/// 参数：label(text)、variant(enum:buttonVariant, 默认 normal)、highlight(bool, 默认 false)、icon(string)、glyph(string)、color(color)、size(size)、disabled(bool, 默认 false)、action(action)
 inline pluginxx::ui::Item button(
     const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
     const pluginxx::ui::Capabilities* env = nullptr
 ) {
     return pluginxx::ui::detail::expandKit("button", params, env, &kitTemplate);
+}
+
+/// 子树样式作用域：包住一块内容，data 由客户端定义（musicxx 用 text / surface / button / mask / shimmer 五组颜色）；客户端不支持时只给内容，样式不生效
+/// 参数：child(item, 必填)、data(json, 必填)
+inline pluginxx::ui::Item themeScope(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
+) {
+    return pluginxx::ui::detail::expandKit("themeScope", params, env, &kitTemplate);
 }
 
 /// 一排等宽按钮（按钮列表里的每一项占一等份）
@@ -169,7 +180,7 @@ inline pluginxx::ui::Item actionsRow(
 }
 
 /// 内容块（卡片）
-/// 参数：title(text)、variant(enum:blockVariant, 默认 card)、padding(edges)、margin(edges)、children(items)
+/// 参数：title(text)、variant(enum:blockVariant, 默认 card)、padding(edges)、margin(edges)、child(item)
 inline pluginxx::ui::Item card(
     const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
     const pluginxx::ui::Capabilities* env = nullptr
@@ -223,7 +234,7 @@ inline pluginxx::ui::Item tree(
 }
 
 /// 列表项（数据对象，给 ListViewBase / ListView 的 items 用）
-/// 参数：id(string)、title(text, 必填)、subtitle(text)、trailing(text)、image(string)、icon(string)、tone(tone, 默认 normal)、selected(bool, 默认 false)、action(action)
+/// 参数：id(string)、title(text, 必填)、subtitle(text)、trailing(text)、image(string)、icon(string)、color(color, 默认 normal)、selected(bool, 默认 false)、action(action)
 inline utilxx_base::Json listItem(
     const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
     const pluginxx::ui::Capabilities* env = nullptr
@@ -241,7 +252,7 @@ inline utilxx_base::Json menuItem(
 }
 
 /// 迷你趋势图
-/// 参数：data(numbers, 必填)、height(int, 默认 1)、glyphStyle(enum:sparkStyle, 默认 block)、showLast(bool, 默认 true)、tone(tone, 默认 accent)
+/// 参数：data(numbers, 必填)、height(int, 默认 1)、glyphStyle(enum:sparkStyle, 默认 block)、showLast(bool, 默认 true)、color(color, 默认 accent)
 inline pluginxx::ui::Item sparkline(
     const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
     const pluginxx::ui::Capabilities* env = nullptr

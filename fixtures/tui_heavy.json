@@ -35,6 +35,6 @@
     { "kind": "Sparkline", "data": [3, 3, 9], "height": 1, "glyphStyle": "bar", "showLast": false },
     { "kind": "Divider" },
     { "kind": "Progress", "value": 0, "total": 100, "showValue": true },
-    { "kind": "Align", "align": "center", "children": [{ "kind": "Badge", "text": "居中标签" }] }
+    { "kind": "Align", "align": "center", "child": { "kind": "Badge", "text": "居中标签" } }
   ]
 }

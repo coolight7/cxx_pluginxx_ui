@@ -59,7 +59,7 @@ inline Item title(std::string_view value) {
 inline Item caption(std::string_view value) {
     Item item = text(value);
     item.textType = "caption";
-    item.tone     = "hint";
+    item.color     = "hint";
     return item;
 }
 
@@ -173,10 +173,10 @@ inline Item button(std::string_view label, Action action = {},
     return item;
 }
 
-inline Item badge(std::string_view value, std::string_view tone = "accent") {
+inline Item badge(std::string_view value, std::string_view color = "accent") {
     Item item = node("Badge");
     item.text = TextValue::of(value);
-    item.tone.assign(tone);
+    item.color.assign(color);
     return item;
 }
 

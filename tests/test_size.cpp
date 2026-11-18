@@ -70,7 +70,7 @@ PLUGINXX_UI_TEST(开发期检查提示非整数倍与混用) {
         {"kind":"Gap","size":11},
         {"kind":"Row","children":[
             {"kind":"SizedBox","width":40},
-            {"kind":"Expanded","children":[{"kind":"Text","text":"x"}]}
+            {"kind":"Expanded","child":{"kind":"Text","text":"x"}}
         ]},
         {"kind":"Text","text":"x","wrap":false,"maxLines":2}
     ])"));
@@ -102,7 +102,7 @@ PLUGINXX_UI_TEST(尺寸字段在模型里的三种形态) {
     PLUGINXX_UI_CHECK(percent.height.isAuto(), "没给的高度是 auto");
 
     const Item edges = pluginxx::ui::parseBlock(Json::parse(
-        R"({"kind":"Padding","padding":{"horizontal":20,"top":8},"children":[]})"
+        R"({"kind":"Padding","padding":{"horizontal":20,"top":8},"child":null})"
     ));
     PLUGINXX_UI_CHECK_EQ(edges.padding.left, 20.0, "左右取 horizontal");
     PLUGINXX_UI_CHECK_EQ(edges.padding.top, 8.0, "单边优先");

@@ -67,7 +67,7 @@ void main() {
       <String, Object?>{
         'kind': 'Padding',
         'padding': 16,
-        'children': <Object?>[<String, Object?>{'kind': 'Text', 'text': 'abc'}],
+        'child': <String, Object?>{'kind': 'Text', 'text': 'abc'},
       },
     ]);
     expect(plainText(items), '  abc');
@@ -77,7 +77,7 @@ void main() {
       <String, Object?>{
         'kind': 'Padding',
         'padding': 16,
-        'children': <Object?>[<String, Object?>{'kind': 'Text', 'text': 'abcdefgh'}],
+        'child': <String, Object?>{'kind': 'Text', 'text': 'abcdefgh'},
       },
     ]);
     expect(plainText(wrapped, width: 6), '  abcd\n  efgh');
@@ -86,7 +86,7 @@ void main() {
       <String, Object?>{
         'kind': 'Padding',
         'padding': <String, Object?>{'left': 3, 'top': 40, 'right': 40, 'bottom': 40},
-        'children': <Object?>[<String, Object?>{'kind': 'Text', 'text': 'x'}],
+        'child': <String, Object?>{'kind': 'Text', 'text': 'x'},
       },
     ]);
     expect(plainText(others), 'x');
@@ -97,7 +97,7 @@ void main() {
       <String, Object?>{
         'kind': 'Block',
         'title': '卡片',
-        'children': <Object?>[<String, Object?>{'kind': 'Text', 'text': '内容'}],
+        'child': <String, Object?>{'kind': 'Text', 'text': '内容'},
       },
       <String, Object?>{
         'kind': 'Row',
@@ -112,7 +112,7 @@ void main() {
         'id': 'x',
         'title': '折叠',
         'expanded': false,
-        'children': <Object?>[<String, Object?>{'kind': 'Text', 'text': '隐藏'}],
+        'child': <String, Object?>{'kind': 'Text', 'text': '隐藏'},
       },
       <String, Object?>{'kind': 'Icon', 'glyph': '▶'},
       <String, Object?>{'kind': 'Image', 'alt': '封面'},
@@ -168,6 +168,21 @@ void main() {
     expect(displayWidth('abc'), 3);
     expect(displayWidth('中文'), 4);
     expect(displayWidth('a中b'), 4);
+  });
+
+  test('纯文本：ThemeScope 只看内容，Button 没 label 用 glyph', () {
+    final List<ItemData> items = parseBlocks(<Object?>[
+      <String, Object?>{
+        'kind': 'ThemeScope',
+        'data': <String, Object?>{
+          'text': <String, Object?>{'main': '#ff000000'},
+        },
+        'child': <String, Object?>{'kind': 'Text', 'text': '带样式的子块'},
+      },
+      <String, Object?>{'kind': 'Button', 'glyph': '▶', 'variant': 'simple'},
+      <String, Object?>{'kind': 'Button'},
+    ]);
+    expect(plainText(items), '带样式的子块\n[▶]');
   });
 
   test('纯文本与 C++ 侧逐字节一致（金文件）', () {

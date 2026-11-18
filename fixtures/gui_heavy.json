@@ -18,10 +18,13 @@
         },
         {
           "kind": "Expanded",
-          "children": [
-            { "kind": "Text", "text": "歌名", "type": "title" },
-            { "kind": "Text", "text": "歌手", "type": "caption", "tone": "hint" }
-          ]
+          "child": {
+            "kind": "Column",
+            "children": [
+              { "kind": "Text", "text": "歌名", "type": "title" },
+              { "kind": "Text", "text": "歌手", "type": "caption", "color": "hint" }
+            ]
+          }
         },
         { "kind": "Icon", "name": "play", "glyph": "▶", "size": 24 }
       ]
@@ -31,7 +34,7 @@
       "align": "center",
       "children": [
         { "kind": "Image", "source": "url", "src": "https://example.com/a.png", "alt": "底图" },
-        { "kind": "Badge", "text": "NEW", "tone": "accent" }
+        { "kind": "Badge", "text": "NEW", "color": "accent" }
       ]
     },
     { "kind": "SizedBox", "width": { "percent": 60 }, "height": 80 },

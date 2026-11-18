@@ -14,6 +14,8 @@
 using pluginxx::ui::AdaptReport;
 using pluginxx::ui::Capabilities;
 using pluginxx::ui::Item;
+using pluginxx::ui::Limits;
+using pluginxx::ui::ParseReport;
 using utilxx_base::Json;
 
 namespace {
@@ -135,17 +137,27 @@ PLUGINXX_UI_TEST(终端能力下降级为文本) {
 PLUGINXX_UI_TEST(容器不支持时展开子块) {
     const Capabilities caps = capsWithout({"Block", "Padding", "Align", "Collapse"});
     const std::vector<Item> items = pluginxx::ui::parseBlocks(Json::parse(R"([
-        {"kind":"Block","title":"卡片","children":[
-            {"kind":"Text","text":"内容"},
-            {"kind":"Text","text":"第二行"}
-        ]}
+        {"kind":"Block","title":"卡片","child":{"kind":"Text","text":"内容"}}
     ])"));
     const auto out = pluginxx::ui::adaptBlocks(items, caps);
-    PLUGINXX_UI_CHECK_EQ(out.size(), static_cast<std::size_t>(3), "标题行 + 两个子块");
+    PLUGINXX_UI_CHECK_EQ(out.size(), static_cast<std::size_t>(2), "标题行 + 子块");
     PLUGINXX_UI_CHECK_EQ(out[0].kind, std::string("Text"), "标题变成文本");
     PLUGINXX_UI_CHECK_EQ(out[0].text.fallback, std::string("卡片"), "标题内容");
-    PLUGINXX_UI_CHECK_EQ(out[1].text.fallback, std::string("内容"), "子块一");
-    PLUGINXX_UI_CHECK_EQ(out[2].text.fallback, std::string("第二行"), "子块二");
+    PLUGINXX_UI_CHECK_EQ(out[1].text.fallback, std::string("内容"), "子块");
+}
+
+PLUGINXX_UI_TEST(单块容器给两块时只画第一块) {
+    ParseReport report;
+    const Item  item = pluginxx::ui::parseBlock(
+        Json::parse(R"({"kind":"Block","child":[
+            {"kind":"Text","text":"第一块"},
+            {"kind":"Text","text":"第二块"}
+        ]})"),
+        Limits{}, &report
+    );
+    PLUGINXX_UI_CHECK_EQ(item.children.size(), static_cast<std::size_t>(1), "只收一块");
+    PLUGINXX_UI_CHECK_EQ(item.children.front().text.fallback, std::string("第一块"), "取第一块");
+    PLUGINXX_UI_CHECK_EQ(report.warnings.size(), static_cast<std::size_t>(1), "记了一条提示");
 }
 
 PLUGINXX_UI_TEST(不支持的可选块退成纯文本) {
@@ -170,7 +182,7 @@ PLUGINXX_UI_TEST(未知组件用兜底文本) {
     PLUGINXX_UI_CHECK_EQ(out.size(), static_cast<std::size_t>(1), "保留一个块");
     PLUGINXX_UI_CHECK_EQ(out[0].kind, std::string("Text"), "变成文本");
     PLUGINXX_UI_CHECK_EQ(out[0].text.fallback, std::string("兜底文本"), "用 fallback");
-    PLUGINXX_UI_CHECK_EQ(out[0].tone, std::string("hint"), "次要样式");
+    PLUGINXX_UI_CHECK_EQ(out[0].color, std::string("hint"), "次要样式");
 }
 
 PLUGINXX_UI_TEST(控件形态不支持时退成只读文本) {
@@ -206,7 +218,7 @@ PLUGINXX_UI_TEST(层数上限按客户端能力截断) {
     Capabilities caps = Capabilities::full();
     caps.limits.maxDepth = 1;
     const std::vector<Item> items = pluginxx::ui::parseBlocks(Json::parse(R"([
-        {"kind":"Block","children":[{"kind":"Block","children":[{"kind":"Text","text":"深处"}]}]}
+        {"kind":"Block","child":{"kind":"Block","child":{"kind":"Text","text":"深处"}}}
     ])"));
     AdaptReport report;
     const auto  out = pluginxx::ui::adaptBlocks(items, caps, &report);
@@ -218,6 +230,9 @@ PLUGINXX_UI_TEST(层数上限按客户端能力截断) {
 
 PLUGINXX_UI_TEST(适配规则表与定义一致) {
     PLUGINXX_UI_CHECK(
+        pluginxx::ui::adaptRuleOf("ThemeScope") == pluginxx::ui::AdaptRule::Flatten,
+        "ThemeScope → flatten"
+    );    PLUGINXX_UI_CHECK(
         pluginxx::ui::adaptRuleOf("Stack") == pluginxx::ui::AdaptRule::LastChild, "Stack → lastChild"
     );
     PLUGINXX_UI_CHECK(
