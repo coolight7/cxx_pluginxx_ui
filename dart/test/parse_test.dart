@@ -85,7 +85,7 @@ void main() {
         }).action;
 
     final UiAction? shortForm = actionOf('openSettings');
-    expect(shortForm?.kind, ActionKind.dispatch);
+    expect(shortForm?.kind, ActionKind.call);
     expect(shortForm?.name, 'openSettings');
 
     final UiAction? route = actionOf(<String, Object?>{
@@ -95,19 +95,31 @@ void main() {
     expect(route?.kind, ActionKind.route);
     expect(route?.route, 'ext://demo/settings');
 
-    final UiAction? command = actionOf(<String, Object?>{
-      'kind': 'command',
+    final UiAction? call = actionOf(<String, Object?>{
+      'kind': 'call',
       'name': 'musicxx.player.play',
       'args': <String, Object?>{'x': 1},
+      'timeoutMs': 800,
     });
-    expect(command?.kind, ActionKind.command);
-    expect(command?.args, <String, Object?>{'x': 1});
+    expect(call?.kind, ActionKind.call);
+    expect(call?.name, 'musicxx.player.play');
+    expect(call?.args, <String, Object?>{'x': 1});
+    expect(call?.timeoutMs, 800);
+    expect(call?.isHostCall, isTrue);
+    expect(call?.callsOtherPlugin('demo'), isFalse);
+    expect(
+      actionOf(<String, Object?>{
+        'kind': 'call',
+        'name': 'plugin.other.refresh',
+      })?.callsOtherPlugin('demo'),
+      isTrue,
+    );
 
     expect(actionOf(<String, Object?>{'kind': 'none'}), isNull);
   });
 
   test('动作解析器可直接用（块字段与客户端扩展点共用）', () {
-    expect(parseAction('openSettings')?.kind, ActionKind.dispatch);
+    expect(parseAction('openSettings')?.kind, ActionKind.call);
     expect(parseAction('openSettings')?.name, 'openSettings');
     expect(
       parseAction(<String, Object?>{'kind': 'ROUTE', 'route': 'ext://demo/card'})?.route,

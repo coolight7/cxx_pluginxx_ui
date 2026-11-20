@@ -148,19 +148,21 @@ struct TextValue {
 
 // ===== 动作与控件 =====
 
-/// 动作：`dispatch`（交回内容归属方处理）/ `route`（跳转）/ `command`（客户端官方动作）
+/// 动作：`call`（调能力）/ `route`（跳转）/ `none`
 struct Action {
     enum class Kind : std::uint8_t {
-        None     = 0,
-        Dispatch = 1,
-        Route    = 2,
-        Command  = 3,
+        None = 0,
+        Call = 1,
+        Route = 2,
     };
 
     Kind        kind = Kind::None;
-    std::string name;     ///< dispatch / command 的动作名
+    std::string name;     ///< call 的能力名（短名 / `plugin.<插件id>.<名字>` / `musicxx.*`）
     std::string route;    ///< route 的目标地址
     std::string argsJson; ///< 动作参数（紧凑 JSON 对象文本）
+
+    /// call 的等待上限（毫秒；0 = 不额外收紧，由应用声明与实现者决定）
+    int timeoutMs = 0;
 
     bool empty() const {
         return kind == Kind::None;
@@ -465,6 +467,15 @@ struct Item {
     /// **通用载体**：含义由客户端定义（musicxx 的配色规格在包内 `lib/src/ui_theme.dart`），
     /// 解析与序列化都原样往返，库不解释内容。
     std::string themeDataJson;
+
+    // ---- 通用块：UISlot（在界面里嵌一个槽位） ----
+    std::string slot;         ///< UISlot.slot（槽位 id）
+    std::string slotArgsJson; ///< UISlot.args（传给嵌套槽位的上下文）
+
+    /// UISlot.fallback（0 或 1 项）：没有内容时画的块
+    ///
+    /// 写成 vector 是为了能放在 `Item` 里（`Item` 不能按值包含自己）。
+    std::vector<Item> slotFallback;
 
     Action      action;   ///< 点击动作（可点组件）
     std::string fallback; ///< 客户端不认识这个块时显示的文本

@@ -1,4 +1,4 @@
-# 组件描述 schema v3
+# 组件描述 schema v4
 
 > 本文件由 `tools/gen_ui.dart` 生成，源是 `schema/ui.def.json`。
 
@@ -37,15 +37,40 @@
 字符串，或 `{ "key": "i18n.key", "fallback": "缺键时的文本", "args": { "n": 3 } }`。
 客户端优先按 `key` 取自己的语言表，取不到用 `fallback`；`args` 用于 `{n}` 这类命名占位替换。
 
+## 值位置：字面量 / 变量 / 插值 / 表达式
+
+尺寸、`visible`、`Progress.value`、文本、过渡块的 `value`、`AnimatedBuilder` 的通道、着色器参数这类"值位置"接受**四种写法**：
+
+```jsonc
+12                                       // 1. 字面量
+{ "var": "musicxx.song.name" }            // 2. 变量绑定（渲染前算一次）
+"当前歌曲 {musicxx.song.name}"             // 3. 字符串插值（渲染前算一次）
+{ "kind": "smooth", "of": { "kind": "source", "name": "musicxx.spectrum.level" } }  // 4. 值表达式（可能每帧算）
+```
+
+| 写法 | 什么时候算 | 说明 |
+|---|---|---|
+| 字面量 | —— | 原值 |
+| `{"var": id, "default"?, "unit"?}` | 每次构建前 | 取不到值时用 `default`，没有 `default` 就按"这个键没写"处理；`unit: "percent"` 把数字变成 `{"percent": n}` |
+| 字符串里的 `{变量 id}` | 每次构建前 | 转义：`\{` → 字面量 `{`，`\\` → 字面量 `\`；不是变量 id 时按 `TextValue.args` 的同名参数替换（`{n}` 继续可用），都没有就换空串并记一条 `missing` |
+| `{"kind": …}` | 每帧 / 每次构建 | 与着色器参数同一套引擎（节点表见 `docs/value-runtime.md`）；`source` 先按变量表解析，再回落到客户端提供的派生来源 |
+
+变量 id 三种前缀：`musicxx.*`（客户端状态）、`scope:musicxx.*`（当前槽位作用域）、`plugin.<插件 id>.*`（插件广播频道，可跨插件）。声明用到的变量（内容的 `deps`）才会被订阅，也只有它们进 `context`。
+
 ## 动作
 
 ```jsonc
-"action": "openSettings"                                  // 短写 = dispatch
-"action": { "kind": "dispatch", "name": "openSettings", "args": {} }
-"action": { "kind": "route",    "route": "ext://demo/settings" }
-"action": { "kind": "command",  "name": "musicxx.player.play" }
+"action": "openSettings"                                  // 短写 = call（回自己）
+"action": { "kind": "call", "name": "openSettings" }
+"action": { "kind": "call", "name": "plugin.other.refresh", "args": {}, "timeoutMs": 800 }
+"action": { "kind": "call", "name": "musicxx.player.play" }
+"action": { "kind": "route", "route": "ext://demo/settings" }
 "action": { "kind": "none" }
 ```
+
+`call` 的能力名按前缀决定交给谁：短名回自己、`plugin.<插件 id>.<名字>` 找那个插件、`musicxx.*` 找客户端。`timeoutMs` 只收紧这一次的等待（不写 = 由客户端声明与实现者决定）。
+
+动作**不返回界面**：要改画面就重新生成内容（`musicxx.ui.slot.update` 或 `push`）。
 
 控件只在**值变化时立即派发**自己的动作，客户端把 `{"id":…,"value":…}` 合并进参数
 （冲突时以客户端补的为准）；库不提供表单提交层，需要"保存"就自己放一个 `Button`。
@@ -106,6 +131,7 @@
 | `musicxx.SlideTransition` | client | musicxx | `from` `to` `value` `curve` `child` | 位移动画：按 value（0~1）从 from 移到 to（单位 = 自身尺寸的倍数；其他客户端展开子节点） |
 | `musicxx.ScaleTransition` | client | musicxx | `from` `to` `value` `curve` `child` | 缩放动画：按 value（0~1）从 from 缩放到 to（其他客户端展开子节点） |
 | `musicxx.RotationTransition` | client | musicxx | `from` `to` `value` `curve` `child` | 旋转动画：按 value（0~1）从 from 转到 to（单位 = 圈数；其他客户端展开子节点） |
+| `UISlot` | optional | — | `slot`* `args` `fallback` | 在那位置渲染另一个槽位的内容：可以是应用预留的槽位，也可以是插件自己声明（musicxx.ui.slot.define）的槽位。作用域变量继续有效，并额外提供 scope:musicxx.slot.args（块上的 args）；没有注册内容、内容解析不出来、槽位被撤销或嵌套循环时画 fallback，没有 fallback 就不占位。只接受 insert / replace 两种槽位，嵌套深度最多 4 层 |
 
 `*` = 必填。字段类型：`size` = 上面三种尺寸形态；`edges` = 四边数值；`text` = TextValue；
 `action` = 上面四种动作；`item` = 一个子块（对象）；`items` = 子块数组；其余同名。
@@ -152,6 +178,7 @@
 | `musicxx.SlideTransition` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
 | `musicxx.ScaleTransition` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
 | `musicxx.RotationTransition` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
+| `UISlot` | `skip` | 跳过（无降级形态） |
 
 适配保证收敛：降级结果只包含客户端声明支持的块，最多降到 `Text`（`terminal` 规则）。
 
@@ -159,7 +186,7 @@
 
 ```jsonc
 {
-  "apiVersion": 3,
+  "apiVersion": 4,
   "kind": "gui",                       // tui / gui，只用于粗判断
   "blocks": ["Text", "Divider", "…"],  // 实际支持的块
   "controls": ["buttons", "select", "…"],

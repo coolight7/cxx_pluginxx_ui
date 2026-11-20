@@ -698,6 +698,88 @@
           }
         }
       ]
+    },
+    {
+      "name": "slot",
+      "doc": "在这里渲染一个槽位的内容（应用预留的或插件声明的）；没写 fallback 时不占位",
+      "params": [
+        {
+          "name": "slot",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "args",
+          "type": "json"
+        },
+        {
+          "name": "fallback",
+          "type": "item"
+        }
+      ],
+      "variants": [
+        {
+          "template": {
+            "kind": "UISlot",
+            "slot": "$slot",
+            "args": "$args",
+            "fallback": "$fallback"
+          }
+        }
+      ]
+    },
+    {
+      "name": "textVar",
+      "doc": "一段带变量的文本（字符串里的 {变量 id} 由客户端绑定）",
+      "params": [
+        {
+          "name": "text",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "color",
+          "type": "color",
+          "default": "normal"
+        }
+      ],
+      "variants": [
+        {
+          "template": {
+            "kind": "Text",
+            "text": "$text",
+            "color": "$color"
+          }
+        }
+      ]
+    },
+    {
+      "name": "varValue",
+      "doc": "把某个变量绑定成值（`{\"var\": …}`），可用在尺寸 / 进度 / 开关等值位置",
+      "params": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "fallback",
+          "type": "json"
+        },
+        {
+          "name": "unit",
+          "type": "string"
+        }
+      ],
+      "variants": [
+        {
+          "template": {
+            "var": "$name",
+            "default": "$fallback",
+            "unit": "$unit"
+          }
+        }
+      ]
     }
   ],
   "runtime": [

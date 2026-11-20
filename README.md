@@ -29,7 +29,7 @@ include/pluginxx/ui/
 src/                parse / adapt / plain_text / kit_runtime / lint 的实现
 schema/             **唯一组件定义**（ui.def.json + kit.def.json）
 tools/gen_ui.dart   生成器（生成三份绑定 + 文档 + fixture）
-dart/               Dart 包 `pluginxx_ui`（模型 / 解析 / 适配 / 文本降级 / kit）
+dart/               Dart 包 `pluginxx_ui`（模型 / 解析 / 适配 / 文本降级 / kit + 变量绑定 / 值系统 / 槽位与内容运行时）
 js/pluginxx_ui_kit.js  基础 kit（JS 插件随插件目录分发这一份）
 fixtures/           共享夹具（两端解析/降级/纯文本测试共用）
 docs/               文档（ui-schema.md / kit.md 是生成物；integration.md 是手写的接入指引）
@@ -46,6 +46,19 @@ tests/              C++ 单元测试
 
 三份绑定的**语义一致**由同一套夹具与测试约束：解析/往返、适配（完整 / 终端 / 最小能力）、
 尺寸换算、纯文本（`fixtures/plaintext.golden.json` 逐字节比对）、kit 展开。
+
+## Dart 侧的运行时部分（其余客户端可以照这个实现）
+
+| 文件 | 内容 |
+|---|---|
+| `dart/lib/src/bind.dart` | `bindVariables` / `bindText` / `bindTextValue`：`{"var": …}` 与字符串里的 `{变量 id}`（转义 `\\{` / `\\\\`、`missing` 汇总） |
+| `dart/lib/src/value_runtime.dart` | 值表达式：节点、求值、`smooth` / `tween` / `lfo` 状态、`UiValueSourceResolver` 接口（文档：`docs/value-runtime.md`） |
+| `dart/lib/src/text_runtime.dart` | `resolveTextValue`：语言表查找 + `args` 占位 + 变量插值 + 表达式回调 |
+| `dart/lib/src/size_runtime.dart` | `resolveSize` / `resolveEdges` / `sizeInCells`（纯数学，含终端字符格换算） |
+| `dart/lib/src/slot.dart` | `SlotSpec` / `SlotKind` / `SlotCatalogue` / `SlotChoice`（槽位与可选样式的候选） |
+| `dart/lib/src/content_hub.dart` | `ContentHub`：缓存、激活、依赖订阅、串行刷新（只保留最新一次）、`rev` 排序、绑定 + 解析 + 适配记忆化、嵌套深度与循环保护；客户端实现 `ContentTransport` / `VariableReader` |
+
+这些都不依赖 Flutter，也不含项目业务：渲染器、主题、帧调度、槽位清单数据与变量取值都在客户端。
 
 ## 只放通用内容（依赖库纪律）
 

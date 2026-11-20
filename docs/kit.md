@@ -27,6 +27,9 @@
 | `menuItem` | `title`* `icon` `action` | 菜单项（数据对象，给 ListView 的 menu / itemMenu 用） |
 | `sparkline` | `data`* `height`=1 `glyphStyle`=block `showLast`=true `color`=accent | 迷你趋势图 |
 | `progressRow` | `label` `value`* `total`=100 `unit` | 一行进度（左侧标签 + 进度条） |
+| `slot` | `slot`* `args` `fallback` | 在这里渲染一个槽位的内容（应用预留的或插件声明的）；没写 fallback 时不占位 |
+| `textVar` | `text`* `color`=normal | 一段带变量的文本（字符串里的 {变量 id} 由客户端绑定） |
+| `varValue` | `name`* `fallback` `unit` | 把某个变量绑定成值（`{"var": …}`），可用在尺寸 / 进度 / 开关等值位置 |
 
 按格换算的辅助函数（用客户端 `cell`，缺省取 `defaults.cell`）：
 

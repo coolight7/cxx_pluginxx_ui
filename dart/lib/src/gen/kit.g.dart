@@ -93,6 +93,18 @@ const Map<String, Map<String, Object?>> kKitTemplates = <String, Map<String, Obj
     'params': <String, Object?>{'label': null, 'value': null, 'total': 100, 'unit': null},
     'variants': <Object?>[<String, Object?>{'template': <String, Object?>{'kind': 'Row', 'gap': 12, 'cross': 'center', 'children': <Object?>[<String, Object?>{'\$require': 'label', 'kind': 'Text', 'text': '\$label'}, <String, Object?>{'kind': 'Expanded', 'child': <String, Object?>{'kind': 'Progress', 'value': '\$value', 'total': '\$total', 'unit': '\$unit'}}]}}],
   },
+  'slot': <String, Object?>{
+    'params': <String, Object?>{'slot': null, 'args': null, 'fallback': null},
+    'variants': <Object?>[<String, Object?>{'template': <String, Object?>{'kind': 'UISlot', 'slot': '\$slot', 'args': '\$args', 'fallback': '\$fallback'}}],
+  },
+  'textVar': <String, Object?>{
+    'params': <String, Object?>{'text': null, 'color': 'normal'},
+    'variants': <Object?>[<String, Object?>{'template': <String, Object?>{'kind': 'Text', 'text': '\$text', 'color': '\$color'}}],
+  },
+  'varValue': <String, Object?>{
+    'params': <String, Object?>{'name': null, 'fallback': null, 'unit': null},
+    'variants': <Object?>[<String, Object?>{'template': <String, Object?>{'var': '\$name', 'default': '\$fallback', 'unit': '\$unit'}}],
+  },
 };
 
 /// 按格换算成 u（count 列），env 为空时用库默认格大小
@@ -222,5 +234,23 @@ Map<String, Object?> sparkline({required List<num> data, int? height, Object? gl
 /// 参数：label(text)、value(float, 必填)、total(float, 默认 100)、unit(string)
 Map<String, Object?> progressRow({Object? label, required num value, num? total, String? unit, PluginCapabilities? env}) =>
     KitRuntime.expand('progressRow', <String, Object?>{'label': label, 'value': value, 'total': total, 'unit': unit}, env, kKitTemplates) ??
+        <String, Object?>{};
+
+/// 在这里渲染一个槽位的内容（应用预留的或插件声明的）；没写 fallback 时不占位
+/// 参数：slot(string, 必填)、args(json)、fallback(item)
+Map<String, Object?> slot({required String slot, Object? args, Map<String, Object?>? fallback, PluginCapabilities? env}) =>
+    KitRuntime.expand('slot', <String, Object?>{'slot': slot, 'args': args, 'fallback': fallback}, env, kKitTemplates) ??
+        <String, Object?>{};
+
+/// 一段带变量的文本（字符串里的 {变量 id} 由客户端绑定）
+/// 参数：text(text, 必填)、color(color, 默认 normal)
+Map<String, Object?> textVar({required Object text, String? color, PluginCapabilities? env}) =>
+    KitRuntime.expand('textVar', <String, Object?>{'text': text, 'color': color}, env, kKitTemplates) ??
+        <String, Object?>{};
+
+/// 把某个变量绑定成值（`{"var": …}`），可用在尺寸 / 进度 / 开关等值位置
+/// 参数：name(string, 必填)、fallback(json)、unit(string)
+Map<String, Object?> varValue({required String name, Object? fallback, String? unit, PluginCapabilities? env}) =>
+    KitRuntime.expand('varValue', <String, Object?>{'name': name, 'fallback': fallback, 'unit': unit}, env, kKitTemplates) ??
         <String, Object?>{};
 

@@ -7,7 +7,7 @@ import '../model.dart';
 /// 定义文件结构版本
 const int kSchemaVersion = 2;
 /// 组件词汇版本（新增 kind / 字段 / 枚举值时递增，只增不改）
-const int kUiApiVersion = 3;
+const int kUiApiVersion = 4;
 
 /// 默认留白（u）：Gap.size 的缺省值与基础 kit 的默认行距
 const double kDefaultGap = 12;
@@ -56,6 +56,7 @@ const List<BlockMeta> kBlockTable = <BlockMeta>[
   BlockMeta('musicxx.SlideTransition', BlockLevel.client, 'musicxx', AdaptRule.flatten),
   BlockMeta('musicxx.ScaleTransition', BlockLevel.client, 'musicxx', AdaptRule.flatten),
   BlockMeta('musicxx.RotationTransition', BlockLevel.client, 'musicxx', AdaptRule.flatten),
+  BlockMeta('UISlot', BlockLevel.optional, '', AdaptRule.skip),
 ];
 
 /// 全部组件的名字（顺序与定义文件一致）
@@ -98,6 +99,7 @@ const List<String> kBlockNames = <String>[
   'musicxx.SlideTransition',
   'musicxx.ScaleTransition',
   'musicxx.RotationTransition',
+  'UISlot',
 ];
 
 /// 支持的控制形态（第一版）
@@ -199,9 +201,8 @@ const List<String> kEnumListVariant = <String>[
 /// 枚举 actionKind 的取值
 const List<String> kEnumActionKind = <String>[
   'none',
-  'dispatch',
+  'call',
   'route',
-  'command',
 ];
 
 /// 枚举 sparkStyle 的取值

@@ -43,4 +43,5 @@ const Map<String, AdaptRule> kAdaptRules = <String, AdaptRule>{
   'musicxx.SlideTransition': AdaptRule.flatten,
   'musicxx.ScaleTransition': AdaptRule.flatten,
   'musicxx.RotationTransition': AdaptRule.flatten,
+  'UISlot': AdaptRule.skip,
 };

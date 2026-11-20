@@ -181,7 +181,7 @@ Edges _edges(Object? value, ParseReport? report, String what) {
 
 UiAction? _action(Object? value) {
   if (value is String) {
-    return UiAction(kind: ActionKind.dispatch, name: value);
+    return UiAction(kind: ActionKind.call, name: value);
   }
   final Map<String, Object?>? map = _asMap(value);
   if (null == map) {
@@ -189,12 +189,15 @@ UiAction? _action(Object? value) {
   }
   final String kind = _enum(map, 'kind', kEnumActionKind, 'none');
   switch (kind) {
-    case 'dispatch':
-      return UiAction(kind: ActionKind.dispatch, name: _str(map, 'name'), args: map['args']);
+    case 'call':
+      return UiAction(
+        kind: ActionKind.call,
+        name: _str(map, 'name'),
+        args: map['args'],
+        timeoutMs: _num(map, 'timeoutMs', 0).toInt(),
+      );
     case 'route':
       return UiAction(kind: ActionKind.route, route: _str(map, 'route'));
-    case 'command':
-      return UiAction(kind: ActionKind.command, name: _str(map, 'name'), args: map['args']);
     default:
       return null;
   }
@@ -202,7 +205,7 @@ UiAction? _action(Object? value) {
 
 /// 解析一个动作描述（块字段与客户端扩展点里的 `action` 共用同一套语义）
 ///
-/// 允许字符串短写（= `dispatch`）与 `{kind: dispatch|route|command|none}`
+/// 允许字符串短写（= `{kind: call, name: <短名>}`）与 `{kind: call|route|none}`
 /// （kind 忽略大小写；未知 kind 返回 `null`）。
 UiAction? parseAction(Object? json) => _action(json);
 
@@ -577,6 +580,18 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
       item.rowBodyRatio = _num(json, 'rowBodyRatio', 0.5);
       item.columnBodyRatio = _num(json, 'columnBodyRatio', 0.5);
       item.animate = _bool(json, 'enableAnimations', false);
+      return item;
+    case 'UISlot':
+      // 槽位 id 接受简称（`playing.lyric.top`）与全名（`musicxx.ui.…` / `plugin.<插件>.ui.…`）；
+      // 这里只补全主程序的简称，插件槽位的合法性由客户端的槽位表判定
+      item.slot = _str(json, 'slot');
+      if (item.slot.isEmpty) {
+        ctx.warn('UISlot 缺少 slot（槽位 id），这一块不渲染');
+      }
+      item.slotArgs = json['args'];
+      // `fallback` 是一块（不是文本）：没有内容时画它
+      final List<ItemData> fallbackBlocks = singleChild('fallback', 'UISlot.fallback');
+      item.slotFallback = fallbackBlocks.isEmpty ? null : fallbackBlocks.first;
       return item;
     case 'musicxx.Shader':
       item.bundle = _str(json, 'bundle');
@@ -1010,19 +1025,18 @@ Object? _actionToJson(UiAction? action) {
     return null;
   }
   switch (action.kind) {
-    case ActionKind.dispatch:
-      if (null == action.args) {
+    case ActionKind.call:
+      if (null == action.args && action.timeoutMs <= 0) {
         return action.name;
       }
-      return <String, Object?>{'kind': 'dispatch', 'name': action.name, 'args': action.args};
-    case ActionKind.route:
-      return <String, Object?>{'kind': 'route', 'route': action.route};
-    case ActionKind.command:
       return <String, Object?>{
-        'kind': 'command',
+        'kind': 'call',
         'name': action.name,
         if (null != action.args) 'args': action.args,
+        if (action.timeoutMs > 0) 'timeoutMs': action.timeoutMs,
       };
+    case ActionKind.route:
+      return <String, Object?>{'kind': 'route', 'route': action.route};
     case ActionKind.none:
       return null;
   }
@@ -1458,6 +1472,15 @@ Map<String, Object?> dumpItem(ItemData item) {
       out['columnBodyRatio'] = item.columnBodyRatio;
       if (item.animate) {
         out['enableAnimations'] = true;
+      }
+      break;
+    case 'UISlot':
+      out['slot'] = item.slot;
+      if (null != item.slotArgs) {
+        out['args'] = item.slotArgs;
+      }
+      if (null != item.slotFallback) {
+        out['fallback'] = dumpItem(item.slotFallback!);
       }
       break;
     case 'musicxx.Shader':

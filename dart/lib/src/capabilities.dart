@@ -35,6 +35,87 @@ class Limits {
   final int maxDataPoints;
 }
 
+/// 客户端的槽位支持情况（能力段 `slots`）
+///
+/// 客户端如实上报，插件可以据此决定是否用 `UISlot` 嵌套、要不要写 `fallback`。
+/// 库不做取舍（没有就不会渲染，插件可以在自己的界面里避开）。
+class SlotCapabilities {
+  const SlotCapabilities({
+    this.kinds = const <String>[
+      'insert',
+      'replace',
+      'selectable',
+      'pageBackground',
+      'page',
+      'overlay',
+    ],
+    this.args = true,
+    this.fallback = true,
+    this.declare = true,
+    this.maxNesting = 4,
+  });
+
+  /// 支持哪些槽位形态（`insert` / `replace` / `selectable` / `pageBackground` / `page` / `overlay`）
+  final List<String> kinds;
+
+  /// 是否支持 `UISlot.args`（把上下文传给嵌套槽位）
+  final bool args;
+
+  /// 是否支持 `UISlot.fallback`
+  final bool fallback;
+
+  /// 插件能否声明自己的槽位（`plugin.<插件id>.ui.*`）
+  final bool declare;
+
+  /// 嵌套深度上限（0 = 不支持嵌套）
+  final int maxNesting;
+
+  bool supportsKind(String kind) => kinds.contains(kind.toLowerCase());
+
+  /// 不限制（GUI 客户端的默认能力）
+  static const SlotCapabilities full = SlotCapabilities();
+
+  /// 不支持槽位（只画自己的内容）
+  static const SlotCapabilities none = SlotCapabilities(
+    kinds: <String>[],
+    args: false,
+    fallback: false,
+    declare: false,
+    maxNesting: 0,
+  );
+}
+
+/// 客户端的值系统支持情况（能力段 `values`）
+///
+/// 三种写法可以分别上报：变量绑定 / 字符串插值 / 值表达式。
+/// 终端客户端可以只支持前两种，GUI 客户端三种都支持。
+class ValueCapabilities {
+  const ValueCapabilities({
+    this.bindings = true,
+    this.interpolation = true,
+    this.expressions = true,
+    this.kinds = const <String>[],
+  });
+
+  /// `{"var": …}` 变量绑定
+  final bool bindings;
+
+  /// 字符串里的 `{变量 id}` 插值
+  final bool interpolation;
+
+  /// 值表达式（每帧求值）
+  final bool expressions;
+
+  /// 支持的值表达式节点（空 = 不逐个上报，按全部支持处理）
+  final List<String> kinds;
+
+  static const ValueCapabilities full = ValueCapabilities();
+
+  static const ValueCapabilities plain = ValueCapabilities(
+    expressions: false,
+  );
+}
+
 /// 客户端能力
 class PluginCapabilities {
   PluginCapabilities({
@@ -48,6 +129,8 @@ class PluginCapabilities {
     this.percent = true,
     this.aspect = true,
     this.limits = const Limits(),
+    this.slots = SlotCapabilities.full,
+    this.values = ValueCapabilities.full,
   })  : blocks = blocks ?? <String>[],
         controls = controls ?? <String>[],
         icons = icons ?? <String>[];
@@ -75,6 +158,12 @@ class PluginCapabilities {
   bool percent;
   bool aspect;
   Limits limits;
+
+  /// 槽位支持情况（`UISlot` 嵌套用）
+  SlotCapabilities slots;
+
+  /// 值系统支持情况（变量 / 插值 / 表达式）
+  ValueCapabilities values;
 
   bool supportsBlock(String name) =>
       blocks.any((String item) => item.toLowerCase() == name.toLowerCase());
@@ -113,5 +202,7 @@ class PluginCapabilities {
         controls: <String>[],
         percent: false,
         aspect: false,
+        slots: SlotCapabilities.none,
+        values: ValueCapabilities.plain,
       );
 }

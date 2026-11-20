@@ -188,11 +188,11 @@ Edges edgesOf(const Json& value, ParseReport* report, const std::string& what) {
     };
 }
 
-/// 动作：字符串短写 = dispatch；对象按 kind
+/// 动作：字符串短写 = call；对象按 kind
 Action actionOf(const Json& value) {
     Action action;
     if (value.is_string()) {
-        action.kind = Action::Kind::Dispatch;
+        action.kind = Action::Kind::Call;
         action.name = std::string(value.get_string_view());
         return action;
     }
@@ -201,15 +201,13 @@ Action actionOf(const Json& value) {
     }
     const std::string kind =
         fieldEnum(value, "kind", PLUGINXX_UI_ENUM(gen::kEnumActionKind), "none");
-    if (kind == "dispatch") {
-        action.kind = Action::Kind::Dispatch;
+    if (kind == "call") {
+        action.kind = Action::Kind::Call;
         action.name = fieldString(value, "name");
+        action.timeoutMs = static_cast<int>(fieldNumber(value, "timeoutMs", 0.0));
     } else if (kind == "route") {
         action.kind  = Action::Kind::Route;
         action.route = fieldString(value, "route");
-    } else if (kind == "command") {
-        action.kind = Action::Kind::Command;
-        action.name = fieldString(value, "name");
     }
     if (fieldHas(value, "args")) {
         action.argsJson = jsonText(value["args"]);
@@ -966,6 +964,18 @@ Item parseBlockImpl(const Json& json, const Ctx& ctx, const int depth) {
         }
         return item;
     }
+    if (canonical == "UISlot") {
+        item.slot = fieldString(json, "slot");
+        if (item.slot.empty()) {
+            ctx.warn("UISlot 缺少 slot（槽位 id），这一块不渲染");
+        }
+        if (fieldHas(json, "args")) {
+            item.slotArgsJson = jsonText(json["args"]);
+        }
+        // `fallback` 是一块（不是文本）：没有内容时画它
+        item.slotFallback = parseSingleChild(json, ctx, depth, "UISlot.fallback");
+        return item;
+    }
     return item;
 }
 
@@ -1089,29 +1099,24 @@ Json edgesToJson(const Edges& edges) {
 
 Json actionToJson(const Action& action) {
     switch (action.kind) {
-        case Action::Kind::Dispatch: {
-            if (action.argsJson.empty()) {
+        case Action::Kind::Call: {
+            if (action.argsJson.empty() && action.timeoutMs <= 0) {
                 return Json(action.name);
             }
-            Json out = Json::object({{"kind", Json("dispatch")}, {"name", Json(action.name)}});
-            try {
-                out["args"] = Json::parse(action.argsJson);
-            } catch (...) {
-            }
-            return out;
-        }
-        case Action::Kind::Route:
-            return Json::object({{"kind", Json("route")}, {"route", Json(action.route)}});
-        case Action::Kind::Command: {
-            Json out = Json::object({{"kind", Json("command")}, {"name", Json(action.name)}});
+            Json out = Json::object({{"kind", Json("call")}, {"name", Json(action.name)}});
             if (!action.argsJson.empty()) {
                 try {
                     out["args"] = Json::parse(action.argsJson);
                 } catch (...) {
                 }
             }
+            if (action.timeoutMs > 0) {
+                out["timeoutMs"] = Json(action.timeoutMs);
+            }
             return out;
         }
+        case Action::Kind::Route:
+            return Json::object({{"kind", Json("route")}, {"route", Json(action.route)}});
         case Action::Kind::None:
         default:
             return Json();
@@ -1680,6 +1685,17 @@ Json dumpBlockImpl(const Item& item) {
         out["resolutionScale"] = item.resolutionScale;
         if (item.maxFps > 0) {
             out["maxFps"] = item.maxFps;
+        }
+    } else if (item.kind == "UISlot") {
+        out["slot"] = item.slot;
+        if (!item.slotArgsJson.empty()) {
+            try {
+                out["args"] = Json::parse(item.slotArgsJson);
+            } catch (...) {
+            }
+        }
+        if (!item.slotFallback.empty()) {
+            out["fallback"] = dumpBlockImpl(item.slotFallback.front());
         }
     }
 

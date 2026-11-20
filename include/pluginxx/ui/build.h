@@ -223,11 +223,16 @@ inline Item control(std::string_view form, std::string_view controlId, TextValue
 }
 
 /// 动作快捷构造
-inline Action dispatch(std::string_view name, std::string_view argsJson = "{}") {
+///
+/// `call` 的能力名按前缀决定谁处理：短名回自己、`plugin.<插件id>.<名字>` 找那个插件、
+/// `musicxx.*` 找应用。[timeoutMs] > 0 时是这次调用的等待上限（0 = 由应用声明与实现者决定）。
+inline Action call(std::string_view name, std::string_view argsJson = "{}",
+                   const int timeoutMs = 0) {
     Action action;
-    action.kind = Action::Kind::Dispatch;
+    action.kind = Action::Kind::Call;
     action.name.assign(name);
     action.argsJson.assign(argsJson);
+    action.timeoutMs = timeoutMs;
     return action;
 }
 
@@ -235,14 +240,6 @@ inline Action route(std::string_view target) {
     Action action;
     action.kind = Action::Kind::Route;
     action.route.assign(target);
-    return action;
-}
-
-inline Action command(std::string_view name, std::string_view argsJson = "{}") {
-    Action action;
-    action.kind = Action::Kind::Command;
-    action.name.assign(name);
-    action.argsJson.assign(argsJson);
     return action;
 }
 

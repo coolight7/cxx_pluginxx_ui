@@ -216,6 +216,39 @@ auto renderable = pluginxx::ui::adaptDocument(doc, myCaps(), &adaptReport);
 - `ParseReport` / `AdaptReport` 的提示要落日志（`--debug` 或文件日志），它们是"插件为什么没显示"
   的第一手线索。
 
+### 2.8 槽位与内容运行时（异步内容）
+
+插件不再在渲染路径上被同步调用：它把界面写进内容缓存，客户端**只读缓存渲染**。
+
+四步接入：
+
+1. **槽位表**：`SlotCatalogue` 里放客户端预留的槽位（`SlotSpec(id, kind, variables)`）。
+   运行期插件声明的槽位（`plugin.<插件 id>.ui.*`）也从传输层收到后 `put` 进去。
+2. **变量**：实现 `VariableReader`：
+   - 全局变量（`musicxx.*`）与插件广播（`plugin.*`）由客户端读（Store / 广播当前值）；
+   - 作用域变量（`scope:*`）直接 `scope?.read(id)`（`SlotScope` 会沿作用域链找，
+     `scope:musicxx.slot.args` 就是外层传的 `args`）。
+   - `watch` / `unwatch` 按变量 id 订阅（引用计数由 hub 自己管）。
+3. **传输**：实现 `ContentTransport`：
+   - `changes`：把插件框架的"内容注册快照 / 生成结果 / 槽位声明 / 插件停用"翻译成
+     `ContentRegistered` / `ContentResultChange` / `SlotDeclared` / `PluginDetached` 等；
+   - `requestContent`：用 `request.context` 调插件的生成函数，结果经 `changes` 回来；
+     返回的 Future 只表示"这次请求结束了"（串行刷新靠它）。
+4. **挂载**：页面 / 插入块在 `initState` 里 `hub.activate(slot)`，`dispose` 时
+   `scope.dispose()`；渲染时读 `hub.contentsOf(slot)` 与 `hub.renderDocument(entry, scope)`。
+   嵌套槽位（`UISlot`）用 `hub.activate(slot, parent: scope, args: …)`，返回的句柄
+   `valid == false` 时画 `fallback`（深度超限 / 循环 / 不是 insert / replace）。
+
+规则：
+
+- **渲染路径不能同步调插件**：没有缓存时 `insert` 不占位、`replace` 画内置界面、`UISlot` 画 `fallback`；
+- **同一槽位可以有多份内容**（不同插件、同一插件不同 id），按 `order` 与注册顺序排；
+  `replace` 只认第一份、`selectable` 只认选中那份（`hub.setSelected`）；
+- **刷新串行 + 只保留最新一次**：每条内容最多一个在途请求，执行期间的变化只留最新一份
+  `context`，执行完立刻补发；同一份 `context` 不重复请求（显式的 `slot.update` 例外）；
+- **变量变化先重新绑定**（用户马上看到新值），**再**请求结构；两条路不要混；
+- 缓存只在内存，插件停用 / 卸载 / 关闭时清掉；`ContentPipeline` 可替换（默认 = 绑定 → 解析 → 适配）。
+
 ---
 
 ## 3. 插件框架接入（转发方，不渲染）
@@ -356,9 +389,11 @@ kit 复制进示例插件目录）。
 | 插件页面空白 | 组件名/字段名不是规范写法，被当成未知块跳过 | `ParseReport.warnings`；`plainText` 打印同一份 JSON |
 | 某个块画不出来，也没有提示 | 能力段声明了但渲染层没实现 | 对照 `caps.blocks` 与渲染层的分支；插件看不出问题，因为能力是客户端自己报的 |
 | 卡片时挤时松 | u 值不是格的整数倍，终端取整后留白消失或撑开 | `lintWithCaps`；把值写成格大小的整数倍（默认 8 / 20） |
-| 控件操作后界面没变化 | 控件没写 `action`，或写成了旧名（`capability` / `action`） | 动作只认 `dispatch` / `route` / `command` / `none`；字符串短写等于 `dispatch` |
+| 控件操作后界面没变化 | 控件没写 `action`，或写成了旧名（`capability` / `action`） | 动作只认 `call` / `route` / `none`；字符串短写等于 `call` |
 | `percent` 宽度没效果 | 父容器在这一轴无界（例如自动高度的纵向容器） | 高度基准会退化成内容尺寸；改父容器的尺寸约束 |
 | 终端里图片/着色器不见了 | 它们是可选级，`adapt` 按能力降级 | 插件侧用 `env.hasBlock('Image')` 之类挑替代结构 |
+| 界面里的槽位没有内容 | 客户端还没激活那个槽位 / 插件还没注册内容 | `ContentHub.contentsOf(slot)` 看注册与缓存；客户端要看有没有 `activate()` |
+| 变量一直是空串 | 变量没写进内容的 `deps`（没订阅也不会进 `context`） | 看注册的 deps；`ContentHub` 的组日志里有 `missing` |
 | JS 插件报 `pluginxx is not defined` | 清单没写 `scripts`（kit 随插件目录分发，插件框架不预置） | 清单加 `scripts: [pluginxx_ui_kit.js, <client>_ui_kit.js, plugin.js]` |
 | 扩展 kit 与基础 kit 同名组件 | 两边的命名空间/加载顺序 | C++：各在自己的命名空间，可同时包含；JS：后加载的覆盖同名的 |
 
@@ -374,6 +409,9 @@ kit 复制进示例插件目录）。
 `Text` / `Divider` / `Gap` / `Button` / `Block` / `Row` / `Column` / `Expanded` / `Spacer` /
 `SizedBox` / `Padding` / `Align` / `Collapse` / `KV` / `Table` / `Tree` / `Progress` / `Badge` /
 `Control` / `Markdown`。
+
+实现 `UISlot` 的客户端（能嵌槽位）需要：能按槽位取内容（`ContentHub`）、作用域链、
+深度与循环保护；不支持时写成 `SlotCapabilities.none`，`adapt` 会把它降成纯文本。
 
 实现时的语义要点：
 
@@ -396,10 +434,12 @@ kit 复制进示例插件目录）。
 
 ### 8.3 动作与控件通道
 
-- `dispatch` → 交回内容归属方（插件能力 / 页面刷新），客户端把 `{id, value}` 合并进参数；
+- `call` → 调一个能力：短名回自己、`plugin.<插件 id>.<名字>` 找那个插件、`musicxx.*` 找客户端；
+  客户端把 `{id, value}` 合并进参数；
 - `route` → 跳转（可跳范围由客户端自己定，例如只允许跳到本客户端的外壳页或插件的自绘页）；
-- `command` → 客户端官方动作；
 - `none` → 不响应。
+
+动作**不返回界面**：要换画面就让插件重新生成内容（`musicxx.ui.slot.update` / `push`）。
 
 ### 8.4 能力上报三处一致
 

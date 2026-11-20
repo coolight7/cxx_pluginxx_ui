@@ -28,7 +28,7 @@ PLUGINXX_UI_TEST(构建器的节点都能被解析) {
         pluginxx::ui::build::sizedBox(40, 40, pluginxx::ui::build::text("方")),
         pluginxx::ui::build::align(pluginxx::ui::build::text("居中"), "center", "center"),
         pluginxx::ui::build::stack({pluginxx::ui::build::text("底"), pluginxx::ui::build::text("顶")}),
-        pluginxx::ui::build::button("按钮", pluginxx::ui::build::dispatch("doIt"), "simple", true),
+        pluginxx::ui::build::button("按钮", pluginxx::ui::build::call("doIt"), "simple", true),
         pluginxx::ui::build::badge("3"),
         pluginxx::ui::build::progress(30, 100, "%"),
         pluginxx::ui::build::icon("play", "▶"),
@@ -48,13 +48,13 @@ PLUGINXX_UI_TEST(构建器的文本与动作字段) {
     PLUGINXX_UI_CHECK_EQ(card.title.fallback, std::string("卡片标题"), "内容块标题");
     PLUGINXX_UI_CHECK_EQ(card.variant, std::string("card"), "内容块形态");
 
-    const Item button = pluginxx::ui::build::button("刷新", pluginxx::ui::build::command(
+    const Item button = pluginxx::ui::build::button("刷新", pluginxx::ui::build::call(
                                                                  "musicxx.render.select",
                                                                  R"({"slot":"player.background"})"));
     PLUGINXX_UI_CHECK_EQ(button.label.fallback, std::string("刷新"), "按钮文案");
     PLUGINXX_UI_CHECK_EQ(button.variant, std::string("normal"), "按钮默认样式");
     PLUGINXX_UI_CHECK(!button.highlight, "按钮默认非选中态");
-    PLUGINXX_UI_CHECK(button.action.kind == Action::Kind::Command, "按钮动作是 command");
+    PLUGINXX_UI_CHECK(button.action.kind == Action::Kind::Call, "按钮动作是 call");
     PLUGINXX_UI_CHECK_EQ(button.action.name, std::string("musicxx.render.select"), "动作名");
 
     // 样式与选中态是两个独立的字段：highlight 写进 JSON 后要能往返
@@ -73,13 +73,14 @@ PLUGINXX_UI_TEST(构建器的文本与动作字段) {
 
     const Item control = pluginxx::ui::build::control("checkbox", "skipAds",
                                                       pluginxx::ui::TextValue::of("跳过广告"),
-                                                      pluginxx::ui::build::dispatch("setSkipAds"));
+                                                      pluginxx::ui::build::call("setSkipAds"));
     PLUGINXX_UI_CHECK_EQ(control.control, std::string("checkbox"), "控件形态");
     PLUGINXX_UI_CHECK_EQ(control.id, std::string("skipAds"), "控件 id");
     PLUGINXX_UI_CHECK_EQ(control.label.fallback, std::string("跳过广告"), "控件标签");
-    PLUGINXX_UI_CHECK(control.action.kind == Action::Kind::Dispatch, "控件动作是 dispatch");
+    PLUGINXX_UI_CHECK(control.action.kind == Action::Kind::Call, "控件动作是 call");
 
     // 文本取值（i18n 键 + 命名占位）也能用构建器表达
     const Item text = pluginxx::ui::build::text("兜底");
     PLUGINXX_UI_CHECK_EQ(text.text.resolve(), std::string("兜底"), "文本解析");
 }
+

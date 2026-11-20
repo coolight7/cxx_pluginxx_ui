@@ -316,6 +316,13 @@ bool itemText(const Item& item, const Ctx& ctx, std::string& out) {
         out = childrenText(item.rowBody, ctx);
         return !out.empty();
     }
+    if (item.kind == "UISlot") {
+        // 纯文本降级：看不到别的槽位里的内容，只能画 fallback（没写就不占位）
+        if (item.slotFallback.empty()) {
+            return false;
+        }
+        return itemText(item.slotFallback.front(), ctx, out);
+    }
     if (item.kind == "Text") {
         const std::string value = text(item.text);
         if (value.empty()) {

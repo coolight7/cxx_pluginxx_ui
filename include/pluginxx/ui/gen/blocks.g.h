@@ -16,7 +16,7 @@ namespace gen {
 /// 定义文件结构版本（字段/组件结构变化时递增）
 inline constexpr int kSchemaVersion = 2;
 /// 组件词汇版本（新增 kind / 字段 / 枚举值时递增，只增不改）
-inline constexpr int kUiApiVersion = 3;
+inline constexpr int kUiApiVersion = 4;
 
 /// 默认留白（u）：Gap.size 的缺省值与基础 kit 的默认行距
 inline constexpr double kDefaultGap = 12;
@@ -141,6 +141,9 @@ inline constexpr BlockMeta kBlockTable[] = {
     {"musicxx.RotationTransition", BlockLevel::Client,
      "Musicxx", AdaptRule::Flatten,
      "旋转动画：按 value（0~1）从 from 转到 to（单位 = 圈数；其他客户端展开子节点）"},
+    {"UISlot", BlockLevel::Optional,
+     "", AdaptRule::Skip,
+     "在那位置渲染另一个槽位的内容：可以是应用预留的槽位，也可以是插件自己声明（musicxx.ui.slot.define）的槽位。作用域变量继续有效，并额外提供 scope:musicxx.slot.args（块上的 args）；没有注册内容、内容解析不出来、槽位被撤销或嵌套循环时画 fallback，没有 fallback 就不占位。只接受 insert / replace 两种槽位，嵌套深度最多 4 层"},
 };
 inline constexpr std::size_t kBlockCount = sizeof(kBlockTable) / sizeof(kBlockTable[0]);
 
@@ -223,9 +226,8 @@ inline constexpr std::string_view kEnumListVariant[] = {
 };
 inline constexpr std::string_view kEnumActionKind[] = {
     "none",
-    "dispatch",
+    "call",
     "route",
-    "command",
 };
 inline constexpr std::string_view kEnumSparkStyle[] = {
     "block",

@@ -6,6 +6,11 @@
 /// - [parseDocument] / [parseBlocks] / [parseBlock]：JSON → 模型（校验 + 上限 + 提示）
 /// - [adaptDocument] / [adaptBlocks] / [adaptItem]：模型 + 能力 → 客户端可渲染的模型
 /// - [plainText] / [plainTextItem] / [plainTextDocument]：模型 → 纯文本（日志 / 降级）
+/// - [bindVariables] / [bindText] / [bindTextValue]：变量绑定（`{"var": …}` 与 `{…}` 插值）
+/// - [resolveTextValue]：文本取值 → 屏幕上的文本
+/// - [resolveSize] / [resolveEdges] / [sizeInCells]：尺寸与边距换算
+/// - [UiValue] / [parseUiArgsTable] / [parseUiValueNode]：值表达式（每帧求值）
+/// - [ContentHub] / [SlotCatalogue] / [SlotChoice]：槽位与内容运行时（异步内容缓存）
 /// - [KitRuntime]：kit 模板展开（具体 kit 组件见 `gen/kit.g.dart`）
 ///
 /// 用法（客户端渲染层）：
@@ -19,7 +24,9 @@
 library pluginxx_ui;
 
 export 'src/adapt.dart';
+export 'src/bind.dart';
 export 'src/capabilities.dart';
+export 'src/content_hub.dart';
 export 'src/gen/adapt_rules.g.dart';
 export 'src/gen/blocks.g.dart';
 export 'src/gen/kit.g.dart';
@@ -27,3 +34,7 @@ export 'src/kit_runtime.dart';
 export 'src/model.dart';
 export 'src/parse.dart';
 export 'src/plain_text.dart';
+export 'src/size_runtime.dart';
+export 'src/slot.dart';
+export 'src/text_runtime.dart';
+export 'src/value_runtime.dart';

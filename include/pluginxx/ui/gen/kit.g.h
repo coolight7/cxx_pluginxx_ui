@@ -68,6 +68,12 @@ inline pluginxx::ui::Json kitTemplate(const std::string_view name) {
          R"KIT({"variants":[{"template":{"kind":"Sparkline","data":"$data","height":"$height","glyphStyle":"$glyphStyle","showLast":"$showLast","color":"$color"}}],"params":{"data":null,"height":1,"glyphStyle":"block","showLast":true,"color":"accent"}})KIT"},
         {"progressRow",
          R"KIT({"variants":[{"template":{"kind":"Row","gap":12,"cross":"center","children":[{"$require":"label","kind":"Text","text":"$label"},{"kind":"Expanded","child":{"kind":"Progress","value":"$value","total":"$total","unit":"$unit"}}]}}],"params":{"label":null,"value":null,"total":100,"unit":null}})KIT"},
+        {"slot",
+         R"KIT({"variants":[{"template":{"kind":"UISlot","slot":"$slot","args":"$args","fallback":"$fallback"}}],"params":{"slot":null,"args":null,"fallback":null}})KIT"},
+        {"textVar",
+         R"KIT({"variants":[{"template":{"kind":"Text","text":"$text","color":"$color"}}],"params":{"text":null,"color":"normal"}})KIT"},
+        {"varValue",
+         R"KIT({"variants":[{"template":{"var":"$name","default":"$fallback","unit":"$unit"}}],"params":{"name":null,"fallback":null,"unit":null}})KIT"},
     };
     const auto it = kTable.find(name);
     if (it == kTable.end()) {
@@ -267,6 +273,33 @@ inline pluginxx::ui::Item progressRow(
     const pluginxx::ui::Capabilities* env = nullptr
 ) {
     return pluginxx::ui::detail::expandKit("progressRow", params, env, &kitTemplate);
+}
+
+/// 在这里渲染一个槽位的内容（应用预留的或插件声明的）；没写 fallback 时不占位
+/// 参数：slot(string, 必填)、args(json)、fallback(item)
+inline pluginxx::ui::Item slot(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
+) {
+    return pluginxx::ui::detail::expandKit("slot", params, env, &kitTemplate);
+}
+
+/// 一段带变量的文本（字符串里的 {变量 id} 由客户端绑定）
+/// 参数：text(text, 必填)、color(color, 默认 normal)
+inline pluginxx::ui::Item textVar(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
+) {
+    return pluginxx::ui::detail::expandKit("textVar", params, env, &kitTemplate);
+}
+
+/// 把某个变量绑定成值（`{"var": …}`），可用在尺寸 / 进度 / 开关等值位置
+/// 参数：name(string, 必填)、fallback(json)、unit(string)
+inline pluginxx::ui::Item varValue(
+    const pluginxx::ui::Json& params = pluginxx::ui::Json::object(),
+    const pluginxx::ui::Capabilities* env = nullptr
+) {
+    return pluginxx::ui::detail::expandKit("varValue", params, env, &kitTemplate);
 }
 
 } // namespace kit

@@ -252,27 +252,45 @@ String formatNumber(double value) {
 /// 动作类型
 enum ActionKind {
   none,
-  dispatch,
+
+  /// 调用一个能力：短名回自己、`plugin.<插件id>.<名字>` 找那个插件、`musicxx.*` 找应用
+  call,
+
+  /// 跳转到一个插件页面（`ext://<插件id>/<内容 id>`）
   route,
-  command,
 }
 
-/// 动作：`dispatch`（交回内容归属方）/ `route`（跳转）/ `command`（客户端官方动作）
+/// 动作：`call`（调能力）/ `route`（跳转）/ `none`
 class UiAction {
   const UiAction({
     this.kind = ActionKind.none,
     this.name = '',
     this.route = '',
     this.args,
+    this.timeoutMs = 0,
   });
 
   final ActionKind kind;
+
+  /// `call` 的能力名（短名 / `plugin.<插件id>.<名字>` / `musicxx.*`）
   final String name;
   final String route;
   final Object? args;
 
+  /// `call` 的等待上限（毫秒）；0 = 不额外收紧（由应用声明与实现者决定）
+  final int timeoutMs;
+
   bool get isEmpty => kind == ActionKind.none;
   bool get isNotEmpty => !isEmpty;
+
+  /// 这次调用的目标是不是应用的能力（`musicxx.*`）
+  bool get isHostCall => kind == ActionKind.call && name.startsWith('musicxx.');
+
+  /// 这次调用是不是指向别的插件（`plugin.<插件id>.` 且不是自己）
+  bool callsOtherPlugin(String selfPluginId) =>
+      kind == ActionKind.call &&
+      name.startsWith('plugin.') &&
+      !name.startsWith('plugin.$selfPluginId.');
 
   static const UiAction none = UiAction();
 }
@@ -699,6 +717,16 @@ class ItemData {
   UiAction? action;
   String fallback = '';
 
+  // ---- 通用块：UISlot（在界面里嵌一个槽位） ----
+  /// 要渲染的槽位 id（应用预留的 `musicxx.ui.*` 或插件声明的 `plugin.<插件id>.ui.*`）
+  String slot = '';
+
+  /// 传给这个嵌套槽位的上下文（作用域变量 `scope:musicxx.slot.args`）
+  Object? slotArgs;
+
+  /// 没有内容时画的块（没写就不占位）
+  ItemData? slotFallback;
+
   /// 是否含可交互内容（控件 / 带动作的可点组件）
   bool get interactive =>
       kind == 'Control' || isListKind || (action?.isNotEmpty ?? false);
@@ -834,7 +862,10 @@ class ItemData {
     ..columnBodyRatio = columnBodyRatio
     ..visible = visible
     ..action = action
-    ..fallback = fallback;
+    ..fallback = fallback
+    ..slot = slot
+    ..slotArgs = slotArgs
+    ..slotFallback = slotFallback;
 }
 
 /// 一份界面内容：可选包装 + 块数组

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "uiApiVersion": 3,
+  "uiApiVersion": 4,
   "defaults": {
     "gap": 12,
     "cell": { "width": 8, "height": 20 }
@@ -33,7 +33,7 @@
     "controlKind": ["buttons", "select", "checkbox", "switch", "text", "number", "password"],
     "listLayout": ["auto", "list", "grid", "multiList"],
     "listVariant": ["card", "plain"],
-    "actionKind": ["none", "dispatch", "route", "command"],
+    "actionKind": ["none", "call", "route"],
     "sparkStyle": ["block", "bar"],
     "imageFit": ["contain", "cover", "fill", "fitWidth", "fitHeight", "none"],
     "axis": ["vertical", "horizontal"],
@@ -77,7 +77,8 @@
     "musicxx.FadeTransition": "flatten",
     "musicxx.SlideTransition": "flatten",
     "musicxx.ScaleTransition": "flatten",
-    "musicxx.RotationTransition": "flatten"
+    "musicxx.RotationTransition": "flatten",
+    "UISlot": "skip"
   },
   "blocks": [
     {
@@ -516,7 +517,7 @@
             "subtitle": "每周一更新",
             "trailing": "12 首",
             "image": "cover",
-            "action": { "kind": "dispatch", "name": "openPlaylist", "args": { "name": "每周新歌" } }
+            "action": { "kind": "call", "name": "openPlaylist", "args": { "name": "每周新歌" } }
           },
           {
             "id": "fav",
@@ -777,6 +778,22 @@
         "to": 1,
         "value": { "kind": "const", "value": 0.5 },
         "child": { "kind": "Text", "text": "转起来的内容" }
+      }
+    },
+    {
+      "kind": "UISlot",
+      "level": "optional",
+      "doc": "在那位置渲染另一个槽位的内容：可以是应用预留的槽位，也可以是插件自己声明（musicxx.ui.slot.define）的槽位。作用域变量继续有效，并额外提供 scope:musicxx.slot.args（块上的 args）；没有注册内容、内容解析不出来、槽位被撤销或嵌套循环时画 fallback，没有 fallback 就不占位。只接受 insert / replace 两种槽位，嵌套深度最多 4 层",
+      "fields": [
+        { "name": "slot", "type": "string", "required": true },
+        { "name": "args", "type": "json" },
+        { "name": "fallback", "type": "item" }
+      ],
+      "sample": {
+        "kind": "UISlot",
+        "slot": "musicxx.ui.playing.lyric.top",
+        "args": { "rowId": "abc" },
+        "fallback": { "kind": "Text", "text": "（没有内容）" }
       }
     }
   ]

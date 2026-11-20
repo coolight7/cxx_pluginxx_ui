@@ -304,6 +304,10 @@ String? _itemText(ItemData item, _Ctx ctx) {
       // 不能按宽高比切换的客户端用横屏那一套（与适配规则一致）
       final String body = _childrenText(item.rowBody, ctx);
       return body.isEmpty ? null : body;
+    case 'UISlot':
+      // 纯文本降级：看不到别的槽位里的内容，只能画 fallback（没写就不占位）
+      final ItemData? slotFallback = item.slotFallback;
+      return null == slotFallback ? null : _itemText(slotFallback, ctx);
     case 'Diagram':
       return item.mermaid.isEmpty ? null : _linesOf(item.mermaid, ctx);
     case 'musicxx.Shader':

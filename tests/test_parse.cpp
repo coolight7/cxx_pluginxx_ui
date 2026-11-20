@@ -87,7 +87,7 @@ PLUGINXX_UI_TEST(动作的四种形态) {
         return pluginxx::ui::parseBlock(Json::parse(source)).action;
     };
     const Action shortForm = actionOf(R"("openSettings")");
-    PLUGINXX_UI_CHECK(shortForm.kind == Action::Kind::Dispatch, "字符串短写 = dispatch");
+    PLUGINXX_UI_CHECK(shortForm.kind == Action::Kind::Call, "字符串短写 = call");
     PLUGINXX_UI_CHECK_EQ(shortForm.name, std::string("openSettings"), "动作名");
 
     const Action route = actionOf(R"({"kind":"route","route":"ext://demo/settings"})");
@@ -95,8 +95,8 @@ PLUGINXX_UI_TEST(动作的四种形态) {
     PLUGINXX_UI_CHECK_EQ(route.route, std::string("ext://demo/settings"), "跳转目标");
 
     const Action command =
-        actionOf(R"({"kind":"command","name":"musicxx.player.play","args":{"x":1}})");
-    PLUGINXX_UI_CHECK(command.kind == Action::Kind::Command, "command");
+        actionOf(R"({"kind":"call","name":"musicxx.player.play","args":{"x":1}})");
+    PLUGINXX_UI_CHECK(command.kind == Action::Kind::Call, "call");
     PLUGINXX_UI_CHECK_EQ(command.argsJson, std::string(R"({"x":1})"), "参数按原文本携带");
 
     const Action none = actionOf(R"({"kind":"none"})");
@@ -106,7 +106,7 @@ PLUGINXX_UI_TEST(动作的四种形态) {
 PLUGINXX_UI_TEST(动作解析器可直接用) {
     // 块字段与客户端扩展点（UI 项的 data.action）共用同一个解析器
     const Action shortForm = pluginxx::ui::parseAction(Json("openSettings"));
-    PLUGINXX_UI_CHECK(shortForm.kind == Action::Kind::Dispatch, "字符串短写 = dispatch");
+    PLUGINXX_UI_CHECK(shortForm.kind == Action::Kind::Call, "字符串短写 = call");
     PLUGINXX_UI_CHECK_EQ(shortForm.name, std::string("openSettings"), "动作名");
 
     const Action route = pluginxx::ui::parseAction(
@@ -168,14 +168,14 @@ PLUGINXX_UI_TEST(列表块解析与往返) {
     PLUGINXX_UI_CHECK_EQ(item.items[0].trailing.resolve(), std::string("12 首"), "项右侧文字");
     PLUGINXX_UI_CHECK_EQ(item.items[0].image, std::string("cover"), "项封面");
     PLUGINXX_UI_CHECK(item.items[0].selected, "项高亮");
-    PLUGINXX_UI_CHECK(item.items[0].action.kind == pluginxx::ui::Action::Kind::Dispatch, "项动作");
+    PLUGINXX_UI_CHECK(item.items[0].action.kind == pluginxx::ui::Action::Kind::Call, "项动作");
     PLUGINXX_UI_CHECK_EQ(item.items[1].color, std::string("hint"), "项语义色");
     PLUGINXX_UI_CHECK(item.toolbar.size() == 1, "工具条块");
     PLUGINXX_UI_CHECK(item.menu.size() == 1, "顶部菜单");
     PLUGINXX_UI_CHECK_EQ(item.menu[0].icon, std::string("resource/svg/refresh.svg"), "菜单图标");
     PLUGINXX_UI_CHECK(item.itemMenu.size() == 1, "每项菜单");
-    PLUGINXX_UI_CHECK(item.editAction.kind == pluginxx::ui::Action::Kind::Dispatch, "编辑动作");
-    PLUGINXX_UI_CHECK(item.saveAction.kind == pluginxx::ui::Action::Kind::Dispatch, "保存动作");
+    PLUGINXX_UI_CHECK(item.editAction.kind == pluginxx::ui::Action::Kind::Call, "编辑动作");
+    PLUGINXX_UI_CHECK(item.saveAction.kind == pluginxx::ui::Action::Kind::Call, "保存动作");
     PLUGINXX_UI_CHECK_EQ(item.removeTipTitle.resolve(), std::string("确认删除"), "删除确认标题");
     PLUGINXX_UI_CHECK(item.showCount, "显示条数");
 
@@ -243,6 +243,27 @@ PLUGINXX_UI_TEST(不再按层级上限丢弃子块) {
     PLUGINXX_UI_CHECK_EQ(depth, 20, "深层嵌套完整保留");
 }
 
+PLUGINXX_UI_TEST(UISlot 解析与往返) {
+    const pluginxx::ui::Item item = pluginxx::ui::parseBlock(Json::parse(R"({
+        "kind":"UISlot",
+        "slot":"musicxx.ui.playing.lyric.top",
+        "args":{"rowId":"abc"},
+        "fallback":{"kind":"Text","text":"（没有内容）"}
+    })"));
+    PLUGINXX_UI_CHECK_EQ(item.kind, std::string("UISlot"), "kind");
+    PLUGINXX_UI_CHECK_EQ(item.slot, std::string("musicxx.ui.playing.lyric.top"), "槽位 id");
+    PLUGINXX_UI_CHECK(!item.slotArgsJson.empty(), "args 按原文本携带");
+    PLUGINXX_UI_CHECK_EQ(item.slotFallback.size(), static_cast<std::size_t>(1), "fallback 一块");
+    PLUGINXX_UI_CHECK_EQ(item.slotFallback.front().text.fallback, std::string("（没有内容）"), "fallback 文本");
+
+    const Json dumped = pluginxx::ui::dumpItem(item);
+    PLUGINXX_UI_CHECK_EQ(dumped["slot"].get<std::string>(), item.slot, "序列化保留槽位");
+    PLUGINXX_UI_CHECK(dumped["fallback"].is_object(), "序列化保留 fallback");
+    const pluginxx::ui::Item again = pluginxx::ui::parseBlock(dumped);
+    PLUGINXX_UI_CHECK_EQ(again.slot, item.slot, "往返稳定");
+    PLUGINXX_UI_CHECK_EQ(again.text.fallback, std::string(), "UISlot 自己没有文本");
+}
+
 PLUGINXX_UI_TEST(能力段往返) {
     const pluginxx::ui::Capabilities full = pluginxx::ui::fullCapabilities();
     const Json                     json = pluginxx::ui::capabilitiesToJson(full);
@@ -259,3 +280,4 @@ PLUGINXX_UI_TEST(能力段往返) {
     PLUGINXX_UI_CHECK_EQ(minBack.blocks.size(), static_cast<std::size_t>(1), "最小能力只有 Text");
     PLUGINXX_UI_CHECK(!minBack.percent, "最小能力不支持 percent");
 }
+
