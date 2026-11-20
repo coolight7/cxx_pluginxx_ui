@@ -33,6 +33,8 @@ class ContentRegistration {
     required this.itemId,
     required this.plugin,
     required this.id,
+    this.title = '',
+    this.depict = '',
     this.deps = const <String>[],
     this.order = 0,
     this.minIntervalMs = 0,
@@ -51,6 +53,14 @@ class ContentRegistration {
   /// 插件自己起的短 id（同一个插件在同一个槽位上可以有多份）
   final String id;
 
+  /// 展示名（可选样式槽位的候选列表用；空 = 用内容 id）
+  ///
+  /// 声明时就给，不能等生成：用户要在**选中之前**就看到名字。
+  final String title;
+
+  /// 一句话说明（可选样式槽位的副标题）
+  final String depict;
+
   /// 依赖的变量 id（只有这些被订阅、也只有这些进 `context`）
   final List<String> deps;
 
@@ -64,7 +74,8 @@ class ContentRegistration {
   final int seq;
 
   @override
-  String toString() => 'ContentRegistration($slot, $itemId, order=$order)';
+  String toString() =>
+      'ContentRegistration($slot, $itemId, order=$order${title.isEmpty ? '' : ', $title'})';
 }
 
 /// 缓存里的一条内容
@@ -309,7 +320,9 @@ class DefaultContentPipeline implements ContentPipeline {
 /// - [values]：客户端在这个槽位上填的作用域变量（例如歌单页的歌单信息）；
 /// - [parent]：嵌套时的外层作用域（作用域变量按链继承）；
 /// - [depth]：嵌套深度（应用预留的槽位是 1）；
-/// - [ancestors]：祖先槽位链（防止循环）。
+/// - [ancestors]：祖先槽位链（防止循环）；
+/// - [onlyIds]：只关心这几个内容 id（空 = 槽位上的全部）——页面 / 浮层这类"一个槽位上挂很多份、
+///   每次只用一份"的位置靠它避免把不相干的内容也拉一遍。
 class SlotScope {
   SlotScope._({
     required this.slot,
@@ -318,6 +331,7 @@ class SlotScope {
     required this.parent,
     required this.depth,
     required this.ancestors,
+    this.onlyIds = const <String>{},
     ContentHub? hub,
     bool valid = true,
   }) : _hub = hub,
@@ -329,6 +343,9 @@ class SlotScope {
   final SlotScope? parent;
   final int depth;
   final Set<String> ancestors;
+
+  /// 只关心这几个内容 id（空 = 全部）
+  final Set<String> onlyIds;
 
   final ContentHub? _hub;
   final bool _valid;
@@ -418,6 +435,9 @@ class ContentHub {
 
   /// 变量 → 订阅者计数（多个内容依赖同一变量时只订阅一次）
   final Map<String, int> _watchCount = <String, int>{};
+
+  /// 槽位 → 实际订阅过的变量（取消激活时照着退订，见 [_unsubscribeSlot]）
+  final Map<String, List<String>> _slotWatchedDeps = <String, List<String>>{};
   final Map<String, void Function()> _watchCallbacks =
       <String, void Function()>{};
 
@@ -444,6 +464,28 @@ class ContentHub {
   final Map<String, int> requestCount = <String, int>{};
 
   // ---------- 查询 ----------
+
+  /// 某个内容 id 的条目（`page` / `overlay` 这类"一个槽位挂很多份、每次只用一份"的位置用它）
+  ///
+  /// 找不到时返回 null（还没注册 / 已被注销）。
+  ContentEntry? entryOf(String slot, String id) {
+    for (final ContentEntry entry in contentsOf(slot)) {
+      if (entry.id == id) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
+  /// 某个内容 id 的注册（找不到时返回 null）
+  ContentRegistration? registrationOf(String slot, String id) {
+    for (final ContentRegistration reg in registrationsOf(slot)) {
+      if (reg.id == id) {
+        return reg;
+      }
+    }
+    return null;
+  }
 
   /// 某个槽位上的内容（按 order 与注册顺序排好）
   ///
@@ -573,11 +615,15 @@ class ContentHub {
   ///
   /// [parent] 非空表示这是 `UISlot` 渲染出来的嵌套槽位：作用域按链继承，同时做深度与循环检查
   /// （不合法时返回 `valid == false` 的句柄，调用方画 fallback）。
+  ///
+  /// [ids] 只关心这几个内容 id（空 = 全部）：页面 / 浮层这类"一个槽位上挂很多份、每次只用一份"
+  /// 的位置传它，只请求自己要的那一份，变量变化引起的刷新也只限这几份。
   SlotScope activate(
     String slot, {
     SlotScope? parent,
     Map<String, Object?> args = const <String, Object?>{},
     Map<String, Object?> values = const <String, Object?>{},
+    Iterable<String> ids = const <String>[],
   }) {
     final SlotSpec? spec = slots[slot];
     if (null == parent && null == spec) {
@@ -608,6 +654,7 @@ class ContentHub {
       parent: parent,
       depth: depth,
       ancestors: ancestors,
+      onlyIds: <String>{for (final String id in ids) if (id.isNotEmpty) id},
       hub: this,
       valid: valid,
     );
@@ -616,11 +663,14 @@ class ContentHub {
     }
     final List<SlotScope> list = _active.putIfAbsent(slot, () => <SlotScope>[]);
     list.add(scope);
-    if (list.length == 1) {
-      _subscribeSlot(slot);
-      // 激活总是请求一次：保证结构是最新的（显式请求，不受"同一 context 不发"限制）
-      _requestSlot(slot, force: true);
-    }
+    // 每次激活都订阅并请求一次：同一个槽位上可能先后开着两个只看自己那份的挂载点
+    // （例如页面叠页面），第二个的那一份不会因为第一个已经激活过就漏掉
+    _subscribeSlot(slot, ids: scope.onlyIds);
+    _requestSlot(
+      slot,
+      ids: scope.onlyIds.isEmpty ? null : scope.onlyIds.toList(),
+      force: true,
+    );
     return scope;
   }
 
@@ -639,45 +689,54 @@ class ContentHub {
 
   // ---------- 依赖订阅 ----------
 
-  void _subscribeSlot(String slot) {
+  /// 现在激活着的挂载点想要哪些内容 id（空 = 该槽位的全部）
+  ///
+  /// 多个挂载点同时开着且各自只看几份时取并集；只要有一个"全都要"的，就是全部。
+  Set<String> _onlyIdsOf(String slot) {
+    final List<SlotScope>? list = _active[slot];
+    if (null == list || list.isEmpty) {
+      return const <String>{};
+    }
+    final Set<String> out = <String>{};
+    for (final SlotScope scope in list) {
+      if (scope.onlyIds.isEmpty) {
+        return const <String>{};
+      }
+      out.addAll(scope.onlyIds);
+    }
+    return out;
+  }
+
+  /// 订阅这个槽位上内容的依赖
+  ///
+  /// [ids] 非空时只订阅这几份内容自己的依赖（页面 / 浮层只关心自己要的那一份）。
+  /// 订阅过的变量按槽位记下来，取消激活时照着这份记录退订，计数不会对不上。
+  void _subscribeSlot(String slot, {Set<String> ids = const <String>{}}) {
     final Map<String, ContentRegistration>? registered = _registry[slot];
     if (null == registered) {
       return;
     }
+    final Set<String> only = ids.isNotEmpty ? ids : _onlyIdsOf(slot);
+    final List<String> watched = _slotWatchedDeps.putIfAbsent(slot, () => <String>[]);
     for (final ContentRegistration reg in registered.values) {
+      if (only.isNotEmpty && !only.contains(reg.id)) {
+        continue;
+      }
       for (final String dep in reg.deps) {
-        if (dep.startsWith('scope:') || dep.startsWith('plugin.')) {
-          // 作用域变量由作用域自己给（激活时就有了），插件变量要订阅广播
-          if (!dep.startsWith('plugin.')) {
-            continue;
-          }
+        // 作用域变量由作用域自己给（激活时就有了），插件变量要订阅广播
+        if (dep.startsWith('scope:')) {
+          continue;
         }
         _watchVariable(dep, slot);
+        watched.add(dep);
       }
     }
   }
 
   void _unsubscribeSlot(String slot) {
-    final Map<String, ContentRegistration>? registered = _registry[slot];
-    if (null == registered) {
-      return;
-    }
-    final Set<String> stillNeeded = <String>{};
-    for (final MapEntry<String, Map<String, ContentRegistration>> entry in _registry.entries) {
-      if (entry.key == slot || !_isActive(entry.key)) {
-        continue;
-      }
-      for (final ContentRegistration reg in entry.value.values) {
-        stillNeeded.addAll(reg.deps);
-      }
-    }
-    for (final ContentRegistration reg in registered.values) {
-      for (final String dep in reg.deps) {
-        if (stillNeeded.contains(dep)) {
-          continue;
-        }
-        _unwatchVariable(dep, slot);
-      }
+    final List<String> watched = _slotWatchedDeps.remove(slot) ?? const <String>[];
+    for (final String dep in watched) {
+      _unwatchVariable(dep, slot);
     }
   }
 
@@ -696,6 +755,11 @@ class ContentHub {
     final int count = (_watchCount[id] ?? 0) - 1;
     if (count > 0) {
       _watchCount[id] = count;
+      return;
+    }
+    if (count < 0) {
+      // 已经退过（插件卸载时按插件统一退订），这里什么都不用做
+      _watchCount.remove(id);
       return;
     }
     _watchCount.remove(id);
@@ -725,7 +789,11 @@ class ContentHub {
     if (null == registered) {
       return out;
     }
+    final Set<String> only = _onlyIdsOf(slot);
     for (final ContentRegistration reg in registered.values) {
+      if (only.isNotEmpty && !only.contains(reg.id)) {
+        continue;
+      }
       out.addAll(reg.deps);
     }
     return out;
@@ -758,7 +826,15 @@ class ContentHub {
     final Set<String> allowed = <String>{
       for (final ContentEntry entry in effective) entry.itemId,
     };
+    // 没指定 ids 时按"挂载点想要的那几份"算：页面 / 浮层这类位置只请求自己要的那一份，
+    // 变量变化引起的刷新也不会把同槽位的其它页面一并拉回来
+    final Set<String> only = null == ids
+        ? _onlyIdsOf(slot)
+        : <String>{for (final String id in ids) id};
     for (final ContentRegistration reg in registered.values) {
+      if (only.isNotEmpty && !only.contains(reg.id)) {
+        continue;
+      }
       if (null != ids && !ids.contains(reg.id)) {
         continue;
       }
@@ -1035,17 +1111,13 @@ class ContentHub {
       _rendered.remove(reg.itemId);
     }
     if (_isActive(reg.slot)) {
-      if (map.length == 1) {
-        _subscribeSlot(reg.slot);
-      } else {
-        for (final String dep in reg.deps) {
-          if (dep.startsWith('plugin.')) {
-            _watchVariable(dep, reg.slot);
-          }
+      // 只关心其中几份的挂载点（页面 / 浮层）不订阅、不请求不相干的那几份
+      final Set<String> only = _onlyIdsOf(reg.slot);
+      if (only.isEmpty || only.contains(reg.id)) {
+        _subscribeSlot(reg.slot, ids: <String>{reg.id});
+        if (_shouldRequest(reg)) {
+          _requestOne(reg, force: true);
         }
-      }
-      if (_shouldRequest(reg)) {
-        _requestOne(reg, force: true);
       }
     }
     _notifySlot(reg.slot);
@@ -1209,6 +1281,7 @@ class ContentHub {
     }
     _watchCallbacks.clear();
     _watchCount.clear();
+    _slotWatchedDeps.clear();
     _registry.clear();
     _cache.clear();
     _rendered.clear();

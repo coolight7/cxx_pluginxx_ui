@@ -630,6 +630,177 @@ void main() {
       expect(hub.contentsOf('slot.bg').single.id, 'all');
       scope.dispose();
     });
+
+    test('只关心指定内容：只请求那一份，其它那份的变量不订阅', () async {
+      transport.emit(
+        const ContentRegistered(
+          ContentRegistration(
+            slot: 'slot.insert',
+            itemId: 'plugin.a.row1',
+            plugin: 'a',
+            id: 'row1',
+            deps: <String>['musicxx.player.title'],
+            seq: 1,
+          ),
+        ),
+      );
+      transport.emit(
+        const ContentRegistered(
+          ContentRegistration(
+            slot: 'slot.insert',
+            itemId: 'plugin.a.row2',
+            plugin: 'a',
+            id: 'row2',
+            deps: <String>['musicxx.player.artist'],
+            seq: 2,
+          ),
+        ),
+      );
+      final SlotScope scope = hub.activate(
+        'slot.insert',
+        ids: <String>['row2'],
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        <String>[for (final ContentRequest r in transport.requests) r.itemId],
+        <String>['plugin.a.row2'],
+      );
+      expect(
+        hub.registrationsOf('slot.insert').length,
+        2,
+        reason: '注册表照样有两份，只是没请求另一份',
+      );
+      expect(scope.onlyIds, <String>{'row2'});
+
+      final int before = transport.requests.length;
+      variables.set('musicxx.player.title', '别的歌');
+      await Future<void>.delayed(Duration.zero);
+      expect(transport.requests.length, before, reason: '没要的那一份的变量不订阅');
+
+      variables.set('musicxx.player.artist', '新歌手');
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        <String>[
+          for (final ContentRequest r in transport.requests.skip(before))
+            r.itemId,
+        ],
+        <String>['plugin.a.row2'],
+      );
+      scope.dispose();
+    });
+
+    test('同一个槽位先后两个挂载点各要一份：两份都会被请求', () async {
+      transport.emit(
+        const ContentRegistered(
+          ContentRegistration(
+            slot: 'slot.insert',
+            itemId: 'plugin.a.row1',
+            plugin: 'a',
+            id: 'row1',
+            seq: 1,
+          ),
+        ),
+      );
+      transport.emit(
+        const ContentRegistered(
+          ContentRegistration(
+            slot: 'slot.insert',
+            itemId: 'plugin.a.row2',
+            plugin: 'a',
+            id: 'row2',
+            seq: 2,
+          ),
+        ),
+      );
+      final SlotScope first = hub.activate(
+        'slot.insert',
+        ids: <String>['row1'],
+      );
+      await Future<void>.delayed(Duration.zero);
+      final SlotScope second = hub.activate(
+        'slot.insert',
+        ids: <String>['row2'],
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        <String>[for (final ContentRequest r in transport.requests) r.itemId],
+        containsAll(<String>['plugin.a.row1', 'plugin.a.row2']),
+      );
+      first.dispose();
+      second.dispose();
+    });
+
+    test('退订只退自己订阅过的变量，别的槽位还在用的照旧收到通知', () async {
+      slots.put(const SlotSpec(id: 'slot.other', kind: SlotKind.insert));
+      transport.emit(
+        const ContentRegistered(
+          ContentRegistration(
+            slot: 'slot.insert',
+            itemId: 'plugin.a.row',
+            plugin: 'a',
+            id: 'row',
+            deps: <String>['musicxx.player.title'],
+          ),
+        ),
+      );
+      transport.emit(
+        const ContentRegistered(
+          ContentRegistration(
+            slot: 'slot.other',
+            itemId: 'plugin.a.other',
+            plugin: 'a',
+            id: 'other',
+            deps: <String>['musicxx.player.title'],
+          ),
+        ),
+      );
+      final SlotScope first = hub.activate('slot.insert');
+      final SlotScope second = hub.activate('slot.other');
+      await Future<void>.delayed(Duration.zero);
+
+      first.dispose();
+      final int before = transport.requests.length;
+      variables.set('musicxx.player.title', '第一首');
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        <String>[
+          for (final ContentRequest r in transport.requests.skip(before))
+            r.itemId,
+        ],
+        <String>['plugin.a.other'],
+        reason: '同一个变量别的槽位还在用，退订不能把它撤掉',
+      );
+
+      second.dispose();
+      final int after = transport.requests.length;
+      variables.set('musicxx.player.title', '第二首');
+      await Future<void>.delayed(Duration.zero);
+      expect(transport.requests.length, after, reason: '都取消激活了，不再订阅变量');
+    });
+
+    test('entryOf / registrationOf 按 id 取，title 与 depict 原样保留', () async {
+      transport.emit(
+        const ContentRegistered(
+          ContentRegistration(
+            slot: 'slot.insert',
+            itemId: 'plugin.a.row',
+            plugin: 'a',
+            id: 'row',
+            title: '歌曲信息',
+            depict: '在歌曲操作里加一行',
+          ),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(hub.registrationOf('slot.insert', 'row')?.title, '歌曲信息');
+      expect(
+        hub.registrationOf('slot.insert', 'row')?.depict,
+        '在歌曲操作里加一行',
+      );
+      expect(hub.registrationOf('slot.insert', 'nope'), isNull);
+      expect(hub.entryOf('slot.insert', 'row')?.itemId, 'plugin.a.row');
+      expect(hub.entryOf('slot.insert', 'nope'), isNull);
+    });
   });
 }
 
