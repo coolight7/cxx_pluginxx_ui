@@ -142,7 +142,12 @@ class SlotCatalogue {
   }
 
   /// 撤销某个插件声明的全部槽位
+  ///
+  /// 空的 [pluginId] 不做事：应用预留的槽位 `owner` 也是空串，传空串会把它们一起删掉。
   void removeOwnedBy(String pluginId) {
+    if (pluginId.isEmpty) {
+      return;
+    }
     final List<String> owned = <String>[
       for (final SlotSpec spec in _specs.values)
         if (spec.owner == pluginId) spec.id,

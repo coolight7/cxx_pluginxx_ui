@@ -594,6 +594,102 @@ void main() {
       second.dispose();
     });
 
+    test('可选样式：未选中的内容也能按 id 查到，选中值写全名或短 id 都认', () async {
+      transport.emit(
+        const ContentRegistered(
+          ContentRegistration(
+            slot: 'slot.select',
+            itemId: 'plugin.a.same',
+            plugin: 'a',
+            id: 'same',
+            seq: 1,
+          ),
+        ),
+      );
+      transport.emit(
+        const ContentRegistered(
+          ContentRegistration(
+            slot: 'slot.select',
+            itemId: 'plugin.b.same',
+            plugin: 'b',
+            id: 'same',
+            seq: 2,
+          ),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      // 两个插件用了同一个短 id：按全名查得到各自那份，且不受"还没选"的影响
+      expect(hub.entryOf('slot.select', 'plugin.a.same')?.plugin, 'a');
+      expect(hub.entryOf('slot.select', 'plugin.b.same')?.plugin, 'b');
+      hub.setSelected('slot.select', 'plugin.b.same');
+      expect(
+        <String>[
+          for (final ContentEntry entry in hub.contentsOf('slot.select'))
+            entry.itemId,
+        ],
+        <String>['plugin.b.same'],
+      );
+      // 短 id 照样能用（只有一个插件时它不会歧义）
+      hub.setSelected('slot.select', 'same');
+      expect(
+        <String>[
+          for (final ContentEntry entry in hub.contentsOf('slot.select'))
+            entry.itemId,
+        ],
+        <String>['plugin.a.same', 'plugin.b.same'],
+      );
+    });
+
+    test('页面背景适用的路由写在注册里，不用客户端另外告诉', () async {
+      slots.put(
+        const SlotSpec(id: 'slot.bg', kind: SlotKind.pageBackground),
+      );
+      transport.emit(
+        const ContentRegistered(
+          ContentRegistration(
+            slot: 'slot.bg',
+            itemId: 'plugin.a.all',
+            plugin: 'a',
+            id: 'all',
+            seq: 1,
+          ),
+        ),
+      );
+      transport.emit(
+        const ContentRegistered(
+          ContentRegistration(
+            slot: 'slot.bg',
+            itemId: 'plugin.a.songs',
+            plugin: 'a',
+            id: 'songs',
+            routes: <String>['/songs'],
+            seq: 2,
+          ),
+        ),
+      );
+      hub.setRoute('slot.bg', '/songs');
+      final SlotScope scope = hub.activate('slot.bg');
+      await Future<void>.delayed(Duration.zero);
+      expect(hub.contentsOf('slot.bg').single.id, 'songs');
+      hub.setRoute('slot.bg', '/setting');
+      expect(hub.contentsOf('slot.bg').single.id, 'all');
+      // 重新注册时不再写路由 = 回到"所有页面"
+      transport.emit(
+        const ContentRegistered(
+          ContentRegistration(
+            slot: 'slot.bg',
+            itemId: 'plugin.a.songs',
+            plugin: 'a',
+            id: 'songs',
+            seq: 2,
+          ),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(hub.contentsOf('slot.bg').single.id, 'songs');
+      scope.dispose();
+    });
+
     test('页面背景按路由取舍：写了路由的优先，同一优先级最新注册的生效', () async {
       slots.put(
         const SlotSpec(id: 'slot.bg', kind: SlotKind.pageBackground),
@@ -616,12 +712,12 @@ void main() {
             itemId: 'plugin.a.songs',
             plugin: 'a',
             id: 'songs',
+            routes: <String>['/songs'],
             seq: 2,
           ),
         ),
       );
-      hub.setBackgroundRoutes('plugin.a.all', <String>[]);
-      hub.setBackgroundRoutes('plugin.a.songs', <String>['/songs']);
+      await Future<void>.delayed(Duration.zero);
       hub.setRoute('slot.bg', '/songs');
       final SlotScope scope = hub.activate('slot.bg');
       await Future<void>.delayed(Duration.zero);

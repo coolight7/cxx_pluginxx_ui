@@ -35,6 +35,7 @@ class ContentRegistration {
     required this.id,
     this.title = '',
     this.depict = '',
+    this.routes = const <String>[],
     this.deps = const <String>[],
     this.order = 0,
     this.minIntervalMs = 0,
@@ -60,6 +61,11 @@ class ContentRegistration {
 
   /// 一句话说明（可选样式槽位的副标题）
   final String depict;
+
+  /// 适用的页面路由（只有 `pageBackground` 槽位用；空 = 所有普通页面）
+  ///
+  /// 要在注册时给：客户端要先按路由挑出「这一页用哪一份」，那时内容还没生成。
+  final List<String> routes;
 
   /// 依赖的变量 id（只有这些被订阅、也只有这些进 `context`）
   final List<String> deps;
@@ -465,27 +471,61 @@ class ContentHub {
 
   // ---------- 查询 ----------
 
-  /// 某个内容 id 的条目（`page` / `overlay` 这类"一个槽位挂很多份、每次只用一份"的位置用它）
+  /// 某个内容 id 的条目（`page` / `overlay` / 可选样式这类"一个槽位挂很多份、每次只用一份"的位置用它）
   ///
-  /// 找不到时返回 null（还没注册 / 已被注销）。
+  /// [id] 写内容短 id（`card`）或全名（`plugin.<插件 id>.card`）都认。
+  /// 直接查注册表与缓存，**不看槽位形态的过滤**：可选样式槽位也能查到没选中的那一份
+  /// （候选列表要报它的状态），页面背景槽位能查到不是当前路由的那几份。
+  /// 注册了但还没生成时返回 `hasContent == false` 的条目；没注册时返回 null。
   ContentEntry? entryOf(String slot, String id) {
-    for (final ContentEntry entry in contentsOf(slot)) {
-      if (entry.id == id) {
-        return entry;
+    final ContentEntry? cached = _cache[slot]?[id];
+    if (null != cached) {
+      return cached;
+    }
+    final Map<String, ContentEntry>? cache = _cache[slot];
+    if (null != cache) {
+      for (final ContentEntry entry in cache.values) {
+        if (entry.id == id) {
+          return entry;
+        }
       }
     }
-    return null;
+    final ContentRegistration? reg = _resolveRegistration(slot, id);
+    if (null == reg) {
+      return null;
+    }
+    return ContentEntry(
+      slot: slot,
+      itemId: reg.itemId,
+      plugin: reg.plugin,
+      id: reg.id,
+      order: reg.order,
+      rev: 0,
+      seq: reg.seq,
+    );
   }
 
-  /// 某个内容 id 的注册（找不到时返回 null）
-  ContentRegistration? registrationOf(String slot, String id) {
-    for (final ContentRegistration reg in registrationsOf(slot)) {
+  /// 注册表里找一条（[id] 是短 id 或全名）
+  ContentRegistration? _resolveRegistration(String slot, String id) {
+    final Map<String, ContentRegistration>? registered = _registry[slot];
+    if (null == registered) {
+      return null;
+    }
+    final ContentRegistration? exact = registered[id];
+    if (null != exact) {
+      return exact;
+    }
+    for (final ContentRegistration reg in registered.values) {
       if (reg.id == id) {
         return reg;
       }
     }
     return null;
   }
+
+  /// 某个内容 id 的注册（找不到时返回 null）
+  ContentRegistration? registrationOf(String slot, String id) =>
+      _resolveRegistration(slot, id);
 
   /// 某个槽位上的内容（按 order 与注册顺序排好）
   ///
@@ -531,9 +571,10 @@ class ContentHub {
         if (null == selected) {
           return const <ContentEntry>[];
         }
+        // 选中值写全名或短 id 都认：不同插件可以用同一个短 id，全名才是唯一的
         return <ContentEntry>[
           for (final ContentEntry entry in list)
-            if (entry.id == selected) entry,
+            if (entry.itemId == selected || entry.id == selected) entry,
         ];
       case SlotKind.pageBackground:
         final String route = _routeOf[slot] ?? '';
@@ -569,7 +610,10 @@ class ContentHub {
 
   Object? _routesOf(String itemId) => _routeMap[itemId];
 
-  /// 页面背景项声明的路由（客户端注册内容时一起告诉 hub）
+  /// 页面背景项声明的路由
+  ///
+  /// 注册时从 [ContentRegistration.routes] 带进来；[setBackgroundRoutes] 给测试与
+  /// 客户端自己的补充声明用。
   final Map<String, Object?> _routeMap = <String, Object?>{};
 
   /// 设置一个页面背景内容适用的路由（空 = 所有普通页面）
@@ -1086,6 +1130,12 @@ class ContentHub {
   }
 
   void _applyRegistered(ContentRegistration reg) {
+    // 页面背景按注册里带的路由挑（注册时就要有：那时内容还没生成）
+    if (reg.routes.isNotEmpty) {
+      _routeMap[reg.itemId] = reg.routes;
+    } else {
+      _routeMap.remove(reg.itemId);
+    }
     final Map<String, ContentRegistration> map = _registry.putIfAbsent(
       reg.slot,
       () => <String, ContentRegistration>{},
@@ -1236,7 +1286,7 @@ class ContentHub {
     for (final String slot in slotIds) {
       _notifySlot(slot);
     }
-    slots.removeOwnedBy('');
+    // 只搚插件声明的槽位：应用预留的（`owner` 为空）属于客户端，不能跟插件一起消失
     for (final SlotSpec spec in slots.pluginDeclared.toList()) {
       slots.remove(spec.id);
     }
