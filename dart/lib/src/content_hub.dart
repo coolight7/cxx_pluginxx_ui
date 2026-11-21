@@ -485,7 +485,7 @@ class ContentHub {
     final Map<String, ContentEntry>? cache = _cache[slot];
     if (null != cache) {
       for (final ContentEntry entry in cache.values) {
-        if (entry.id == id) {
+        if (entry.id == id || entry.itemId == id) {
           return entry;
         }
       }
@@ -516,12 +516,19 @@ class ContentHub {
       return exact;
     }
     for (final ContentRegistration reg in registered.values) {
-      if (reg.id == id) {
+      if (_matchesContentId(reg, id)) {
         return reg;
       }
     }
     return null;
   }
+
+  /// 这个 id 指的是不是这条注册：短 id（`card`）或全名（`plugin.<插件 id>.card`）都认
+  ///
+  /// 不同插件可以用同一个短 id（页面 / 浮层 / 可选样式都是），**同时只显示一份的位置
+  /// （页面、浮层、样式候选）必须写全名**，否则会拿到另一个同名内容。
+  static bool _matchesContentId(ContentRegistration reg, String id) =>
+      reg.id == id || reg.itemId == id;
 
   /// 某个内容 id 的注册（找不到时返回 null）
   ContentRegistration? registrationOf(String slot, String id) =>
@@ -763,7 +770,8 @@ class ContentHub {
     final Set<String> only = ids.isNotEmpty ? ids : _onlyIdsOf(slot);
     final List<String> watched = _slotWatchedDeps.putIfAbsent(slot, () => <String>[]);
     for (final ContentRegistration reg in registered.values) {
-      if (only.isNotEmpty && !only.contains(reg.id)) {
+      if (only.isNotEmpty &&
+          !only.any((String id) => _matchesContentId(reg, id))) {
         continue;
       }
       for (final String dep in reg.deps) {
@@ -835,7 +843,7 @@ class ContentHub {
     }
     final Set<String> only = _onlyIdsOf(slot);
     for (final ContentRegistration reg in registered.values) {
-      if (only.isNotEmpty && !only.contains(reg.id)) {
+      if (only.isNotEmpty && !only.any((String id) => _matchesContentId(reg, id))) {
         continue;
       }
       out.addAll(reg.deps);
@@ -876,10 +884,10 @@ class ContentHub {
         ? _onlyIdsOf(slot)
         : <String>{for (final String id in ids) id};
     for (final ContentRegistration reg in registered.values) {
-      if (only.isNotEmpty && !only.contains(reg.id)) {
+      if (only.isNotEmpty && !only.any((String id) => _matchesContentId(reg, id))) {
         continue;
       }
-      if (null != ids && !ids.contains(reg.id)) {
+      if (null != ids && !ids.any((String id) => _matchesContentId(reg, id))) {
         continue;
       }
       if (null != plugin && reg.plugin != plugin) {
@@ -900,7 +908,8 @@ class ContentHub {
     final SlotSpec? spec = slots[reg.slot];
     switch (spec?.kind) {
       case SlotKind.selectable:
-        return _selected[reg.slot] == reg.id;
+        final String? selected = _selected[reg.slot];
+        return null != selected && _matchesContentId(reg, selected);
       case SlotKind.replace:
         final List<ContentEntry> list = contentsOf(reg.slot);
         return list.isNotEmpty && list.first.itemId == reg.itemId;
@@ -1163,7 +1172,8 @@ class ContentHub {
     if (_isActive(reg.slot)) {
       // 只关心其中几份的挂载点（页面 / 浮层）不订阅、不请求不相干的那几份
       final Set<String> only = _onlyIdsOf(reg.slot);
-      if (only.isEmpty || only.contains(reg.id)) {
+      if (only.isEmpty ||
+          only.any((String id) => _matchesContentId(reg, id))) {
         _subscribeSlot(reg.slot, ids: <String>{reg.id});
         if (_shouldRequest(reg)) {
           _requestOne(reg, force: true);

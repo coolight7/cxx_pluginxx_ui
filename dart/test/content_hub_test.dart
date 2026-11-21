@@ -785,6 +785,91 @@ void main() {
       scope.dispose();
     });
 
+    test('同名短 id：写全名才精确指向那个插件的那一份', () async {
+      // 两个插件在同一个槽位上都叫 `card`（页面 / 浮层就是这样）：
+      // 短 id 只能命中“先缓存的那一份”，页面这类同时只显示一份的位置必须写全名。
+      transport.emit(
+        const ContentRegistered(
+          ContentRegistration(
+            slot: 'slot.insert',
+            itemId: 'plugin.a.card',
+            plugin: 'a',
+            id: 'card',
+            seq: 1,
+          ),
+        ),
+      );
+      transport.emit(
+        const ContentRegistered(
+          ContentRegistration(
+            slot: 'slot.insert',
+            itemId: 'plugin.b.card',
+            plugin: 'b',
+            id: 'card',
+            seq: 2,
+          ),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      for (final String plugin in <String>['a', 'b']) {
+        transport.emit(
+          ContentResultChange(
+            slot: 'slot.insert',
+            itemId: 'plugin.$plugin.card',
+            rev: 1,
+            json: _doc('插件 $plugin'),
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
+      }
+
+      expect(hub.entryOf('slot.insert', 'plugin.b.card')?.plugin, 'b');
+      expect(hub.entryOf('slot.insert', 'card')?.plugin, 'a');
+
+      final int before = transport.requests.length;
+      final SlotScope scope = hub.activate(
+        'slot.insert',
+        ids: <String>['plugin.b.card'],
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        <String>[
+          for (final ContentRequest request in transport.requests.skip(before))
+            request.itemId,
+        ],
+        <String>['plugin.b.card'],
+        reason: '写全名时不要连带请求另一个插件的同名内容',
+      );
+      expect(hub.contentsOf('slot.insert').length, 2);
+      scope.dispose();
+    });
+
+    test('可选样式的选中值写全名也能请求到那一份', () async {
+      transport.emit(
+        const ContentRegistered(
+          ContentRegistration(
+            slot: 'slot.select',
+            itemId: 'plugin.a.style1',
+            plugin: 'a',
+            id: 'style1',
+            seq: 1,
+          ),
+        ),
+      );
+      final SlotScope scope = hub.activate('slot.select');
+      await Future<void>.delayed(Duration.zero);
+      expect(transport.requests, isEmpty, reason: '没有选中时 selectable 不请求');
+
+      hub.setSelected('slot.select', 'plugin.a.style1');
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        <String>[for (final ContentRequest r in transport.requests) r.itemId],
+        <String>['plugin.a.style1'],
+        reason: '样式选择存的是全名（`plugin.<插件 id>.<短 id>`），要能对上',
+      );
+      scope.dispose();
+    });
+
     test('同一个槽位先后两个挂载点各要一份：两份都会被请求', () async {
       transport.emit(
         const ContentRegistered(
