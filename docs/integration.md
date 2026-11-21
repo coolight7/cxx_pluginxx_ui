@@ -249,6 +249,17 @@ auto renderable = pluginxx::ui::adaptDocument(doc, myCaps(), &adaptReport);
 - **变量变化先重新绑定**（用户马上看到新值），**再**请求结构；两条路不要混；
 - 缓存只在内存，插件停用 / 卸载 / 关闭时清掉；`ContentPipeline` 可替换（默认 = 绑定 → 解析 → 适配）。
 
+补充（2026-11）：
+
+- **注册带 `routes`**：普通页面背景在注册时就给适用的页面路由（内容还没生成，客户端得先按路由挑"这一页用哪一份"）。
+  取舍规则由客户端定（musicxx 是"显式路由优先 → 注册顺序最靠后"），库只保存 `ContentRegistration.routes` 并在重新注册时更新；
+  重新注册不带 `routes` = 回到"所有页面"。
+- **只请求自己要的那份**：页面 / 浮层一个槽位上挂很多份、每次只用一份时，用 `hub.activate(slot, values, ids: [id])`；
+  变量订阅与变量变化引起的刷新也只限这几份。按 id 取用 `hub.entryOf(slot, id)`（注册了但还没生成时 `hasContent == false`）。
+- **可选样式的候选先有名字**：`ContentRegistration.title` / `depict` 在用户选中之前就要显示；`entryOf` 对只注册未生成的内容也返回条目，
+  名字取 `title`（没写就用短 id）。
+- `ContentHub` 的 `pluginDetached` 只摘这个槽位上的订阅，**不删**槽位：槽位归客户端所有（应用预留的与插件声明的分开管）。
+
 ---
 
 ## 3. 插件框架接入（转发方，不渲染）
@@ -257,7 +268,7 @@ auto renderable = pluginxx::ui::adaptDocument(doc, myCaps(), &adaptReport);
 
 - 把客户端的能力段原样放进框架信息（例如 C ABI 配置结构体加一个字符串字段
   `ui_capabilities`），插件框架只校验"是不是 JSON 对象"，不解析内容；
-- 取内容时把能力段作为参数传给插件（`{"view":"…","ui":{…}}`），插件在生成内容的那一刻就能
+- 取内容时把内容生成函数需要的上下文（声明过的依赖变量 → 当前值）原样传过去，插件在生成内容的那一刻就能
   按目标挑选组件；
 - **插件框架不做适配、不读组件表**：内容由主程序解析与降级。框架里再放一份组件清单只会多一处要同步；
 - 改了 C ABI 结构体（加字段）后：重新生成 Dart 绑定（ffigen）、插件框架与 Dart 侧一起更新
