@@ -254,10 +254,11 @@ auto renderable = pluginxx::ui::adaptDocument(doc, myCaps(), &adaptReport);
 - **注册带 `routes`**：普通页面背景在注册时就给适用的页面路由（内容还没生成，客户端得先按路由挑"这一页用哪一份"）。
   取舍规则由客户端定（musicxx 是"显式路由优先 → 注册顺序最靠后"），库只保存 `ContentRegistration.routes` 并在重新注册时更新；
   重新注册不带 `routes` = 回到"所有页面"。
-- **只请求自己要的那份**：页面 / 浮层一个槽位上挂很多份、每次只用一份时，用 `hub.activate(slot, values, ids: [id])`；
-  变量订阅与变量变化引起的刷新也只限这几份。按 id 取用 `hub.entryOf(slot, id)`（注册了但还没生成时 `hasContent == false`）。
+- **只请求自己要的那份**：页面 / 浮层一个槽位上挂很多份、每次只用一份时，用 `hub.activate(slot, values, ids: [itemId])`；
+  变量订阅与变量变化引起的刷新也只限这几份。`ids` 与 `hub.entryOf(slot, itemId)` 都只认**内容全名**
+  `plugin.<插件 id>.<短 id>`：不同插件可以用同一个短 id，短 id 分不清是哪一份。
 - **可选样式的候选先有名字**：`ContentRegistration.title` / `depict` 在用户选中之前就要显示；`entryOf` 对只注册未生成的内容也返回条目，
-  名字取 `title`（没写就用短 id）。
+  名字取 `title`（没写就用短 id）；`setSelected` 存的也是全名。
 - `ContentHub` 的 `pluginDetached` 只摘这个槽位上的订阅，**不删**槽位：槽位归客户端所有（应用预留的与插件声明的分开管）。
 
 ---

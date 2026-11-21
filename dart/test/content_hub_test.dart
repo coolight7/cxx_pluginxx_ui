@@ -296,7 +296,7 @@ void main() {
       final SlotScope scope = hub.activate('slot.insert');
       await Future<void>.delayed(Duration.zero);
       expect(transport.requests.length, 2);
-      hub.requestUpdate('slot.insert', <String>['row2'], 'a');
+      hub.requestUpdate('slot.insert', <String>['plugin.a.row2'], 'a');
       await Future<void>.delayed(Duration.zero);
       expect(transport.requests.length, 3);
       expect(transport.requests.last.id, 'row2');
@@ -360,7 +360,7 @@ void main() {
       await Future<void>.delayed(Duration.zero);
       expect(hub.contentsOf('slot.select'), isEmpty, reason: '还没选');
 
-      hub.setSelected('slot.select', 's2');
+      hub.setSelected('slot.select', 'plugin.a.s2');
       await Future<void>.delayed(Duration.zero);
       expect(<String>[for (final ContentEntry e in hub.contentsOf('slot.select')) e.id], <String>['s2']);
       expect(<String>[for (final ContentRequest r in transport.requests) r.id], <String>['s2']);
@@ -618,9 +618,10 @@ void main() {
         ),
       );
       await Future<void>.delayed(Duration.zero);
-      // 两个插件用了同一个短 id：按全名查得到各自那份，且不受"还没选"的影响
+      // 两个插件用了同一个短 id：只能按全名查
       expect(hub.entryOf('slot.select', 'plugin.a.same')?.plugin, 'a');
       expect(hub.entryOf('slot.select', 'plugin.b.same')?.plugin, 'b');
+      expect(hub.entryOf('slot.select', 'same'), isNull, reason: '不再接受短 id');
       hub.setSelected('slot.select', 'plugin.b.same');
       expect(
         <String>[
@@ -629,15 +630,9 @@ void main() {
         ],
         <String>['plugin.b.same'],
       );
-      // 短 id 照样能用（只有一个插件时它不会歧义）
+      // 短 id 不再当作选中值：分不清是哪个插件的
       hub.setSelected('slot.select', 'same');
-      expect(
-        <String>[
-          for (final ContentEntry entry in hub.contentsOf('slot.select'))
-            entry.itemId,
-        ],
-        <String>['plugin.a.same', 'plugin.b.same'],
-      );
+      expect(hub.contentsOf('slot.select'), isEmpty);
     });
 
     test('页面背景适用的路由写在注册里，不用客户端另外告诉', () async {
@@ -754,7 +749,7 @@ void main() {
       );
       final SlotScope scope = hub.activate(
         'slot.insert',
-        ids: <String>['row2'],
+        ids: <String>['plugin.a.row2'],
       );
       await Future<void>.delayed(Duration.zero);
       expect(
@@ -766,7 +761,7 @@ void main() {
         2,
         reason: '注册表照样有两份，只是没请求另一份',
       );
-      expect(scope.onlyIds, <String>{'row2'});
+      expect(scope.onlyIds, <String>{'plugin.a.row2'});
 
       final int before = transport.requests.length;
       variables.set('musicxx.player.title', '别的歌');
@@ -785,9 +780,9 @@ void main() {
       scope.dispose();
     });
 
-    test('同名短 id：写全名才精确指向那个插件的那一份', () async {
+    test('同名短 id：只能按全名分别寻址', () async {
       // 两个插件在同一个槽位上都叫 `card`（页面 / 浮层就是这样）：
-      // 短 id 只能命中“先缓存的那一份”，页面这类同时只显示一份的位置必须写全名。
+      // 只写短 id 分不清是哪一份，所以内容寻址一律用全名。
       transport.emit(
         const ContentRegistered(
           ContentRegistration(
@@ -824,7 +819,7 @@ void main() {
       }
 
       expect(hub.entryOf('slot.insert', 'plugin.b.card')?.plugin, 'b');
-      expect(hub.entryOf('slot.insert', 'card')?.plugin, 'a');
+      expect(hub.entryOf('slot.insert', 'card'), isNull, reason: '短 id 不再接受');
 
       final int before = transport.requests.length;
       final SlotScope scope = hub.activate(
@@ -844,7 +839,7 @@ void main() {
       scope.dispose();
     });
 
-    test('可选样式的选中值写全名也能请求到那一份', () async {
+    test('可选样式的选中值写全名才能请求到', () async {
       transport.emit(
         const ContentRegistered(
           ContentRegistration(
@@ -895,12 +890,12 @@ void main() {
       );
       final SlotScope first = hub.activate(
         'slot.insert',
-        ids: <String>['row1'],
+        ids: <String>['plugin.a.row1'],
       );
       await Future<void>.delayed(Duration.zero);
       final SlotScope second = hub.activate(
         'slot.insert',
-        ids: <String>['row2'],
+        ids: <String>['plugin.a.row2'],
       );
       await Future<void>.delayed(Duration.zero);
       expect(
@@ -973,13 +968,14 @@ void main() {
         ),
       );
       await Future<void>.delayed(Duration.zero);
-      expect(hub.registrationOf('slot.insert', 'row')?.title, '歌曲信息');
+      expect(hub.registrationOf('slot.insert', 'plugin.a.row')?.title, '歌曲信息');
       expect(
-        hub.registrationOf('slot.insert', 'row')?.depict,
+        hub.registrationOf('slot.insert', 'plugin.a.row')?.depict,
         '在歌曲操作里加一行',
       );
       expect(hub.registrationOf('slot.insert', 'nope'), isNull);
-      expect(hub.entryOf('slot.insert', 'row')?.itemId, 'plugin.a.row');
+      expect(hub.entryOf('slot.insert', 'plugin.a.row')?.itemId, 'plugin.a.row');
+      expect(hub.entryOf('slot.insert', 'row'), isNull, reason: '短 id 不再接受');
       expect(hub.entryOf('slot.insert', 'nope'), isNull);
     });
   });

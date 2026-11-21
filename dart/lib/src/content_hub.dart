@@ -327,7 +327,7 @@ class DefaultContentPipeline implements ContentPipeline {
 /// - [parent]：嵌套时的外层作用域（作用域变量按链继承）；
 /// - [depth]：嵌套深度（应用预留的槽位是 1）；
 /// - [ancestors]：祖先槽位链（防止循环）；
-/// - [onlyIds]：只关心这几个内容 id（空 = 槽位上的全部）——页面 / 浮层这类"一个槽位上挂很多份、
+/// - [onlyIds]：只关心这几个内容 id（**全名**；空 = 槽位上的全部）——页面 / 浮层这类"一个槽位上挂很多份、
 ///   每次只用一份"的位置靠它避免把不相干的内容也拉一遍。
 class SlotScope {
   SlotScope._({
@@ -350,7 +350,7 @@ class SlotScope {
   final int depth;
   final Set<String> ancestors;
 
-  /// 只关心这几个内容 id（空 = 全部）
+  /// 只关心这几个内容 id（**全名** `plugin.<插件 id>.<短 id>`）
   final Set<String> onlyIds;
 
   final ContentHub? _hub;
@@ -471,9 +471,10 @@ class ContentHub {
 
   // ---------- 查询 ----------
 
-  /// 某个内容 id 的条目（`page` / `overlay` / 可选样式这类"一个槽位挂很多份、每次只用一份"的位置用它）
+  /// 某个内容的条目（`page` / `overlay` / 可选样式这类"一个槽位挂很多份、每次只用一份"的位置用它）
   ///
-  /// [id] 写内容短 id（`card`）或全名（`plugin.<插件 id>.card`）都认。
+  /// [id] 必须是**全名** `plugin.<插件 id>.<短 id>`：同一个槽位上不同插件可以用同一个短 id
+  /// （页面都叫 `card` 这类），只有全名能唯一指向一份内容，所以这里不再接受短 id。
   /// 直接查注册表与缓存，**不看槽位形态的过滤**：可选样式槽位也能查到没选中的那一份
   /// （候选列表要报它的状态），页面背景槽位能查到不是当前路由的那几份。
   /// 注册了但还没生成时返回 `hasContent == false` 的条目；没注册时返回 null。
@@ -481,14 +482,6 @@ class ContentHub {
     final ContentEntry? cached = _cache[slot]?[id];
     if (null != cached) {
       return cached;
-    }
-    final Map<String, ContentEntry>? cache = _cache[slot];
-    if (null != cache) {
-      for (final ContentEntry entry in cache.values) {
-        if (entry.id == id || entry.itemId == id) {
-          return entry;
-        }
-      }
     }
     final ContentRegistration? reg = _resolveRegistration(slot, id);
     if (null == reg) {
@@ -505,32 +498,12 @@ class ContentHub {
     );
   }
 
-  /// 注册表里找一条（[id] 是短 id 或全名）
+  /// 注册表里找一条（[id] 必须是全名）
   ContentRegistration? _resolveRegistration(String slot, String id) {
-    final Map<String, ContentRegistration>? registered = _registry[slot];
-    if (null == registered) {
-      return null;
-    }
-    final ContentRegistration? exact = registered[id];
-    if (null != exact) {
-      return exact;
-    }
-    for (final ContentRegistration reg in registered.values) {
-      if (_matchesContentId(reg, id)) {
-        return reg;
-      }
-    }
-    return null;
+    return _registry[slot]?[id];
   }
 
-  /// 这个 id 指的是不是这条注册：短 id（`card`）或全名（`plugin.<插件 id>.card`）都认
-  ///
-  /// 不同插件可以用同一个短 id（页面 / 浮层 / 可选样式都是），**同时只显示一份的位置
-  /// （页面、浮层、样式候选）必须写全名**，否则会拿到另一个同名内容。
-  static bool _matchesContentId(ContentRegistration reg, String id) =>
-      reg.id == id || reg.itemId == id;
-
-  /// 某个内容 id 的注册（找不到时返回 null）
+  /// 某个内容的注册（[id] 必须是全名）
   ContentRegistration? registrationOf(String slot, String id) =>
       _resolveRegistration(slot, id);
 
@@ -578,10 +551,10 @@ class ContentHub {
         if (null == selected) {
           return const <ContentEntry>[];
         }
-        // 选中值写全名或短 id 都认：不同插件可以用同一个短 id，全名才是唯一的
+        // 选中值就是内容全名（不同插件可以用同一个短 id，全名才是唯一的）
         return <ContentEntry>[
           for (final ContentEntry entry in list)
-            if (entry.itemId == selected || entry.id == selected) entry,
+            if (entry.itemId == selected) entry,
         ];
       case SlotKind.pageBackground:
         final String route = _routeOf[slot] ?? '';
@@ -638,7 +611,9 @@ class ContentHub {
     _notifySlot(slot);
   }
 
-  /// 设置可选样式槽位当前选中的内容 id
+  /// 设置可选样式槽位当前选中的内容（**全名** `plugin.<插件 id>.<短 id>`）
+  ///
+  /// 不同插件可以用同一个短 id，存短 id 会分不清是哪个插件的那一份。
   void setSelected(String slot, String? contentId) {
     if (_selected[slot] == contentId) {
       return;
@@ -667,8 +642,8 @@ class ContentHub {
   /// [parent] 非空表示这是 `UISlot` 渲染出来的嵌套槽位：作用域按链继承，同时做深度与循环检查
   /// （不合法时返回 `valid == false` 的句柄，调用方画 fallback）。
   ///
-  /// [ids] 只关心这几个内容 id（空 = 全部）：页面 / 浮层这类"一个槽位上挂很多份、每次只用一份"
-  /// 的位置传它，只请求自己要的那一份，变量变化引起的刷新也只限这几份。
+  /// [ids] 只关心这几个内容（**全名** `plugin.<插件 id>.<短 id>`；空 = 全部）：页面 / 浮层这类
+  /// "一个槽位上挂很多份、每次只用一份"的位置传它，只请求自己要的那一份，变量变化引起的刷新也只限这几份。
   SlotScope activate(
     String slot, {
     SlotScope? parent,
@@ -770,8 +745,7 @@ class ContentHub {
     final Set<String> only = ids.isNotEmpty ? ids : _onlyIdsOf(slot);
     final List<String> watched = _slotWatchedDeps.putIfAbsent(slot, () => <String>[]);
     for (final ContentRegistration reg in registered.values) {
-      if (only.isNotEmpty &&
-          !only.any((String id) => _matchesContentId(reg, id))) {
+      if (only.isNotEmpty && !only.contains(reg.itemId)) {
         continue;
       }
       for (final String dep in reg.deps) {
@@ -843,7 +817,7 @@ class ContentHub {
     }
     final Set<String> only = _onlyIdsOf(slot);
     for (final ContentRegistration reg in registered.values) {
-      if (only.isNotEmpty && !only.any((String id) => _matchesContentId(reg, id))) {
+      if (only.isNotEmpty && !only.contains(reg.itemId)) {
         continue;
       }
       out.addAll(reg.deps);
@@ -855,7 +829,7 @@ class ContentHub {
 
   /// 显式要求刷新（插件调 `musicxx.ui.slot.update`，或客户端自己要重取）
   ///
-  /// [ids] 是插件自己的内容短 id；不传 = 这个槽位上本插件的全部内容。
+  /// [ids] 是**内容全名**（`plugin.<插件 id>.<短 id>`）：不传 = 这个槽位上本插件的全部内容。
   /// 显式的刷新**总会发**（即使 context 与上一次相同），不受"同一份 context 不重复请求"限制。
   void requestUpdate(String slot, [List<String>? ids, String? plugin]) {
     _requestSlot(slot, ids: ids, plugin: plugin, force: true);
@@ -884,10 +858,10 @@ class ContentHub {
         ? _onlyIdsOf(slot)
         : <String>{for (final String id in ids) id};
     for (final ContentRegistration reg in registered.values) {
-      if (only.isNotEmpty && !only.any((String id) => _matchesContentId(reg, id))) {
+      if (only.isNotEmpty && !only.contains(reg.itemId)) {
         continue;
       }
-      if (null != ids && !ids.any((String id) => _matchesContentId(reg, id))) {
+      if (null != ids && !ids.contains(reg.itemId)) {
         continue;
       }
       if (null != plugin && reg.plugin != plugin) {
@@ -909,7 +883,7 @@ class ContentHub {
     switch (spec?.kind) {
       case SlotKind.selectable:
         final String? selected = _selected[reg.slot];
-        return null != selected && _matchesContentId(reg, selected);
+        return null != selected && selected == reg.itemId;
       case SlotKind.replace:
         final List<ContentEntry> list = contentsOf(reg.slot);
         return list.isNotEmpty && list.first.itemId == reg.itemId;
@@ -1172,9 +1146,8 @@ class ContentHub {
     if (_isActive(reg.slot)) {
       // 只关心其中几份的挂载点（页面 / 浮层）不订阅、不请求不相干的那几份
       final Set<String> only = _onlyIdsOf(reg.slot);
-      if (only.isEmpty ||
-          only.any((String id) => _matchesContentId(reg, id))) {
-        _subscribeSlot(reg.slot, ids: <String>{reg.id});
+      if (only.isEmpty || only.contains(reg.itemId)) {
+        _subscribeSlot(reg.slot, ids: <String>{reg.itemId});
         if (_shouldRequest(reg)) {
           _requestOne(reg, force: true);
         }
