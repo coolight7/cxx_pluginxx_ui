@@ -570,6 +570,37 @@ ItemData _parseBlockImpl(Object? value, _Ctx ctx, int depth) {
       item.refreshAction = _action(json['refreshAction']);
       item.loadMoreAction = _action(json['loadMoreAction']);
       return item;
+    case 'musicxx.SongListView':
+      // 歌曲结果模板：条目字段与 ListView 一样，但没有逐条的 action（点行就是播放）
+      item.items = _listItems(
+        json['items'],
+        ctx,
+        'musicxx.SongListView.items',
+      );
+      item.layout = _enum(json, 'layout', kEnumListLayout, 'auto');
+      item.variant = _enum(json, 'variant', kEnumListVariant, 'card');
+      if (_has(json, 'height')) {
+        item.height = _sizeValue(
+          json['height'],
+          ctx.report,
+          'musicxx.SongListView.height',
+        );
+      }
+      if (_has(json, 'padding')) {
+        item.padding = _edges(
+          json['padding'],
+          ctx.report,
+          'musicxx.SongListView.padding',
+        );
+        item.hasPadding = true;
+      }
+      item.emptyText = _textValue(json['emptyText']);
+      item.itemMenu = _menuItems(
+        json['itemMenu'],
+        ctx,
+        'musicxx.SongListView.itemMenu',
+      );
+      return item;
     case 'musicxx.AdaptLayout':
       item.columnBody = children('columnBody', 'musicxx.AdaptLayout.columnBody');
       item.rowBody = children('rowBody', 'musicxx.AdaptLayout.rowBody');
@@ -1457,6 +1488,28 @@ Map<String, Object?> dumpItem(ItemData item) {
         if (null != value) {
           out[entry.key] = value;
         }
+      }
+      break;
+    case 'musicxx.SongListView':
+      out['items'] = <Object?>[
+        for (final ListItem listItem in item.items) _listItemToJson(listItem),
+      ];
+      out['layout'] = item.layout;
+      out['variant'] = item.variant;
+      if (!item.height.isAuto) {
+        out['height'] = _sizeValueToJson(item.height);
+      }
+      if (item.hasPadding) {
+        out['padding'] = _edgesToJson(item.padding);
+      }
+      if (item.emptyText.isNotEmpty) {
+        out['emptyText'] = _textValueToJson(item.emptyText);
+      }
+      if (item.itemMenu.isNotEmpty) {
+        out['itemMenu'] = <Object?>[
+          for (final MenuItem menuItem in item.itemMenu)
+            _menuItemToJson(menuItem),
+        ];
       }
       break;
     case 'musicxx.AdaptLayout':

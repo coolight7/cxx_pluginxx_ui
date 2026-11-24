@@ -70,6 +70,7 @@
       "ListViewBase": "plainTextMono",
       "ListView": "plainTextMono",
       "musicxx.DirListView": "plainTextMono",
+      "musicxx.SongListView": "plainTextMono",
       "musicxx.AdaptLayout": "flatten",
     "musicxx.Shader": "skip",
     "musicxx.AnimatedBuilder": "flatten",
@@ -626,6 +627,44 @@
           { "title": "a.mp3", "path": "/Music/a.mp3", "subtitle": "1.2 MB" }
         ],
         "itemAction": "browse"
+      }
+    },
+    {
+      "kind": "musicxx.SongListView",
+      "level": "client",
+      "client": "musicxx",
+      "doc": "歌曲结果列表（对应客户端内置的歌曲列表）：条目只需要 data.song（type / src / artist / name / fileName / size / durationMs / cover，与 musicxx.DirListView 的歌曲项同一套写法）；行样式、点行播放（整份结果当作播放队列）、内置歌曲菜单、空列表提示都由客户端画；itemMenu 的项排在内置菜单之后，点了派发给插件（参数带 listId / index / itemId）；进播放页跟随客户端设置，其它客户端退成文本列表",
+      "fields": [
+        { "name": "id", "type": "string" },
+        { "name": "items", "type": "listItems", "required": true },
+        { "name": "layout", "type": "enum:listLayout", "default": "auto" },
+        { "name": "variant", "type": "enum:listVariant", "default": "card" },
+        { "name": "height", "type": "size" },
+        { "name": "padding", "type": "edges" },
+        { "name": "emptyText", "type": "text" },
+        { "name": "itemMenu", "type": "menuItems" }
+      ],
+      "sample": {
+        "kind": "musicxx.SongListView",
+        "emptyText": "没有找到",
+        "items": [
+          {
+            "id": "a1",
+            "title": "稻香",
+            "subtitle": "周杰伦",
+            "trailing": "03:52",
+            "data": {
+              "song": {
+                "type": "plugin.demo.audio",
+                "src": "music/稻香.flac",
+                "artist": "周杰伦",
+                "durationMs": 232000
+              }
+            }
+          },
+          { "id": "a2", "title": "没有音源的行", "subtitle": "只有标题" }
+        ],
+        "itemMenu": [{ "title": "收藏到插件曲库", "action": "addFavorite" }]
       }
     },
     {

@@ -50,6 +50,7 @@ inline constexpr AdaptRuleEntry kAdaptRules[] = {
     {"ListViewBase", AdaptRule::PlainTextMono},
     {"ListView", AdaptRule::PlainTextMono},
     {"musicxx.DirListView", AdaptRule::PlainTextMono},
+    {"musicxx.SongListView", AdaptRule::PlainTextMono},
     {"musicxx.AdaptLayout", AdaptRule::Flatten},
     {"musicxx.Shader", AdaptRule::Skip},
     {"musicxx.AnimatedBuilder", AdaptRule::Flatten},

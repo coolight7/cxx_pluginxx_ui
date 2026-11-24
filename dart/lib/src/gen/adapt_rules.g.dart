@@ -35,6 +35,7 @@ const Map<String, AdaptRule> kAdaptRules = <String, AdaptRule>{
   'ListViewBase': AdaptRule.plainTextMono,
   'ListView': AdaptRule.plainTextMono,
   'musicxx.DirListView': AdaptRule.plainTextMono,
+  'musicxx.SongListView': AdaptRule.plainTextMono,
   'musicxx.AdaptLayout': AdaptRule.flatten,
   'musicxx.Shader': AdaptRule.skip,
   'musicxx.AnimatedBuilder': AdaptRule.flatten,

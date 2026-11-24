@@ -123,6 +123,7 @@
 | `ListViewBase` | optional | — | `id` `items`* `layout` `variant` `height` `padding` `header` `footer` `emptyText` `itemAction` | 按应用的列表组件显示多条数据（只显示，没有工具条与编辑）。列表项除了 title/subtitle/trailing/image/icon/color/selected/action，还可写 custom（任意块，写了就整项内容由它画，行内自动插入的编辑/多选/拖拽按钮不受影响）、path（路径/身份）、isDir（目录项）与 data（附加数据，任意 JSON：本库只当原文携带，由客户端自己解释） |
 | `ListView` | optional | — | `id` `items`* `layout` `variant` `height` `padding` `header` `footer` `emptyText` `itemAction` `toolbar` `menu` `itemMenu` `editAction` `saveAction` `addAction` `removeAction` `removeCheckedAction` `removeTipTitle` `positionAction` `refreshAction` `loadMoreAction` `enableCheck` `enableDrop` `showCount` | 带工具条的列表（编辑 / 多选 / 加删 / 定位 / 菜单 / 下拉刷新 / 加载更多）。列表项除 title/subtitle/trailing/image/icon/color/selected/action 外还可写 custom（任意块，整项内容由它画；行内自动插入的编辑/多选/拖拽按钮保留）、path、isDir、data |
 | `musicxx.DirListView` | client | musicxx | `id` `path` `items`* `multi` `showPath` `pathAction` `itemAction` `selectAction` `refreshAction` `loadMoreAction` `height` `padding` `variant` `emptyText` | 目录/文件列表（对应客户端内置的 DirList）：一层目录的条目，顶部路径栏（可带“上一级”动作）；写了 multi 才在行尾出勾选框（勾选态取条目的 selected，变化派发 selectAction）；给了 refreshAction / loadMoreAction 就能在列表内下拉刷新、滑到底加载更多；条目带 data（附加数据）时由本客户端自己解释（musicxx：data.song = 这一项是一首歌，画成歌曲样式；其他客户端按普通列表降级）；进入目录与选中态都由插件维护 |
+| `musicxx.SongListView` | client | musicxx | `id` `items`* `layout` `variant` `height` `padding` `emptyText` `itemMenu` | 歌曲结果列表（对应客户端内置的歌曲列表）：条目只需要 data.song（type / src / artist / name / fileName / size / durationMs / cover，与 musicxx.DirListView 的歌曲项同一套写法）；行样式、点行播放（整份结果当作播放队列）、内置歌曲菜单、空列表提示都由客户端画；itemMenu 的项排在内置菜单之后，点了派发给插件（参数带 listId / index / itemId）；进播放页跟随客户端设置，其它客户端退成文本列表 |
 | `musicxx.AdaptLayout` | client | musicxx | `columnBody`* `rowBody`* `columnSecondBody` `rowSecondBody` `rowBodyRatio` `columnBodyRatio` `enableAnimations` | 按窗口宽高比切换两套内容（对应客户端内置的 XXAdaptiveLayout）：宽高比 < 1 用 columnBody，否则用 rowBody；给了第二套就按比例分两栏（其他客户端用 rowBody） |
 | `musicxx.Shader` | client | musicxx | `bundle`* `args` `speed` `maxFps` `animate` `resolutionScale` | 插件着色器（字段集照搬 shader bundle 文档；其他客户端跳过） |
 | `musicxx.AnimatedBuilder` | client | musicxx | `values` `maxFps` `child` | 动画作用域：声明若干通道（each 是一条值表达式），子树每帧重建（其他客户端展开子节点） |
@@ -170,6 +171,7 @@
 | `ListViewBase` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
 | `ListView` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
 | `musicxx.DirListView` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
+| `musicxx.SongListView` | `plainTextMono` | 该节点的纯文本，包成 Text(mono=true) |
 | `musicxx.AdaptLayout` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
 | `musicxx.Shader` | `skip` | 跳过（无降级形态） |
 | `musicxx.AnimatedBuilder` | `flatten` | 展开子节点（容器不再成立，子节点各自降级） |
