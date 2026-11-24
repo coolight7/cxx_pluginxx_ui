@@ -464,8 +464,8 @@ struct Item {
     // ---- 动作与回退 ----
     /// `ThemeScope.data`：子树样式的原始 JSON（紧凑文本，可为空）
     ///
-    /// **通用载体**：含义由客户端定义（musicxx 的配色规格在包内 `lib/src/ui_theme.dart`），
-    /// 解析与序列化都原样往返，库不解释内容。
+    /// **通用扩展数据**：含义由客户端定义（musicxx 的配色规格在包内 `lib/src/ui_theme.dart`），
+    /// 解析与序列化都原样往返，库不解释它。
     std::string themeDataJson;
 
     // ---- 通用块：UISlot（在界面里嵌一个槽位） ----
