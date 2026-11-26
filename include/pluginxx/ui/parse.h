@@ -57,7 +57,7 @@ PLUGINXX_UI_API Item parseBlock(
 
 /// 解析一个动作描述（块字段与客户端扩展点里的 `action` 共用同一套语义）
 ///
-/// 允许的写法：字符串短写（= `dispatch`）、`{"kind":"dispatch"|"route"|"command"|"none"}`
+/// 允许的写法：字符串短写（= `call`）、`{"kind":"call"|"route"|"none"}`
 /// （kind 忽略大小写；未知 kind 取 `none`）。解析失败返回空动作（`kind == None`）。
 PLUGINXX_UI_API Action parseAction(const utilxx_base::Json& json);
 
