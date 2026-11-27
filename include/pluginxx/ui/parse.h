@@ -41,7 +41,7 @@ PLUGINXX_UI_API Document parseDocument(
     ParseReport*              report = nullptr
 );
 
-/// 解析块数组（也接受 `{"blocks":[…]}` / `{"items":[…]}` 包装）
+/// 解析块数组（也接受 `{"blocks":[…]}` 包装）
 PLUGINXX_UI_API std::vector<Item> parseBlocks(
     const utilxx_base::Json& json,
     const Limits&             limits = {},

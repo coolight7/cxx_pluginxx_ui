@@ -1010,12 +1010,8 @@ Item parseBlock(const Json& json, const Limits& limits, ParseReport* report) {
 std::vector<Item> parseBlocks(const Json& json, const Limits& limits, ParseReport* report) {
     const Ctx ctx{&limits, report};
     const Json* array = &json;
-    if (json.is_object()) {
-        if (json.contains("blocks")) {
-            array = &json["blocks"];
-        } else if (json.contains("items")) {
-            array = &json["items"];
-        }
+    if (json.is_object() && json.contains("blocks")) {
+        array = &json["blocks"];
     }
     // 顶层块的父层记为 -1（顶层块自身算第 1 层）
     return parseChildren(*array, ctx, -1, "blocks");
@@ -1043,8 +1039,6 @@ Document parseDocument(const Json& json, const Limits& limits, ParseReport* repo
     doc.subtitle = textValueOf(json["subtitle"]);
     if (json.contains("blocks")) {
         doc.blocks = parseChildren(json["blocks"], ctx, -1, "blocks");
-    } else if (json.contains("items")) {
-        doc.blocks = parseChildren(json["items"], ctx, -1, "blocks");
     }
     return doc;
 }
